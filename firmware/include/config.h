@@ -4,6 +4,17 @@
 #define PUMP_ID "pump-001"            // must match PUMP_ID in .env
 
 constexpr unsigned long STATUS_INTERVAL_MS = 2000;
+constexpr unsigned long NETWORK_RETRY_INTERVAL_MS = 5000;
+constexpr unsigned long NETWORK_SHUTDOWN_TIMEOUT_MS = 3000;
+constexpr unsigned long NETWORK_COMMAND_TIMEOUT_MS = 1000;
+constexpr unsigned int MQTT_BUFFER_SIZE = 2048;
+constexpr unsigned int MQTT_TASK_STACK_SIZE = 8192;
+constexpr unsigned int MQTT_EVENT_QUEUE_LENGTH = 32;
+constexpr unsigned int MQTT_INBOUND_QUEUE_LENGTH = 8;
+constexpr unsigned long PRIMING_DURATION_MS = 1000;
+constexpr unsigned long COMPLETE_DURATION_MS = 5000;
+constexpr unsigned long BUTTON_DEBOUNCE_MS = 40;
+constexpr unsigned long BUTTON_STOP_HOLD_MS = 1500;
 
 // Set to 1 when there is no real pump head attached and delivery is modelled
 // from time and rate. Status and event messages then carry "simulated": true.
