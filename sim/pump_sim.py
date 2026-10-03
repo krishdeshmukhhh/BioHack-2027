@@ -12,7 +12,8 @@ Layout:
   injected ``clock()`` returning seconds, so it is unit-testable without a broker.
 - ``MqttLink``: thin paho-mqtt 2.x wrapper (Last Will, availability, subscribe in
   on_connect, simulated wifi drop, graceful offline on exit).
-- ``main()``: CLI, keyboard fault injection, main tick loop.
+- ``main()``: CLI, keyboard fault injection, scripted scenarios
+  (``sim/scenarios.py``), main tick loop.
 
 Run with ``python -m sim.pump_sim`` (or ``make sim``).
 """
@@ -31,6 +32,8 @@ import time
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
+
+from sim.scenarios import SCENARIOS, NoPrescriptionError, ScenarioRunner, describe
 
 # Keep in step with firmware/include/limits.h. Demo values, not clinical guidance.
 LIMIT_RATE_MIN_ML_HR = 1.0
@@ -457,7 +460,7 @@ class PumpCore:
 
 
 class MqttLink:
-    """Thin paho-mqtt wrapper. All pump publishes are QoS 0, like PubSubClient."""
+    """Thin paho-mqtt wrapper. Status at QoS 0, events and availability at QoS 1 (topics.md)."""
 
     def __init__(self, core: PumpCore, host: str, port: int, client: Any = None) -> None:
         self.core = core
@@ -631,11 +634,27 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=os.environ.get("SIM_STATE_FILE") or None,
         help="persist the applied prescription across restarts, like NVS (env SIM_STATE_FILE)",
     )
-    p.add_argument(
+    seed = p.add_mutually_exclusive_group()
+    seed.add_argument(
+        "--demo-seed",
+        action="store_true",
+        help="if no prescription is loaded, start from the DEMO.md reset state: "
+        "v7 at 60 mL/hr applied, pump idle",
+    )
+    seed.add_argument(
         "--demo-feed",
         action="store_true",
         help="if no prescription is loaded, start from the DEMO.md seed (v7 at 60 mL/hr) "
         "and start a feed straight away (PLAN phase 1 check)",
+    )
+    p.add_argument(
+        "--scenario",
+        choices=sorted(SCENARIOS),
+        help="run a scripted rehearsal scenario (needs a prescription: add --demo-seed "
+        "or --state-file); keys stay live",
+    )
+    p.add_argument(
+        "--list-scenarios", action="store_true", help="list scenarios and exit"
     )
     p.add_argument("-v", "--verbose", action="store_true", help="debug logging")
     args = p.parse_args(argv)
@@ -644,8 +663,26 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     return args
 
 
+def prepare_core(
+    args: argparse.Namespace, publish: PublishFn, clock: ClockFn = time.monotonic
+) -> PumpCore:
+    """Build the core and apply the --demo-seed / --demo-feed starting state."""
+    core = PumpCore(
+        args.pump_id, publish=publish, clock=clock, speed=args.speed,
+        state_file=args.state_file,
+    )
+    if args.demo_seed or args.demo_feed:
+        core.seed_demo_prescription()
+    if args.demo_feed:
+        core.start()
+    return core
+
+
 def main(argv: list[str] | None = None) -> None:
     args = parse_args(argv)
+    if args.list_scenarios:
+        print(describe())
+        return
     logging.basicConfig(
         level=logging.DEBUG if args.verbose else logging.INFO,
         format="%(asctime)s SIM %(levelname)s %(message)s",
@@ -663,22 +700,31 @@ def main(argv: list[str] | None = None) -> None:
         if link_box:
             link_box[0].publish(topic, payload)
 
-    core = PumpCore(args.pump_id, publish=publish, speed=args.speed, state_file=args.state_file)
+    core = prepare_core(args, publish)
     link = MqttLink(core, args.host, args.port)
     link_box.append(link)
+
+    runner = None
+    if args.scenario:
+        try:
+            runner = ScenarioRunner(
+                SCENARIOS[args.scenario], core, link,
+                out=lambda line: print(line, flush=True),
+            )
+        except NoPrescriptionError as exc:
+            print(f"error: {exc}", file=sys.stderr, flush=True)
+            sys.exit(2)
 
     stop = threading.Event()
     signal.signal(signal.SIGTERM, lambda *_: stop.set())
     threading.Thread(target=_stdin_reader, args=(core, link, stop), daemon=True).start()
 
-    if args.demo_feed:
-        core.seed_demo_prescription()
-        core.start()
-
     link.start()
     try:
         while not stop.is_set():
             core.tick()
+            if runner is not None:
+                runner.tick()
             stop.wait(0.1)
     except KeyboardInterrupt:
         pass
