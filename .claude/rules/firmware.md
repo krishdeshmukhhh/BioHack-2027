@@ -14,5 +14,5 @@ paths:
 - Persist the current prescription and version to NVS (`Preferences`) so a reboot does not lose them.
 - Pins and tunables live in `include/config.h`. Wifi and broker credentials live in `include/secrets.h` (gitignored).
 - Keep an actuator interface (`start`, `stop`, `setRateMlHr`) so a stepper, a DC motor, or an LED stand-in can be swapped without touching the state machine.
-- Use ArduinoJson for payloads and PubSubClient for MQTT. Set the Last Will to `offline` on the availability topic.
+- Use ArduinoJson for payloads and 256dpi `arduino-mqtt` for MQTT (QoS 1 for events, see `shared/protocol/topics.md`). Set the Last Will to `offline` on the availability topic.
 - After any change run `make fw-build`.
