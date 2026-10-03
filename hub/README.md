@@ -14,3 +14,8 @@ Planned modules:
 - `app/live.py`: server-sent events for the web apps
 
 Run with `make hub`. Test with `make test`.
+
+## Demo reset and the Pi
+
+- `python -m hub.reset` (hub stopped): moves the database to `hub/data/archive/` (audit rows kept, S7) and clears the retained prescription for `PUMP_ID`, so a pump reset to v7 is not handed the last demo's prescription. Then start the hub and `python -m sim.pump_sim --demo-seed` (no old `--state-file`), and wait for the pump to show online at v7 before proposing.
+- `hub/deploy/install_services.sh [hostname]` (on the Pi, after `scripts/setup_pi.sh`): systemd services for the broker and the hub that start on boot, plus an optional `.local` hostname.
