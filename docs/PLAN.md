@@ -136,7 +136,7 @@ Each phase ends with an acceptance check you can show to someone. Do not start t
 - [ ] Family app: alert screen with picture, steps, and vibration; daily progress toward goal
 - [x] Sim: scripted scenarios with a time-speed factor; fault injection from the keyboard
 - [x] Sim: `generate_history.py`, 30 days for three fictional patients (on target, drifting under target, repeated night occlusions)
-- [ ] Hub: daily totals, delivered versus prescribed, exception rules (under target for 3 days, more than N alarms per night, pump offline)
+- [x] Hub: daily totals, delivered versus prescribed, exception rules (under target for 3 days, more than N alarms per night, pump offline)
 - [ ] Clinician portal: patient list with exceptions first; patient detail with a delivered versus prescribed chart and alarm timeline
 - [ ] Clinician portal: weekly summary (rule-based text)
 - [ ] "Simulated data" label wherever generated history is shown (S8)

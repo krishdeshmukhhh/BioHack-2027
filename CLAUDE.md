@@ -1,3 +1,7 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 # Smart Pump (Bio Hack 2026)
 
 Prototype smart enteral feeding pump system for families tube feeding at home. Hackathon project: optimise for a reliable live demo, not for production.
@@ -26,6 +30,13 @@ web/family     ─┘        SQLite          └─ sim (software pump)
 - **Pump** (real or simulated) only speaks MQTT. It never talks HTTP.
 - **Simulator** must behave exactly like the firmware on the wire, so the software team is never blocked on hardware.
 
+Where the invariants are enforced (read these before touching the prescription flow):
+- `hub/app/prescriptions.py`: lifecycle (proposed, confirmed, sent, active, rejected, superseded). `publish_prescription` is the single publish gate and refuses anything without a stored confirmation (S2).
+- `hub/app/service.py`: `handle_message()` is the only MQTT ingest path and the only caller of the pump-driven lifecycle functions, so only pump data can set active/rejected/superseded (S5).
+- `hub/app/mqtt_bridge.py`: paho runs in its own thread and hands messages to the asyncio loop with `call_soon_threadsafe`. `hub/app/live.py` fans updates out to SSE clients.
+- Status is authoritative, events are the fast path. Events are QoS 1 (may arrive twice, so the hub dedups) and can be lost while offline; every outcome is also in status (`prescription_version`, `pending_version`, `last_rejected_version`, `alarm`). Topics and QoS: `shared/protocol/topics.md`.
+- `sim/pump_sim.py`: `PumpCore` is the pump logic with no I/O (validation, S3/S4 queueing, state machine); `MqttLink` wraps it in paho. Tests and `web/_mock` drive `PumpCore` directly.
+
 ## Layout
 
 - `firmware/` ESP32, PlatformIO, Arduino framework, C++
@@ -52,7 +63,25 @@ make fw-upload   # flash the ESP32
 make fw-monitor  # serial monitor
 ```
 
+The Makefile includes and exports `.env` (copy from `.env.example`: `MQTT_HOST`, `HUB_PORT`, `HUB_DB_PATH`, `PUMP_ID`). Firmware needs `firmware/include/secrets.h` copied from `secrets.example.h`. `make lanes` / `make lanes-status` create and inspect the lane worktrees (`scripts/worktrees.sh`).
+
 Run `make test` before saying a task is done. Run `make fw-build` after any firmware change.
+
+Single test: `.venv/bin/python -m pytest sim/test_pump_sim.py::test_apply_in_idle` (or `-k pattern`). Test paths are set in `pyproject.toml` (`hub/tests`, `shared/protocol`, `sim`, `web/_mock`).
+
+Useful sim flags (`python -m sim.pump_sim --help`): `--speed 60` compresses feed time, `--demo-seed` starts from the `docs/DEMO.md` reset state, `--scenario <name>` runs a scripted rehearsal (`--list-scenarios`), `--state-file` persists the applied prescription like NVS.
+
+Web work without the hub or a broker: `python web/_mock/mock_api.py` (stdlib only, http://localhost:8003, `--speed 60`) fakes the `docs/API.md` contract over real `PumpCore` pumps; `/_mock/` has controls for feeds, faults, and wifi drop.
+
+No `make` (e.g. Windows): the Makefile targets are one-liners, so run them directly. On Windows the venv interpreter is `.venv/Scripts/python`, not `.venv/bin/python`, e.g. `.venv/Scripts/python -m pytest`, `-m ruff check .`, `-m uvicorn hub.app.main:app --reload`, `-m sim.pump_sim`.
+
+Testing notes:
+- Unit tests need no broker: MQTT is exercised with fake paho clients (see `sim/test_pump_sim_mqtt.py`). Only `make sim`/`make hub` against a real pump need Mosquitto running.
+- `sim/test_limits_match_firmware.py` parses `firmware/include/limits.h` and asserts the simulator's `LIMIT_*` constants match. Changing a limit means changing both.
+- `shared/protocol/test_examples.py` validates every file in `shared/protocol/examples/` against its schema, matched by filename prefix (`status.running.json` → `status.schema.json`). New examples must follow that naming.
+- Windows: two protocol-case tests fail because `read_text()` without `encoding="utf-8"` decodes `shared/protocol/cases/prescription_cases.json` as cp1252. Set `PYTHONUTF8=1` until the fix (`encoding="utf-8"`) lands in `shared/protocol/test_examples.py` and `sim/test_protocol_cases.py`.
+
+Current status and next steps per person: checkboxes in `docs/TEAM.md` and `docs/PLAN.md`; the hub lane keeps a detailed hand-off in `hub/NEXT_STEPS.md` (on `lane/hub`).
 
 ## Safety invariants (never weaken these)
 
@@ -76,6 +105,7 @@ If a task seems to require breaking one of these, stop and ask.
 - **Small, demoable steps.** Follow the phases in `docs/PLAN.md`. Finish a phase's acceptance check before starting the next.
 - **Keep it simple.** No frameworks, build tools, ORMs, or cloud services unless the plan says so. The demo must run on a Pi with no internet.
 - **Accessibility is a deliverable, not polish.** Family app rules are in `.claude/rules/web.md`.
+- Per-area rules live in `.claude/rules/` (`firmware.md`, `hub.md`, `protocol.md`, `web.md`, `safety.md`). Read the one for the area you are editing.
 - **Secrets** go in `.env` and `firmware/include/secrets.h`. Both are gitignored. Never print or commit them.
 
 ## Subagents
@@ -90,7 +120,7 @@ Defined in `.claude/agents/`. Use them for work inside their area.
 
 ## Parallel lanes
 
-Work runs as one lead on `main` plus lane worktrees (`lane/hub`, `lane/sim`, `lane/web`, optional `lane/fw`), each owning only its folders. Read `docs/PARALLEL.md` before starting. If a `.lane` file exists at the repo root you are in a lane: edit only that lane's folders (enforced by `.claude/hooks/lane_guard.py`) and report contract changes to the lead instead of making them.
+Work runs as one lead on `main` plus lane worktrees (`lane/hub`, `lane/sim`, `lane/web`, optional `lane/fw`), each owning only its folders. Read `docs/PARALLEL.md` before starting. If a `.lane` file exists at the repo root you are in a lane: edit only that lane's folders (enforced by `.claude/hooks/lane_guard.py`) and report contract changes to the lead instead of making them. The guard only covers Edit/Write, so don't use shell redirects to get around it. All lanes share one broker; each uses its own `PUMP_ID` so their topics never cross.
 
 ## Definition of done
 

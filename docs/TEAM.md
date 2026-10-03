@@ -88,27 +88,27 @@ Anything not done at its sync point drops to the "Should" or "Stretch" list. Don
 **Folders:** `hub/`. **Worktree:** `../Biohack2-hub` (`HUB_PORT=8001`, `PUMP_ID=pump-hub`).
 
 ### Before Sync 1
-- [ ] `hub/app/schema.sql`: all six tables (ARCHITECTURE-DIAGRAMS §9). Audit table append-only with `BEFORE UPDATE` and `BEFORE DELETE` triggers that `RAISE(ABORT)` (S7, REFERENCES R15).
-- [ ] MQTT bridge: paho `CallbackAPIVersion.VERSION2`, subscribe in `on_connect`, `loop_start()`, hand messages to asyncio with `call_soon_threadsafe` (R5, diagram §3).
-- [ ] Validate inbound messages against the schemas **with a format checker** (R4). Add `received_at`. Store.
-- [ ] `GET /api/pumps/{id}/status` and the SSE stream with its initial snapshot, exactly as in `docs/API.md`. Serve `web/` as static files.
-- [ ] Tests driven by `shared/protocol/examples/*.json`, with no broker needed.
+- [x] `hub/app/schema.sql`: all six tables (ARCHITECTURE-DIAGRAMS §9). Audit table append-only with `BEFORE UPDATE` and `BEFORE DELETE` triggers that `RAISE(ABORT)` (S7, REFERENCES R15).
+- [x] MQTT bridge: paho `CallbackAPIVersion.VERSION2`, subscribe in `on_connect`, `loop_start()`, hand messages to asyncio with `call_soon_threadsafe` (R5, diagram §3).
+- [x] Validate inbound messages against the schemas **with a format checker** (R4). Add `received_at`. Store.
+- [x] `GET /api/pumps/{id}/status` and the SSE stream with its initial snapshot, exactly as in `docs/API.md`. Serve `web/` as static files.
+- [x] Tests driven by `shared/protocol/examples/*.json`, with no broker needed.
 
 ### Before Sync 2
-- [ ] `POST` propose, confirm, decline. Version allocator. 409 when not `proposed` (API.md).
-- [ ] **One publish gate**: refuse without a confirmation (S2); validate outbound; retained, QoS 1 (FR-4).
-- [ ] Lifecycle engine: `active`, `rejected`, and `superseded` **only** from pump events or status (S5, FR-7, FR-9, R6). `rejected` also from the R1 status fields.
-- [ ] Re-publish the latest `sent` prescription on startup and whenever availability goes to online (R3).
-- [ ] Availability tracking plus `last_seen_at` (FR-17).
-- [ ] Tests for unconfirmed, out of range, stale, offline, superseded, and audit UPDATE raising an error.
-- [ ] Run `safety-reviewer`.
+- [x] `POST` propose, confirm, decline. Version allocator. 409 when not `proposed` (API.md).
+- [x] **One publish gate**: refuse without a confirmation (S2); validate outbound; retained, QoS 1 (FR-4).
+- [x] Lifecycle engine: `active`, `rejected`, and `superseded` **only** from pump events or status (S5, FR-7, FR-9, R6). `rejected` also from the R1 status fields.
+- [x] Re-publish the latest `sent` prescription on startup and whenever availability goes to online (R3).
+- [x] Availability tracking plus `last_seen_at` (FR-17).
+- [x] Tests for unconfirmed, out of range, stale, offline, superseded, and audit UPDATE raising an error.
+- [x] Run `safety-reviewer`.
 
 ### Before Sync 4
-- [ ] Alerts: `GET /alerts` and the SSE `alert` event (FR-14, FR-15).
-- [ ] `GET /api/patients` with exception rules: under target 3 days, more than N alarms a night, offline (FR-19).
-- [ ] `GET /api/patients/{id}/daily` for delivered versus prescribed (FR-20). Rule-based weekly summary text (FR-21).
-- [ ] Audit endpoint with caregiver roles (FR-23, FR-29). Profiles endpoint (FR-28).
-- [ ] Load D's 30-day history into the database.
+- [x] Alerts: `GET /alerts` and the SSE `alert` event (FR-14, FR-15).
+- [x] `GET /api/patients` with exception rules: under target 3 days, more than N alarms a night, offline (FR-19).
+- [x] `GET /api/patients/{id}/daily` for delivered versus prescribed (FR-20). Rule-based weekly summary text (FR-21).
+- [x] Audit endpoint with caregiver roles (FR-23, FR-29). Profiles endpoint (FR-28).
+- [x] Load D's 30-day history into the database.
 
 ### Phase 6
 - [ ] Pi setup with `scripts/setup_pi.sh`, a fixed IP or hostname, Mosquitto with `persistence true`, and services that start on boot.
