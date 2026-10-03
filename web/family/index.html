@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Feeding pump (prototype)</title>
+  <link rel="stylesheet" href="/shared/tokens.css">
+  <link rel="stylesheet" href="family.css">
+  <script>
+    try { if (localStorage.getItem("sp-theme") === "night") document.documentElement.dataset.theme = "night"; } catch (e) {}
+  </script>
+</head>
+<body>
+  <a class="skip-link" href="#main" data-i18n="skip_to_content">Skip to main content</a>
+
+  <header class="topbar">
+    <h1 data-i18n="family_title">Feeding pump</h1>
+    <div class="topbar-right">
+      <span id="sim-slot"></span>
+      <button id="night-toggle" class="btn btn-small" type="button" aria-pressed="false"></button>
+    </div>
+  </header>
+
+  <main id="main" tabindex="-1">
+    <p id="conn" class="banner conn"></p>
+    <!-- Announces connection changes only (not the ticking update time). -->
+    <div id="conn-live" class="visually-hidden" role="status" aria-atomic="true"></div>
+
+    <section class="card today" aria-labelledby="today-title">
+      <h2 id="today-title" data-i18n="family_today">Today</h2>
+
+      <div id="status-live" aria-live="polite" aria-atomic="true">
+        <p id="state" class="state"></p>
+        <p id="alarm-line" class="alarm-line tone-danger" hidden></p>
+      </div>
+
+      <div class="progress-block">
+        <p class="delivered">
+          <span id="progress-label" data-i18n="family_delivered">Delivered</span>
+          <strong id="delivered-text"></strong>
+        </p>
+        <div class="meter" id="meter" role="progressbar" aria-labelledby="progress-label"
+             aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+          <div class="meter-fill" id="meter-fill"></div>
+        </div>
+      </div>
+
+      <dl class="facts">
+        <div><dt data-i18n="family_rate_now">Rate now</dt><dd id="rate"></dd></div>
+        <div><dt data-i18n="clin_active_version">Active version</dt><dd id="version"></dd></div>
+      </dl>
+      <p id="updated" class="updated"></p>
+    </section>
+  </main>
+
+  <footer id="footer" class="site-footer"></footer>
+
+  <script type="module" src="family.js"></script>
+</body>
+</html>
