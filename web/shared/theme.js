@@ -28,4 +28,5 @@ export function initNightToggle(button) {
     paint();
   });
   paint();
+  return paint; // call again after a language change
 }

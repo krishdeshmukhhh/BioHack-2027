@@ -88,6 +88,7 @@ export default {
 
   // Family app
   family_title: "Feeding pump",
+  family_page_title: "Feeding pump (prototype)",
   family_today: "Today",
   family_delivered: "Delivered",
   family_of_target: "{delivered} of {target}",
@@ -126,6 +127,7 @@ export default {
 
   // Clinician portal
   clin_title: "Clinician portal",
+  clin_page_title: "Clinician portal (prototype)",
   clin_user: "Signed in as Dr. Demo (demo user, no real login)",
   clin_patient: "Patient",
   clin_pump: "Pump {pump}",
@@ -158,6 +160,147 @@ export default {
   val_mode: "Choose a mode.",
   val_note_long: "Keep the note to 200 characters or fewer.",
   val_fix: "Fix {count} problem(s) in the form.",
+
+  // Settings and language
+  settings_title: "Settings",
+  language_label: "Language",
+  review_confirming_as: "Confirming as {who}.",
+  review_change_who: "Change who is using this phone in Settings below.",
+
+  // Alerts (FR-14). Device handling only, never clinical guidance.
+  alerts_enable_title: "Turn on alerts",
+  alerts_enable_body: "Tap once so this phone can vibrate, beep and speak when the pump needs you.",
+  alerts_enable_btn: "Turn on alerts",
+  alerts_enabled: "Alerts are on for this visit.",
+  alert_what: "What happened",
+  alert_steps: "What to do",
+  alert_done: "Done, I have checked",
+  alert_started: "Started {time}",
+  alert_waiting: "Waiting for the pump. Press Clear on the pump when the problem is fixed.",
+  alert_cleared: "The alarm was cleared at the pump.",
+  alert_spoken: "Pump alarm. {alarm}. {cause}",
+  cause_occlusion: "Something is blocking the feeding tube, so the pump stopped.",
+  cause_bag_empty: "The feed bag is empty, so the pump stopped.",
+  cause_low_battery: "The pump battery is low.",
+  cause_sensor_mismatch: "The bag level does not match what the pump expected, so the pump stopped.",
+  steps_occlusion: [
+    "Look along the tube for a bend, kink or closed clamp.",
+    "Straighten the tube or open the clamp.",
+    "Press Clear on the pump.",
+    "If the alarm comes back, call your care team.",
+  ],
+  steps_bag_empty: [
+    "Check the feed bag.",
+    "Follow your care team's plan for a new bag.",
+    "Press Clear on the pump.",
+  ],
+  steps_low_battery: [
+    "Plug the pump into its charger.",
+    "Keep the charger connected until the battery is full.",
+  ],
+  steps_sensor_mismatch: [
+    "Check that the bag is hanging straight and the tube is connected.",
+    "Press Clear on the pump.",
+    "If the alarm comes back, call your care team.",
+  ],
+  pic_occlusion: "Drawing of a feeding tube with a sharp bend in it",
+  pic_bag_empty: "Drawing of an empty feed bag",
+  pic_low_battery: "Drawing of a nearly empty battery",
+  pic_sensor_mismatch: "Drawing of a feed bag with a question mark",
+
+  // Alert preferences per caregiver (FR-29)
+  prefs_title: "Alerts for {who}",
+  pref_vibrate: "Vibrate",
+  pref_sound: "Beep",
+  pref_speak: "Speak alerts out loud",
+
+  // Voice (FR-27, NFR-A5)
+  speak_status: "Read status aloud",
+  voice_answer: "Answer by voice",
+  voice_listening: "Listening. Say “{yes}” or “{no}”.",
+  voice_yes_words: ["yes", "confirm"],
+  voice_no_words: ["no", "decline"],
+  voice_unheard: "Did not catch that. Use the buttons.",
+
+  // Portal: patient list (FR-19)
+  clin_patients_title: "Patients",
+  clin_patients_intro: "Patients who need attention are listed first.",
+  clin_open_patient: "Open",
+  clin_current_patient: "Showing now",
+  exc_offline: "Pump offline",
+  exc_under_target: "Under target 3 days",
+  exc_night_alarms: "Many night alarms",
+  exc_alarm: "Alarm now: {alarm}",
+  exc_none: "No exceptions",
+  clin_unavailable: "Not available from the hub yet.",
+
+  // Portal: chart (FR-20)
+  chart_title: "Delivered vs prescribed",
+  range_label: "Time range",
+  range_24h: "24 h",
+  range_7d: "7 days",
+  range_30d: "30 days",
+  chart_delivered: "Delivered",
+  chart_prescribed: "Prescribed",
+  chart_under: "Under 90% of prescribed",
+  chart_live_note: "24 h shows this session's live readings from the pump.",
+  chart_show_table: "Show as a table",
+  chart_col_date: "Date",
+  chart_col_time: "Time",
+  chart_col_alarms: "Alarms",
+  chart_desc: "{days} days shown. {under} under 90% of prescribed.",
+  chart_live_desc: "Live feed: {delivered} of {target} delivered.",
+  chart_no_data: "No data yet.",
+  chart_yes: "Yes",
+
+  // Portal: alarm timeline
+  timeline_title: "Alarm timeline",
+  timeline_empty: "No alarms reported in this session.",
+  timeline_active: "Still active",
+  timeline_cleared: "Cleared {time}, after {minutes} min",
+
+  // Portal: audit (FR-23)
+  audit_title: "Audit trail",
+  audit_col_when: "When",
+  audit_col_who: "Who",
+  audit_col_what: "What",
+  audit_col_version: "Version",
+  audit_empty: "No audit entries yet.",
+  audit_who: "{name} ({role})",
+  action_proposed: "Proposed",
+  action_confirmed: "Confirmed",
+  action_declined: "Declined",
+  action_sent: "Sent to pump",
+  action_active: "Active on pump",
+  action_rejected: "Rejected",
+  action_superseded: "Replaced",
+  role_clinician: "Clinician",
+  role_system: "Hub",
+  role_pump: "Pump",
+
+  // Portal: feed profiles (FR-28). Demo values only.
+  profiles_title: "Feed profiles",
+  profiles_intro: "Fills in the form. Demo values only, not guidance.",
+  profile_overnight: "Overnight continuous",
+  profile_day_bolus: "Daytime bolus",
+  profile_school: "School day",
+  profile_applied: "Form filled from “{name}”. Check it, then propose.",
+
+  // Sync 2 contract additions
+  error_stale_version: "A newer change was already sent to the pump, so this one cannot be confirmed.",
+  exc_alarm_active: "Alarm now",
+  summary_title: "Weekly summary",
+  summary_range: "{from} to {to}",
+  summary_delivered: "Delivered {pct}% of prescribed over {days} days.",
+  summary_prior: "Previous week: {pct}%.",
+  trend_improving: "Trend: improving",
+  trend_steady: "Trend: steady",
+  trend_declining: "Trend: declining",
+  summary_under: "Days under 90% of prescribed: {count}.",
+  summary_alarms: "Alarms: {count} ({list}).",
+  summary_no_alarms: "No alarms this week.",
+  summary_none: "No history loaded yet.",
+  profiles_none: "No feed profiles for this patient.",
 
   users: {
     "clin-01": "Dr. Demo",

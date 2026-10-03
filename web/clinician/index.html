@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Clinician portal (prototype)</title>
+  <title data-i18n="clin_page_title">Clinician portal (prototype)</title>
   <link rel="stylesheet" href="/shared/tokens.css">
   <link rel="stylesheet" href="clinician.css">
   <script>
@@ -20,11 +20,19 @@
     </div>
     <div class="topbar-right">
       <span id="sim-slot"></span>
+      <label class="lang-pick"><span class="visually-hidden" data-i18n="language_label">Language</span>
+        <select id="language"></select></label>
       <button id="night-toggle" class="btn btn-small" type="button" aria-pressed="false"></button>
     </div>
   </header>
 
   <main id="main" class="wide" tabindex="-1">
+    <section class="card" aria-labelledby="patients-title">
+      <h2 id="patients-title" data-i18n="clin_patients_title">Patients</h2>
+      <p class="hint" data-i18n="clin_patients_intro"></p>
+      <ul id="patients" class="patients"></ul>
+    </section>
+
     <p id="conn" class="banner conn"></p>
     <div id="conn-live" class="visually-hidden" role="status" aria-atomic="true"></div>
 
@@ -43,6 +51,13 @@
         <section class="card" aria-labelledby="propose-title">
           <h2 id="propose-title" data-i18n="clin_propose_title">Propose a change</h2>
           <p class="hint" data-i18n="clin_propose_intro"></p>
+
+          <div class="profiles" role="group" aria-labelledby="profiles-title">
+            <h3 id="profiles-title" data-i18n="profiles_title">Feed profiles</h3>
+            <p class="hint" data-i18n="profiles_intro"></p>
+            <div id="profile-buttons" class="profile-buttons"></div>
+            <p id="profile-status" class="hint" role="status"></p>
+          </div>
 
           <div id="form-errors" class="banner tone-danger" role="alert" tabindex="-1" hidden></div>
 
@@ -87,8 +102,42 @@
       <section class="card" aria-labelledby="history-title">
         <h2 id="history-title" data-i18n="clin_history_title">Prescriptions</h2>
         <ol id="history" class="history"></ol>
-        <!-- Announces chip changes as the hub reports them. -->
         <div id="chip-live" class="visually-hidden" role="status" aria-atomic="true"></div>
+      </section>
+    </div>
+
+    <section class="card" aria-labelledby="chart-title">
+      <div class="section-head">
+        <h2 id="chart-title" data-i18n="chart_title">Delivered vs prescribed</h2>
+        <div id="ranges" class="ranges" role="group" data-i18n-attr="aria-label:range_label">
+          <button type="button" class="btn btn-small range" data-range="24h" data-i18n="range_24h">24 h</button>
+          <button type="button" class="btn btn-small range" data-range="7d" data-i18n="range_7d">7 days</button>
+          <button type="button" class="btn btn-small range" data-range="30d" data-i18n="range_30d">30 days</button>
+        </div>
+      </div>
+      <div id="chart" class="chart"></div>
+      <ul id="chart-legend" class="legend"></ul>
+      <p id="chart-note" class="hint"></p>
+      <details id="chart-details">
+        <summary data-i18n="chart_show_table">Show as a table</summary>
+        <div id="chart-table" class="table-wrap"></div>
+      </details>
+    </section>
+
+    <section class="card" aria-labelledby="summary-title">
+      <h2 id="summary-title" data-i18n="summary_title">Weekly summary</h2>
+      <div id="summary"></div>
+    </section>
+
+    <div class="columns">
+      <section class="card" aria-labelledby="timeline-title">
+        <h2 id="timeline-title" data-i18n="timeline_title">Alarm timeline</h2>
+        <ol id="timeline" class="timeline"></ol>
+      </section>
+
+      <section class="card" aria-labelledby="audit-title">
+        <h2 id="audit-title" data-i18n="audit_title">Audit trail</h2>
+        <div id="audit" class="table-wrap"></div>
       </section>
     </div>
   </main>

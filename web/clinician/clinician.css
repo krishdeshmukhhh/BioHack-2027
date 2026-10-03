@@ -1,7 +1,7 @@
 /* Clinician portal. Laptop first, but cards stack down to 320 px. */
 
 main.wide { max-width: 72rem; }
-.columns { display: grid; grid-template-columns: 1fr; gap: 0 var(--gap); align-items: start; }
+.columns { display: grid; grid-template-columns: minmax(0, 1fr); gap: 0 var(--gap); align-items: start; }
 @media (min-width: 900px) {
   .columns { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
 }
@@ -26,3 +26,61 @@ main.wide { max-width: 72rem; }
 .rx-note { margin: 0 0 4px; padding: 6px 10px; background: var(--surface-2); border-radius: 6px; overflow-wrap: anywhere; }
 .rx-superseded .rx-summary { font-weight: 500; color: var(--text-muted); }
 .empty { color: var(--text-muted); }
+
+.lang-pick select { min-height: var(--target); width: auto; padding: 8px 10px; font-size: var(--text-small); }
+
+/* ---- Patients ---- */
+.patients { list-style: none; margin: 0; padding: 0; }
+.patient {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 8px;
+  padding: 12px; border: 2px solid var(--surface-2); border-radius: var(--radius); margin-bottom: 8px;
+}
+@media (min-width: 700px) {
+  .patient { grid-template-columns: minmax(12rem, 1fr) minmax(0, 2fr) auto; align-items: center; }
+}
+.patient.is-current { border-color: var(--primary); }
+.patient-main { display: flex; flex-direction: column; }
+.patient-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.current { font-weight: 700; color: var(--primary); display: inline-flex; align-items: center; min-height: var(--target); }
+
+/* ---- Profiles ---- */
+.profiles { background: var(--surface-2); border-radius: var(--radius); padding: 12px; margin-bottom: var(--gap); }
+.profiles h3 { margin: 0 0 4px; font-size: var(--text-body); }
+.profile-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 8px; }
+
+/* ---- Chart ---- */
+.section-head { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 8px; }
+.section-head h2 { margin: 0; }
+.ranges { display: flex; gap: 6px; flex-wrap: wrap; }
+.range[aria-pressed="true"] { background: var(--primary); color: var(--on-primary); }
+.chart { width: 100%; min-height: 60px; overflow: hidden; }
+.chart svg { display: block; }
+.chart .grid { stroke: var(--surface-2); stroke-width: 1; }
+.chart .axis { fill: var(--text-muted); font: 14px var(--font); }
+.c-delivered { fill: var(--primary); }
+.c-under { fill: url(#hatch); stroke: var(--warn); stroke-width: 2; }
+.c-under-bg { fill: var(--warn-bg); }
+.c-under-line { stroke: var(--warn); stroke-width: 3; }
+.c-prescribed { stroke: var(--text); stroke-width: 3; stroke-dasharray: 6 4; }
+.c-delivered-line { fill: none; stroke: var(--primary); stroke-width: 3; }
+.c-prescribed-line { fill: none; stroke: var(--text); stroke-width: 2; stroke-dasharray: 6 4; }
+.legend { list-style: none; display: flex; flex-wrap: wrap; gap: 6px 16px; margin: 8px 0 0; padding: 0; font-size: var(--text-small); }
+.legend li { display: inline-flex; align-items: center; gap: 6px; }
+.legend .sim-note { color: var(--sim); font-weight: 700; }
+details summary { min-height: var(--target); display: flex; align-items: center; cursor: pointer; font-weight: 600; color: var(--primary); }
+
+/* ---- Tables (chart data, audit) ---- */
+.table-wrap { overflow-x: auto; }
+.data { width: 100%; border-collapse: collapse; font-size: var(--text-small); }
+.data th, .data td { text-align: left; padding: 8px 6px; border-bottom: 1px solid var(--surface-2); }
+.data thead th { color: var(--text-muted); }
+.data tbody th { font-weight: 600; white-space: nowrap; }
+
+/* ---- Timeline ---- */
+.timeline { list-style: none; margin: 0; padding: 0; }
+.timeline li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-bottom: 1px solid var(--surface-2); }
+.timeline time { color: var(--text-muted); min-width: 5.5em; }
+
+/* ---- Weekly summary ---- */
+.summary-list { margin: 0; padding-left: 1.2em; }
+.summary-list li { margin-bottom: 4px; }
