@@ -7,5 +7,5 @@ extend-exclude = ["firmware", "fpga"]
 select = ["E", "F", "I", "B", "UP"]
 
 [tool.pytest.ini_options]
-testpaths = ["hub/tests", "shared/protocol", "sim"]
+testpaths = ["hub/tests", "shared/protocol", "sim", "web/_mock"]
 python_files = ["test_*.py"]
