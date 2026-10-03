@@ -87,7 +87,7 @@ The web app maps `alarm` to the picture, cause, and steps in its strings file. T
 | `under_target` | `delivered_ml` below 90% of `prescribed_ml` on each of the last 3 days |
 | `night_alarms` | More than 2 alarms raised in the most recent night window (22:00 to 06:00 UTC) |
 
-Web pages are served at `/` (family app, `web/family/`) and `/clinician/` (`web/clinician/`).
+Web pages are served at `/` (family app, `web/family/`) and `/clinician/` (`web/clinician/`). Files used by both apps (tokens, strings, shared modules) are served at `/shared/` (`web/shared/`).
 
 ## SSE stream `/api/pumps/{pump_id}/stream`
 
@@ -120,3 +120,4 @@ The browser uses `EventSource`, which reconnects automatically. After a reconnec
 
 - 2026-10-03 `contract-v1` frozen. PumpStatus documents the optional pass-through fields, including the R1 reject fields.
 - 2026-10-03 Additive: exception codes and thresholds for `/api/patients`, and the history file format.
+- 2026-10-03 Additive: `/shared/` serves `web/shared/` (found at Sync 1: the family page imports `/shared/*.js`).

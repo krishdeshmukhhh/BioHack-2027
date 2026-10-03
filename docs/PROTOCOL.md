@@ -28,12 +28,17 @@ Checks run in this order. The first failure wins, the pump publishes `prescripti
 | 5 | `rate_ml_hr` within the limits in `limits.h` | `rate_out_of_range` |
 | 6 | `volume_ml` within the limits in `limits.h` | `volume_out_of_range` |
 
-Check 1 is a fixed list, so the firmware and the simulator agree exactly. The payload is a JSON object with:
+Check 1 is the prescription schema, so the firmware and the simulator agree exactly. The payload is malformed unless it is a JSON object where:
 
-- `pump_id`: a string
-- `version`: an integer from 1 to 2147483647 (fits a signed 32-bit int on the ESP32)
-- `mode`: `continuous` or `bolus`
-- `rate_ml_hr` and `volume_ml`: numbers (any value; the range is checked in 5 and 6)
+- there are no keys other than those in `prescription.schema.json`
+- `pump_id`, `mode`, `proposed_by` and `proposed_at` are present and are non-empty strings
+- `mode` is `continuous` or `bolus`
+- `proposed_at` is an RFC 3339 date-time
+- `version` is a JSON integer from 1 to 2147483647 (a signed 32-bit int on the ESP32)
+- `rate_ml_hr` and `volume_ml` are present and are finite numbers. Their range is checked in 5 and 6, not here, so `0` or `-5` gives `rate_out_of_range` or `volume_out_of_range`
+- `confirmed_by`, `confirmed_at` and `note` are each either missing or a string
+- `confirmed_at`, when non-empty, is an RFC 3339 date-time
+- `note`, when present, is at most 200 Unicode characters of valid UTF-8
 
 Edge cases for check 1, the same in the firmware and the sim:
 
@@ -42,7 +47,7 @@ Edge cases for check 1, the same in the firmware and the sim:
 - A payload that is not valid JSON (including `NaN` or `Infinity`) has no readable version, so it is dropped with a log line.
 - The limits in checks 5 and 6 are inclusive at both ends.
 
-`confirmed_by` and `confirmed_at` are **not** part of check 1. If they are missing, empty, or not strings, the reason is `not_confirmed` (check 3). The other fields (`proposed_by`, `proposed_at`, `note`) are not checked by the pump.
+Check 3 then handles confirmation: if `confirmed_by` or `confirmed_at` is missing or empty, the reason is `not_confirmed`. (A non-string value is already `malformed` in check 1.)
 
 If all checks pass:
 
@@ -93,3 +98,4 @@ Record any rename, removal, or change of meaning here with the date.
 - 2026-10-03 (`contract-v1`): added the optional status fields `last_rejected_version` and `last_reject_reason` (PRD R1). Pump-to-hub publishes are QoS 0 to match PubSubClient; `topics.md` was corrected. A replay equal to the pending version is now ignored silently, like one equal to the current version. Additive only; no field renamed or removed.
 - 2026-10-03: clarified check 1 edge cases, status `rate_ml_hr` in idle and alarm, and the automatic `complete` to `idle` after 5 s. Clarifications only; nothing renamed or removed.
 - 2026-10-03: `version` in a prescription has a maximum of 2147483647 (schema and check 1), and an unrepresentable number is `malformed`. From the sim safety review.
+- 2026-10-03 (Sync 1): check 1 is now the full prescription schema shape (unknown keys, `proposed_*`, date-times, note length), adopted from the firmware, which is the stricter and safer of the two. A non-string `confirmed_by`/`confirmed_at` is `malformed`; missing or empty is still `not_confirmed`. Rate or volume of 0 or less is still `*_out_of_range`. Pump events and `online` are now published at QoS 1 (the firmware uses 256dpi arduino-mqtt); see `topics.md`.

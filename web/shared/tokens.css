@@ -1,0 +1,233 @@
+/* Shared design tokens and base components for both apps.
+   Accessibility rules (.claude/rules/web.md) are built in here:
+   48 px targets, 18 px body text, contrast at least 4.5:1, visible focus,
+   a night palette, and reduced motion. No web fonts: must work offline. */
+
+:root {
+  --font: system-ui, -apple-system, "Segoe UI", Roboto, "Noto Sans", sans-serif;
+  --text-body: 1.125rem;   /* 18 px */
+  --text-small: 1rem;      /* 16 px, labels only, never body copy */
+  --text-large: 1.5rem;
+  --text-huge: 2.25rem;
+  --line: 1.5;
+
+  --target: 48px;          /* minimum touch target */
+  --radius: 12px;
+  --gap: 16px;
+  --gutter: 16px;
+
+  /* Day palette. Each text/background pair is at least 4.5:1. */
+  --bg: #f4f3ef;
+  --surface: #ffffff;
+  --surface-2: #ecebe6;
+  --border: #8a877e;          /* 3.4:1 on white, for non-text boundaries */
+  --text: #1a1a1a;            /* 17:1 on white */
+  --text-muted: #45433e;      /* 9.6:1 on white */
+  --primary: #0a58a6;         /* 6.9:1 on white */
+  --on-primary: #ffffff;
+  --focus: #0a58a6;
+  --focus-halo: #ffffff;
+
+  --ok: #1a6b37;              /* 6.4:1 on white */
+  --ok-bg: #e3f2e6;
+  --info: #0a58a6;
+  --info-bg: #e2edf9;
+  --warn: #7f4600;            /* 6.9:1 on white */
+  --warn-bg: #fdf0dc;
+  --danger: #a8231b;          /* 7.0:1 on white */
+  --danger-bg: #fbe5e3;
+  --neutral: #45433e;
+  --neutral-bg: #ecebe6;
+
+  --sim: #5a3d8a;             /* 8.4:1 on white */
+  --sim-bg: #efe9f8;
+}
+
+/* Night mode: dim, warm, low blue, no flashing (FR-26). Opt-in with data-theme. */
+:root[data-theme="night"] {
+  --bg: #0f0d0b;
+  --surface: #1b1814;
+  --surface-2: #26221c;
+  --border: #8c7d66;
+  --text: #ead9bd;            /* 12.8:1 on surface */
+  --text-muted: #c2ad8c;      /* 8.3:1 on surface */
+  --primary: #d9a35a;         /* amber, 8.1:1 on surface */
+  --on-primary: #1b1814;
+  --focus: #e9bf7f;
+  --focus-halo: #0f0d0b;
+
+  --ok: #a9c98c;
+  --ok-bg: #232a1c;
+  --info: #d9b98a;
+  --info-bg: #2a241b;
+  --warn: #e6bd6f;
+  --warn-bg: #2d2416;
+  --danger: #ee9f86;
+  --danger-bg: #331c16;
+  --neutral: #c2ad8c;
+  --neutral-bg: #26221c;
+
+  --sim: #cdb3e0;
+  --sim-bg: #2a2230;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font);
+  font-size: var(--text-body);
+  line-height: var(--line);
+  color: var(--text);
+  background: var(--bg);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main { flex: 1; width: 100%; max-width: 44rem; margin: 0 auto; padding: var(--gutter); }
+
+h1, h2, h3 { line-height: 1.25; margin: 0 0 0.5em; }
+h1 { font-size: var(--text-large); }
+h2 { font-size: 1.3rem; }
+p { margin: 0 0 0.75em; }
+
+a { color: var(--primary); }
+
+/* Visible focus everywhere, on both palettes. */
+:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 6px var(--focus-halo);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px; height: 1px;
+  margin: -1px; padding: 0; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap; border: 0;
+}
+
+.skip-link {
+  position: absolute; left: var(--gutter); top: -100px;
+  background: var(--surface); color: var(--primary);
+  padding: 12px 16px; border-radius: var(--radius); z-index: 10;
+}
+.skip-link:focus { top: var(--gutter); }
+
+/* ---- Cards ---- */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--surface-2);
+  border-radius: var(--radius);
+  padding: var(--gutter);
+  margin-bottom: var(--gap);
+}
+
+/* ---- Buttons ---- */
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  min-height: var(--target); min-width: var(--target);
+  padding: 10px 20px;
+  font: inherit; font-weight: 600;
+  border-radius: var(--radius);
+  border: 2px solid var(--primary);
+  background: var(--surface); color: var(--primary);
+  cursor: pointer;
+}
+.btn-primary { background: var(--primary); color: var(--on-primary); }
+.btn:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn svg { width: 24px; height: 24px; flex: none; }
+
+/* ---- Form controls ---- */
+label, legend { font-weight: 600; }
+input[type="text"], input[type="number"], select, textarea {
+  font: inherit;
+  min-height: var(--target);
+  width: 100%;
+  padding: 10px 12px;
+  color: var(--text);
+  background: var(--surface);
+  border: 2px solid var(--border);
+  border-radius: 8px;
+}
+textarea { min-height: 6rem; resize: vertical; }
+input[aria-invalid="true"], textarea[aria-invalid="true"] { border-color: var(--danger); border-width: 3px; }
+.field { margin-bottom: var(--gap); }
+.hint { color: var(--text-muted); font-size: var(--text-small); margin: 4px 0 0; }
+.field-error { color: var(--danger); font-weight: 600; margin: 4px 0 0; display: flex; gap: 6px; align-items: flex-start; }
+.field-error svg { width: 20px; height: 20px; flex: none; margin-top: 3px; }
+
+.radio-row { display: flex; flex-wrap: wrap; gap: 8px; }
+.radio-row label {
+  display: inline-flex; align-items: center; gap: 10px;
+  min-height: var(--target); padding: 8px 16px;
+  border: 2px solid var(--border); border-radius: var(--radius);
+  font-weight: 500; cursor: pointer;
+}
+.radio-row input { width: 22px; height: 22px; margin: 0; accent-color: var(--primary); }
+fieldset { border: 0; padding: 0; margin: 0 0 var(--gap); }
+
+/* ---- Status chip: icon + text, never colour alone ---- */
+.chip {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 4px 12px; border-radius: 999px;
+  font-weight: 700; font-size: var(--text-small);
+  border: 2px solid currentColor;
+}
+.chip svg { width: 18px; height: 18px; flex: none; }
+.tone-ok      { color: var(--ok);      background: var(--ok-bg); }
+.tone-info    { color: var(--info);    background: var(--info-bg); }
+.tone-warn    { color: var(--warn);    background: var(--warn-bg); }
+.tone-danger  { color: var(--danger);  background: var(--danger-bg); }
+.tone-neutral { color: var(--neutral); background: var(--neutral-bg); }
+
+/* ---- Banners ---- */
+.banner {
+  display: flex; gap: 12px; align-items: flex-start;
+  border-radius: var(--radius); padding: 12px 16px; margin-bottom: var(--gap);
+  border: 2px solid currentColor;
+}
+.banner svg { width: 28px; height: 28px; flex: none; }
+.banner p { margin: 0; color: var(--text); }
+.banner strong { display: block; }
+
+/* ---- Honesty: simulated label and prototype footer (S8, NFR-H1) ---- */
+.sim-label {
+  display: inline-flex; align-items: center; gap: 6px;
+  color: var(--sim); background: var(--sim-bg);
+  border: 2px dashed var(--sim);
+  border-radius: 999px; padding: 2px 12px;
+  font-weight: 700; font-size: var(--text-small);
+}
+.sim-label svg { width: 18px; height: 18px; }
+
+.site-footer {
+  padding: var(--gutter);
+  text-align: center;
+  color: var(--text-muted);
+  font-size: var(--text-small);
+  border-top: 1px solid var(--surface-2);
+}
+.site-footer strong { color: var(--text); }
+
+/* ---- Top bar ---- */
+.topbar {
+  display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px;
+  padding: 12px var(--gutter);
+  background: var(--surface);
+  border-bottom: 1px solid var(--surface-2);
+}
+.topbar h1 { margin: 0; font-size: 1.25rem; }
+.topbar .who { color: var(--text-muted); font-size: var(--text-small); }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

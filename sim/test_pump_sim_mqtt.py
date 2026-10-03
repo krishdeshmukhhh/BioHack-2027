@@ -111,7 +111,7 @@ def test_on_connect_online_then_subscribe():
     _, link, client, _ = make()
     connect(link, client)
     assert ("connect_async", "localhost", 1883, pump_sim.KEEPALIVE_S) in client.calls
-    assert ("pump/pump-001/availability", "online", 0, True) in client.published
+    assert ("pump/pump-001/availability", "online", 1, True) in client.published
     assert ("subscribe", "pump/pump-001/prescription", 1) in client.calls
 
 
@@ -122,13 +122,15 @@ def test_failed_connect_does_not_subscribe():
     assert link.connected is False
 
 
-def test_all_pump_publishes_qos0_not_retained():
+def test_pump_publish_qos_matches_topics_md():
     core, link, client, clock = make()
     connect(link, client)
     link.on_message(client, None, msg("pump/pump-001/prescription", rx(1)))
     core.tick()
     sent = [p for p in client.published if not p[0].endswith("/availability")]
-    assert sent and all(q == 0 and r is False for _, _, q, r in sent)
+    assert sent and all(r is False for _, _, _, r in sent)
+    assert {q for t, _, q, _ in sent if t.endswith("/status")} == {0}
+    assert {q for t, _, q, _ in sent if t.endswith("/event")} == {1}
     assert all(json.loads(p)["simulated"] is True for _, p, _, _ in sent)
 
 
@@ -185,7 +187,7 @@ def test_graceful_shutdown_publishes_offline_before_disconnect():
     i_off = client.calls.index(("publish", "pump/pump-001/availability", "offline"))
     i_disc = client.calls.index(("disconnect",))
     assert i_off < i_disc
-    assert ("pump/pump-001/availability", "offline", 0, True) in client.published
+    assert ("pump/pump-001/availability", "offline", 1, True) in client.published
     assert not client.loop_running
 
 
