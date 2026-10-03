@@ -16,7 +16,7 @@ resume
 stop
 ```
 
-`demo` explicitly loads a fictional, confirmed local test prescription while idle (60 demo mL/hr, target 5 mL), using a version newer than the current version. It never starts delivery automatically and cannot replace an active or pending prescription. `start` begins digital delivery; status reports an increasing `delivered_ml` every two seconds (about 1 mL after a minute running). `occlusion` stops it, `clear` leaves it paused, `resume` continues, and `stop` returns idle. These are test values, not clinical guidance. WiFi/broker credentials are needed only for MQTT integration.
+`demo` (only in the bench build `pio run -e esp32dev_offline -t upload`, never with the hub: a local version would make the portal show a false "Active on pump") explicitly loads a fictional, confirmed local test prescription while idle (60 demo mL/hr, target 5 mL), using a version newer than the current version. It never starts delivery automatically and cannot replace an active or pending prescription. `start` begins digital delivery; status reports an increasing `delivered_ml` every two seconds (about 1 mL after a minute running). `occlusion` stops it, `clear` leaves it paused, `resume` continues, and `stop` returns idle. These are test values, not clinical guidance. WiFi/broker credentials are needed only for MQTT integration.
 
 To display typed commands and send complete lines, use:
 
@@ -80,13 +80,13 @@ Serial monitor at 115200 baud accepts `demo`, `start`, `pause`, `resume`, `stop`
 
 Optional active-low buttons connect GPIO32 (occlusion), GPIO33 (bag empty), and GPIO27 (start/pause/resume/clear) to ground. A short pause-button release starts when idle, pauses when feeding, resumes when paused, or clears when alarmed. Hold for 1.5 seconds to cancel a feed and return idle; an alarm must first be cleared. GPIO25 can drive an LED with an appropriate series resistor as an activity indicator. The LED does not measure delivery. OLED, sensors, stepper calibration, and FPGA are unimplemented stretch work.
 
-For standalone bench tests while the hub is under development, start the broker with `make broker`, observe `pump/#`, and explicitly confirm a fixed demo fixture:
+For standalone bench tests with **no hub running**, start the broker with `make broker`, observe `pump/#`, and send a fixed demo fixture (not retained, identity `bench-test`):
 
 ```bash
-.venv/bin/python firmware/tools/publish_demo.py --broker 192.168.1.10 --version 8 --rate 90 --confirmed-by care-01
+.venv/bin/python firmware/tools/publish_demo.py --bench-only --broker 192.168.1.10 --version 8 --rate 90
 ```
 
-Use a version newer than both current and pending. This helper is a test fixture injector with fixed demo identities; the hub remains responsible for the clinician/caregiver workflow. Broker acknowledgement means sent, and only pump telemetry proves applied or rejected. Use serial `start` after an idle apply; remote prescription updates do not start feeding.
+Use a version newer than both current and pending. This helper is a test fixture injector that bypasses the hub's publish gate (S2), so it is bench only; run `make reset-demo` before the hub is used again. The hub remains responsible for the clinician/caregiver workflow. Broker acknowledgement means sent, and only pump telemetry proves applied or rejected. Use serial `start` after an idle apply; remote prescription updates do not start feeding.
 
 ## Remaining checks and team handoff
 

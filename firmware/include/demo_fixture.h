@@ -3,7 +3,9 @@
 #include "pump_controller.h"
 
 // Explicit local demo command: fixed fictional confirmation and test values.
-// It never starts delivery. Only the digitally simulated build uses this helper.
+// It never starts delivery. Compiled only with -DLOCAL_DEMO (env:esp32dev_offline and
+// the native harness), never into env:esp32dev, which runs with the hub: a version the
+// hub never issued would make the portal show a false "Active on pump" (S5).
 inline bool loadDemoPrescription(PumpController& controller, const char* pumpId, uint32_t now) {
   const auto& before = controller.snapshot();
   if (before.state != PumpState::IDLE || before.hasPending) return false;

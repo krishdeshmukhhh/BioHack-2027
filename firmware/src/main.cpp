@@ -6,7 +6,9 @@
 #include "actuator.h"
 #include "buttons.h"
 #include "config.h"
+#ifdef LOCAL_DEMO
 #include "demo_fixture.h"
+#endif
 #include "mqtt_link.h"
 #include "pump_controller.h"
 #include "telemetry.h"
@@ -63,9 +65,16 @@ void handleCommand(const std::string& command, uint32_t now) {
   if (restarting) return;
   bool accepted = true;
   if (command == "demo") {
+#ifdef LOCAL_DEMO
     accepted = pendingEvents.size() < LOCAL_EVENT_LIMIT - 4 &&
                loadDemoPrescription(controller, PUMP_ID, now);
     if (accepted) logLine("Confirmed local digital demo loaded. Enter start to simulate delivery.");
+#else
+    // A local version the hub never issued would make the portal show a false
+    // "Active on pump" (S5). Only the esp32dev_offline build has this command.
+    logLine("demo is only in the esp32dev_offline build (no hub). Use the portal.");
+    accepted = false;
+#endif
   } else if (command == "start") accepted = controller.start(now);
   else if (command == "pause") accepted = controller.pause(now);
   else if (command == "resume") accepted = controller.resume(now);
