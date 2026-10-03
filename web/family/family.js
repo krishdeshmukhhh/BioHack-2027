@@ -1,13 +1,17 @@
-// Family app entry: live page (PLAN phase 1) plus change review (phase 2).
+// Family app entry: live page, change review, alerts, settings.
 // Renders only from the shared store in web/shared/data.js.
 
 import {
-  applyStrings, escapeHtml, fmtTime, icon, ml, mlHr, renderFooter, simLabelHtml, t,
+  escapeHtml, fmtTime, icon, loadLanguage, ml, mlHr, renderFooter, simLabelHtml, t,
 } from "/shared/core.js";
 import { createPumpStore, pumpIdFromUrl } from "/shared/data.js";
+import { savedLang } from "/shared/lang.js";
+import { speak } from "/shared/speech.js";
 import { initNightToggle } from "/shared/theme.js";
 import { hasStatus, renderConnection, setHtml, setText } from "/shared/ui.js";
+import { initAlerts } from "./alert.js";
 import { initReview } from "./review.js";
+import { initSettings, onSettingsChange } from "./settings.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -63,13 +67,36 @@ function renderStatus(state) {
   setHtml($("sim-slot"), s?.simulated === false ? "" : simLabelHtml(), { fade: false });
 }
 
-applyStrings();
+function spokenStatus(state) {
+  if (!hasStatus(state)) return t("waiting_for_pump");
+  const s = state.status;
+  return t("family_status_spoken", {
+    state: t(`state_${s.state}`), delivered: ml(s.delivered_ml), target: ml(s.target_ml),
+  });
+}
+
+await loadLanguage(savedLang());
 renderFooter($("footer"));
-initNightToggle($("night-toggle"));
+const repaintNight = initNightToggle($("night-toggle"));
+initSettings();
 
 const store = createPumpStore(pumpIdFromUrl()).start();
 store.subscribe((state) => {
   renderConnection($("conn"), $("conn-live"), state);
   renderStatus(state);
 });
+initAlerts(store);
 initReview(store);
+
+const paintSpeak = () => {
+  $("speak-btn").innerHTML = `${icon("info")}<span>${escapeHtml(t("speak_status"))}</span>`;
+};
+paintSpeak();
+$("speak-btn").addEventListener("click", () => speak(spokenStatus(store.state)));
+
+onSettingsChange(() => {
+  renderFooter($("footer"));
+  repaintNight();
+  paintSpeak();
+  store.rerender();
+});

@@ -60,7 +60,10 @@ async function request(method, path, body) {
   return data;
 }
 
-const KNOWN_ERRORS = ["invalid_input", "not_proposed", "unknown_pump", "network"];
+const KNOWN_ERRORS = ["invalid_input", "not_proposed", "stale_version", "unknown_pump", "network"];
+
+/** True when the hub does not offer this endpoint yet (or has no such record). */
+export const isNotAvailable = (err) => err?.status === 404 && err?.code !== "unknown_pump";
 
 /** Plain-language text for an API error. Never a bare code (NFR-A4). */
 export function errorText(err) {
@@ -75,6 +78,8 @@ export const api = {
   alerts: (id) => request("GET", `${pumpPath(id)}/alerts`),
   audit: (id) => request("GET", `${pumpPath(id)}/audit`),
   patients: () => request("GET", "/api/patients"),
+  summary: (patientId) => request("GET", `/api/patients/${encodeURIComponent(patientId)}/summary`),
+  profiles: (patientId) => request("GET", `/api/patients/${encodeURIComponent(patientId)}/profiles`),
   daily: (patientId, days = 30) =>
     request("GET", `/api/patients/${encodeURIComponent(patientId)}/daily?days=${days}`),
   propose: (id, body) => request("POST", `${pumpPath(id)}/prescriptions`, body),
@@ -248,6 +253,8 @@ export function createPumpStore(pumpId) {
       return () => listeners.delete(fn);
     },
     refreshLists,
+    /** Re-run every subscriber, e.g. after a language switch. */
+    rerender: notify,
   };
 }
 
@@ -277,4 +284,18 @@ export function pendingProposal(state) {
 
 export function activeAlerts(state) {
   return state.alerts.filter((a) => a.active);
+}
+
+/**
+ * The alarm to show now: the hub's newest active Alert, else the status alarm
+ * field (for a hub without Alerts). If the hub already reported that alarm as
+ * cleared, a status sent a moment earlier must not bring it back.
+ */
+export function currentAlarm(state) {
+  const alert = activeAlerts(state)[0];
+  if (alert) return { alarm: alert.alarm, since: alert.raised_at };
+  const s = state.status;
+  if (!s?.alarm || !s.received_at) return null;
+  if (state.alerts.some((a) => a.alarm === s.alarm && !a.active)) return null;
+  return { alarm: s.alarm, since: null };
 }

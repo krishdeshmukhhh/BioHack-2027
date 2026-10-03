@@ -2,9 +2,11 @@
 // Every state shown here is the state the hub reports over SSE (S5). The reply to
 // the confirm call is never used to move the outcome forward.
 
-import { chipHtml, escapeHtml, icon, ml, mlHr, t, userName } from "/shared/core.js";
+import { chipHtml, escapeHtml, icon, ml, mlHr, t, tList, userName } from "/shared/core.js";
 import { activePrescription, api, errorText, pendingProposal } from "/shared/data.js";
-import { saveCaregiver, savedCaregiver, setHtml } from "/shared/ui.js";
+import { canListenOffline, listenOnce, voiceVerdict } from "/shared/speech.js";
+import { setHtml } from "/shared/ui.js";
+import { caregiver, onSettingsChange } from "./settings.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -20,22 +22,52 @@ export function initReview(store) {
   let answered = null; // {version, action} this phone answered
   let busy = false;
 
-  const select = $("caregiver");
-  select.value = savedCaregiver();
-  select.addEventListener("change", () => saveCaregiver(select.value));
+  const paintButtons = () => {
+    $("confirm-btn").innerHTML = `${icon("check")}<span>${escapeHtml(t("review_confirm"))}</span>`;
+    $("decline-btn").innerHTML = `${icon("x")}<span>${escapeHtml(t("review_decline"))}</span>`;
+    $("voice-btn").textContent = t("voice_answer");
+  };
+  paintButtons();
 
-  $("confirm-btn").innerHTML = `${icon("check")}<span>${escapeHtml(t("review_confirm"))}</span>`;
-  $("decline-btn").innerHTML = `${icon("x")}<span>${escapeHtml(t("review_decline"))}</span>`;
+  // Optional voice answer (NFR-A5): only when speech can be recognised on the
+  // device. The buttons above always do the same thing.
+  canListenOffline().then((ok) => ($("voice-btn").hidden = !ok));
+  $("voice-btn").addEventListener("click", async () => {
+    if (busy || shownVersion == null || $("voice-btn").disabled) return;
+    const version = shownVersion; // answer only the change that was on screen
+    const yes = tList("voice_yes_words");
+    const no = tList("voice_no_words");
+    $("voice-btn").disabled = true;
+    $("voice-status").textContent = t("voice_listening", { yes: yes[0], no: no[0] });
+    let heard = [];
+    try {
+      heard = await listenOnce();
+    } catch {
+      heard = []; // treated as "did not catch that"
+    } finally {
+      $("voice-btn").disabled = false;
+    }
+    if (answered?.version === version) return; // answered with a button meanwhile
+    if (version !== shownVersion) {
+      $("voice-status").textContent = t("voice_changed");
+      return;
+    }
+    const verdict = voiceVerdict(heard, yes, no);
+    if (verdict) answer(verdict, version);
+    else $("voice-status").textContent = t("voice_unheard");
+  });
 
-  async function answer(action) {
-    if (busy || shownVersion == null) return;
-    const version = shownVersion;
+  async function answer(action, version = shownVersion) {
+    if (busy || version == null || version !== shownVersion) return;
     busy = true;
     setButtons(true, action);
     $("review-error").hidden = true;
+    $("voice-status").textContent = "";
     try {
-      if (action === "confirm") await api.confirm(pumpId, version, select.value);
-      else await api.decline(pumpId, version, select.value);
+      const who = caregiver();
+      if (action === "confirm") await api.confirm(pumpId, version, who);
+      else await api.decline(pumpId, version, who);
+      $("voice-status").textContent = "";
       answered = { version, action };
       render(store.state);
       $("outcome-title").focus(); // the buttons are gone; move focus to the result
@@ -75,12 +107,15 @@ export function initReview(store) {
     if (rx.version !== shownVersion) {
       shownVersion = rx.version;
       $("review-error").hidden = true;
+      $("voice-status").textContent = "";
       $("review-live").textContent = t("review_waiting");
     }
     section.hidden = false;
     const current = activePrescription(state);
 
     $("review-intro").textContent = t("review_intro", { clinician: userName(rx.proposed_by) });
+    $("review-who").textContent =
+      `${t("review_confirming_as", { who: userName(caregiver()) })} ${t("review_change_who")}`;
     // One block per field: label (+ Changed), then Now and New side by side.
     const rows = FIELDS.map(({ key, label, fmt }) => {
       const now = current ? fmt(current[key]) : t("clin_none");
@@ -141,5 +176,10 @@ export function initReview(store) {
     renderOutcome(state);
   }
 
+  onSettingsChange(() => {
+    paintButtons();
+    $("review-rows").dataset.html = ""; // force fresh copy in the new language
+    render(store.state);
+  });
   store.subscribe(render);
 }

@@ -90,3 +90,31 @@ def test_prescription_needs_confirmation():
     example = json.loads((HERE / "examples" / "prescription.json").read_text())
     del example["confirmed_by"]
     assert list(validator.iter_errors(example))
+
+
+# Shared prescription test cases (docs/PROTOCOL.md "Shared test cases"). Check 1 on the
+# pump is the schema shape, so the cases must agree with the schema itself.
+CASES = json.loads((HERE / "cases" / "prescription_cases.json").read_text())["cases"]
+
+
+def _not_json(constant: str):
+    raise ValueError(f"{constant} is not JSON")
+
+
+def _schema_valid(payload: str) -> bool:
+    try:
+        message = json.loads(payload, parse_constant=_not_json)
+    except ValueError:
+        return False
+    return not list(validator_for("prescription").iter_errors(message))
+
+
+@pytest.mark.parametrize("case", CASES, ids=[c["name"] for c in CASES])
+def test_case_agrees_with_schema(case):
+    if "beyond_schema" in case:
+        pytest.skip(case["beyond_schema"])
+    outcome = case["expect"]["outcome"]
+    if outcome in ("applied", "queued", "ignored"):
+        assert _schema_valid(case["payload"]), "the pump accepts it, so the schema must too"
+    elif outcome == "dropped" or case["expect"].get("reason") == "malformed":
+        assert not _schema_valid(case["payload"]), "malformed for the pump, so for the schema too"

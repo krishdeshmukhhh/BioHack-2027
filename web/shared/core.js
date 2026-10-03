@@ -25,7 +25,18 @@ export async function loadLanguage(lang) {
 /** Look up a string and fill {placeholders}. Falls back to English, then the key. */
 export function t(key, vars = {}) {
   const raw = strings[key] ?? en[key] ?? key;
+  if (typeof raw !== "string") return key;
   return raw.replace(/\{(\w+)\}/g, (m, name) => (name in vars ? String(vars[name]) : m));
+}
+
+/** A list-valued string (steps, voice words). Falls back to English. */
+export function tList(key) {
+  const raw = strings[key] ?? en[key];
+  return Array.isArray(raw) ? raw : [];
+}
+
+export function currentLang() {
+  return strings.lang;
 }
 
 export function userName(id) {
