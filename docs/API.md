@@ -51,7 +51,7 @@ Optional status fields pass through when the pump sends them: `battery_pct`, `le
 **Alert**: a hub-side interpretation of a pump alarm.
 
 ```json
-{ "pump_id": "pump-001", "alarm": "occlusion", "active": true, "raised_at": "…", "cleared_at": null }
+{ "pump_id": "pump-001", "alarm": "occlusion", "active": true, "raised_at": "…", "cleared_at": null, "simulated": true }
 ```
 
 The web app maps `alarm` to the picture, cause, and steps in its strings file. The hub sends the code, not the copy.
@@ -71,7 +71,7 @@ The web app maps `alarm` to the picture, cause, and steps in its strings file. T
 | GET | `/api/pumps/{pump_id}/status` | — | PumpStatus | 404 `unknown_pump`; 200 with `online:false` if no data yet |
 | GET | `/api/pumps/{pump_id}/prescriptions` | — | `[Prescription]`, newest first | 404 |
 | POST | `/api/pumps/{pump_id}/prescriptions` | `{mode, rate_ml_hr, volume_ml, note?, proposed_by}` | Prescription (`proposed`, new version) | 422 `invalid_input` (shape only; **no limit check here**, S1 lives in the pump) |
-| POST | `/api/pumps/{pump_id}/prescriptions/{version}/confirm` | `{confirmed_by}` | Prescription (`sent`, or `confirmed` if the publish failed) | 404; 409 `not_proposed` |
+| POST | `/api/pumps/{pump_id}/prescriptions/{version}/confirm` | `{confirmed_by}` | Prescription (`sent`, or `confirmed` if the publish failed) | 404; 409 `not_proposed`; 409 `stale_version` (a newer version was already published, S3) |
 | POST | `/api/pumps/{pump_id}/prescriptions/{version}/decline` | `{declined_by, reason?}` | Prescription (`rejected`, `reject_reason:"declined"`) | 404; 409 `not_proposed` |
 | GET | `/api/pumps/{pump_id}/alerts` | — | `[Alert]` (active first) | 404 |
 | GET | `/api/pumps/{pump_id}/audit` | — | `[AuditRow]`, newest first | 404 |
@@ -135,3 +135,4 @@ With no history loaded, `days` is 0 and the percentages and `trend` are null.
 - 2026-10-03 Additive: exception codes and thresholds for `/api/patients`, and the history file format.
 - 2026-10-03 Additive: `/shared/` serves `web/shared/` (found at Sync 1: the family page imports `/shared/*.js`).
 - 2026-10-03 (Sync 2) Additive: `summary` and `profiles` endpoints (as built by the hub lane), the `alarm_active` exception code, active alerts in the SSE snapshot, and the rule that a repeated event counts once.
+- 2026-10-03 (Sync 2 review): confirm may return 409 `stale_version`; Alert carries `simulated`.
