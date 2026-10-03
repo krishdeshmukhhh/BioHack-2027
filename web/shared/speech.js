@@ -105,7 +105,10 @@ export function listenOnce() {
     r.interimResults = false;
     r.maxAlternatives = 3;
     let heard = [];
-    const timer = setTimeout(() => r.abort(), LISTEN_TIMEOUT_MS);
+    const timer = setTimeout(() => {
+      r.abort();
+      resolve([]); // even if the browser never fires onend after abort
+    }, LISTEN_TIMEOUT_MS);
     r.onresult = (ev) => {
       heard = [...ev.results[0]].map((a) => a.transcript);
     };

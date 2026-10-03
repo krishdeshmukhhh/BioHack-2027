@@ -39,12 +39,15 @@ export function initReview(store) {
     const no = tList("voice_no_words");
     $("voice-btn").disabled = true;
     $("voice-status").textContent = t("voice_listening", { yes: yes[0], no: no[0] });
-    let heard;
+    let heard = [];
     try {
       heard = await listenOnce();
+    } catch {
+      heard = []; // treated as "did not catch that"
     } finally {
       $("voice-btn").disabled = false;
     }
+    if (answered?.version === version) return; // answered with a button meanwhile
     if (version !== shownVersion) {
       $("voice-status").textContent = t("voice_changed");
       return;
@@ -59,6 +62,7 @@ export function initReview(store) {
     busy = true;
     setButtons(true, action);
     $("review-error").hidden = true;
+    $("voice-status").textContent = "";
     try {
       const who = caregiver();
       if (action === "confirm") await api.confirm(pumpId, version, who);
@@ -103,6 +107,7 @@ export function initReview(store) {
     if (rx.version !== shownVersion) {
       shownVersion = rx.version;
       $("review-error").hidden = true;
+      $("voice-status").textContent = "";
       $("review-live").textContent = t("review_waiting");
     }
     section.hidden = false;
