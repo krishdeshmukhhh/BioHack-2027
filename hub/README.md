@@ -19,3 +19,5 @@ Run with `make hub`. Test with `make test`.
 
 - Demo reset is `make reset-demo` (lead's `scripts/reset_demo.sh`). On the Pi, stop the service first: `sudo systemctl stop smart-pump-hub && make reset-demo && sudo systemctl start smart-pump-hub`. Then start the pump with `--demo-seed` and wait for it to show online at v7 before proposing.
 - `hub/deploy/install_services.sh [hostname]` (on the Pi, after `scripts/setup_pi.sh`): systemd services for the broker and the hub that start on boot, plus an optional `.local` hostname.
+- `hub/deploy/laptop.ps1 start|reset|urls` (Windows, from the repo root): the same broker + hub + reset on a laptop when there is no Pi.
+- Where Person B is and what's next: `hub/NEXT_STEPS.md`.

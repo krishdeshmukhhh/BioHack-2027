@@ -1,6 +1,6 @@
 # Person B (Hub): where we are and what's next
 
-Updated 2026-10-03 (evening). Prototype demo only, not a medical device.
+Updated 2026-10-03 (late evening, hand-off point for the next session). Prototype demo only, not a medical device.
 
 ## Where we are
 
@@ -12,7 +12,11 @@ Updated 2026-10-03 (evening). Prototype demo only, not a medical device.
 | Sync 4: feature freeze | Not yet | Hub part done: alerts, patients and exceptions, daily totals, weekly summary, audit, profiles, history loading |
 | Phase 6: demo hardening | Started | **We are here.** Boot services written; Pi not set up yet |
 
-`lane/hub` is pushed and up to date with `origin/main`. Hub tests pass.
+`lane/hub` is pushed and up to date with `origin/lane/hub`; `origin/main` has nothing `lane/hub` lacks. Lint is clean. Tests: 358 pass, 2 fail on Windows only (see below); with `PYTHONUTF8=1` all 360 pass.
+
+### Open items found at hand-off
+- **Uncommitted:** `hub/deploy/laptop.ps1` (run broker + hub on a Windows laptop instead of the Pi: `start`, `reset`, `urls`). Reviewed, looks right; commit it to `lane/hub` and push when ready.
+- **Windows test failure (Person D's folders, report, don't fix in this lane):** `shared/protocol/test_examples.py` and `sim/test_protocol_cases.py` read `cases/prescription_cases.json` with `read_text()` and no encoding, so on Windows the 2-byte UTF-8 note case is decoded as cp1252 and exceeds `maxLength`. Fix: `read_text(encoding="utf-8")` in both files. Workaround: `PYTHONUTF8=1` (PowerShell: `$env:PYTHONUTF8=1`).
 
 ## Done since the last update
 - [x] Pushed `lane/hub` (reset command, Pi boot services, this file).
@@ -22,6 +26,7 @@ Updated 2026-10-03 (evening). Prototype demo only, not a medical device.
 
 ### 1. Hand-off messages (send now)
 - [ ] **To Person D (lead):**
+  - Windows test failure above: add `encoding="utf-8"` to the `read_text()` calls in `shared/protocol/test_examples.py` and `sim/test_protocol_cases.py`.
   - Please merge `lane/hub`. It adds `hub/deploy/install_services.sh` (systemd services for the broker and hub) and removes the duplicate `hub.reset` in favour of `make reset-demo`.
   - The safety review asked for a note in `topics.md`/`PROTOCOL.md`: a zero-byte message on `pump/{id}/prescription` is the demo-reset clear, and the pump drops it silently. Consider adding it as a case in `prescription_cases.json`, so the sim and the firmware both test it.
   - Please tick B's boxes in `docs/TEAM.md`. Everything through "Before Sync 4" is built.
@@ -30,6 +35,8 @@ Updated 2026-10-03 (evening). Prototype demo only, not a medical device.
   - The shared test cases are in `shared/protocol/cases/prescription_cases.json`.
 
 ### 2. Set up the Pi headless (needs internet once)
+No Pi? Use the laptop instead: `powershell -ExecutionPolicy Bypass -File hub/deploy/laptop.ps1 start` (then `urls` for the phone and ESP32 addresses, `reset` for the demo reset). Step 3 works the same against the laptop's IP.
+
 - [ ] Flash the SD card with Raspberry Pi Imager:
   - Raspberry Pi OS Lite, 64-bit.
   - In the settings (gear icon): hostname `smartpump`, a username and password, SSH on, and the demo wifi name and password.
