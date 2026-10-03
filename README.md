@@ -35,4 +35,4 @@ make fw-build
 make fw-upload
 ```
 
-Start with `docs/PLAN.md`.
+Start with `docs/PLAN.md`, then `docs/TEAM.md` (who does what) and `docs/PARALLEL.md` (lanes and worktrees).

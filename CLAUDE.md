@@ -34,7 +34,7 @@ web/family     ─┘        SQLite          └─ sim (software pump)
 - `sim/` Python pump simulator and 30-day history generator
 - `shared/protocol/` JSON Schemas and example messages. This is the contract.
 - `fpga/` stretch: hardware watchdog
-- `docs/` PLAN, ARCHITECTURE, PROTOCOL, SAFETY, DEMO, API (hub HTTP/SSE contract), PARALLEL (lanes and worktrees)
+- `docs/` PLAN, ARCHITECTURE, PROTOCOL, SAFETY, DEMO, API (hub HTTP/SSE contract), PARALLEL (lanes and worktrees), TEAM (4-person split)
 - `docs/research/` PRD, Mermaid architecture diagrams, references with documentation excerpts
 
 ## Commands

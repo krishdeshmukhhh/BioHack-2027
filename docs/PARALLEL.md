@@ -2,6 +2,8 @@
 
 How many Claude instances to run, what each one owns, and how their work comes back together.
 
+**Team of 4?** See [`TEAM.md`](TEAM.md) for who runs which lane, with personal checklists and sync points. With four people the fw lane is on.
+
 **The goal is the most progress with the fewest parallel instances.** Every extra instance adds merge risk and coordination cost. We run **one lead plus three lanes**. A fourth (firmware) lane runs only when someone is at the bench with the hardware.
 
 ## Why this split

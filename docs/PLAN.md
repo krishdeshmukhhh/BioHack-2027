@@ -63,6 +63,8 @@ Four parts, one loop. Details in `ARCHITECTURE.md`.
 
 ## 4. Team roles
 
+The detailed 4-person split, with personal checklists, sync points, and hand-offs, is in `TEAM.md`.
+
 Adjust to who you have. One person can hold two roles.
 
 | Role | Owns | Subagent to use |
