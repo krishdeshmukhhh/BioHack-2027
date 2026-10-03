@@ -28,3 +28,6 @@ firmware/include/secrets.h
 
 # Mosquitto persistence (make broker)
 .mosquitto/
+
+# Generated demo history (make history)
+sim/data/
