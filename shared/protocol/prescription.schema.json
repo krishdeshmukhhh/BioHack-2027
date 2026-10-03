@@ -11,7 +11,7 @@
   ],
   "properties": {
     "pump_id": { "type": "string", "minLength": 1 },
-    "version": { "type": "integer", "minimum": 1, "description": "Increases by one for every new prescription for this pump." },
+    "version": { "type": "integer", "minimum": 1, "maximum": 2147483647, "description": "Increases by one for every new prescription for this pump." },
     "mode": { "enum": ["continuous", "bolus"] },
     "rate_ml_hr": { "type": "number", "exclusiveMinimum": 0 },
     "volume_ml": { "type": "number", "exclusiveMinimum": 0, "description": "Total volume to deliver for one feed." },
