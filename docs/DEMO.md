@@ -6,7 +6,8 @@ Target: about three minutes of live demo. Rehearse it timed. Adjust once the slo
 
 - Pi on, `make broker` and `make hub` running, pump (or `make sim`) online
 - Laptop on the clinician portal, phone on the family app, both on the demo network
-- System reset to the starting state: version 7 active at 60 mL/hr, pump idle
+- System reset to the starting state: version 7 active at 60 mL/hr, pump idle (simulator: `python -m sim.pump_sim --demo-seed`)
+- Rehearse steps 6 to 8 hands-free with `python -m sim.pump_sim --demo-seed --scenario occlusion --speed 60`. On stage, use the keys (`s`, `o`, `c`, `p`) so the presenter controls the timing
 - Fallbacks ready: simulator, screen recording
 - Exactly one pump per `PUMP_ID` on the broker. A leftover `make sim` with the same id as the ESP32 makes both flap online and offline every second. Check with `mosquitto_sub -t 'pump/+/availability' -v`.
 - Ubuntu's own Mosquitto service disabled (`sudo systemctl disable --now mosquitto`), or `make broker` cannot bind port 1883

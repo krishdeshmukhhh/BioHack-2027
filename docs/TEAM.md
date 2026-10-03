@@ -169,7 +169,7 @@ Anything not done at its sync point drops to the "Should" or "Stretch" list. Don
 
 ### Before Sync 4
 - [x] `sim/generate_history.py`: 30 days, 3 fictional patients (on target, drifting under, night occlusions), every row `simulated` (FR-18).
-- [ ] Scripted scenarios for rehearsals (start feed, occlusion, clear).
+- [x] Scripted scenarios for rehearsals (start feed, occlusion, clear).
 - [ ] Ask A whether the firmware and sim still behave the same on the wire.
 
 ### Lead duties (all through the hackathon)
