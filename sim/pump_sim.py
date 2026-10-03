@@ -74,11 +74,19 @@ def _is_int(value: Any) -> bool:
 
 
 def _is_number(value: Any) -> bool:
-    return (
-        isinstance(value, (int, float))
-        and not isinstance(value, bool)
-        and math.isfinite(value)
-    )
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return False
+    try:
+        return math.isfinite(value)
+    except OverflowError:  # an integer too large for a float is malformed
+        return False
+
+
+VERSION_MAX = 2**31 - 1  # check 1 bound in docs/PROTOCOL.md (int32 on the ESP32)
+
+
+def _is_version(value: Any) -> bool:
+    return _is_int(value) and 1 <= value <= VERSION_MAX
 
 
 def _non_empty_str(value: Any) -> bool:
@@ -95,8 +103,7 @@ def is_well_formed(rx: Any) -> bool:
     return (
         isinstance(rx, dict)
         and isinstance(rx.get("pump_id"), str)
-        and _is_int(rx.get("version"))
-        and rx["version"] >= 1
+        and _is_version(rx.get("version"))
         and rx.get("mode") in MODES
         and _is_number(rx.get("rate_ml_hr"))
         and _is_number(rx.get("volume_ml"))
@@ -239,7 +246,7 @@ class PumpCore:
             # 1. shape (fixed field list)
             if not is_well_formed(rx):
                 version = rx.get("version") if isinstance(rx, dict) else None
-                if _is_int(version) and version >= 1:
+                if _is_version(version):
                     self._reject(version, "malformed")
                     return "malformed"
                 log.warning("dropped malformed prescription with no readable version")
@@ -377,9 +384,19 @@ class PumpCore:
         except (OSError, ValueError, AttributeError):
             log.warning("could not read state file %s, starting empty", self.state_file)
             return
-        if is_well_formed(rx) and rx["pump_id"] == self.pump_id:
+        # Defence in depth: a saved prescription passes checks 1, 2, 3, 5, 6 again.
+        if (
+            is_well_formed(rx)
+            and rx["pump_id"] == self.pump_id
+            and _non_empty_str(rx.get("confirmed_by"))
+            and _non_empty_str(rx.get("confirmed_at"))
+            and LIMIT_RATE_MIN_ML_HR <= rx["rate_ml_hr"] <= LIMIT_RATE_MAX_ML_HR
+            and LIMIT_VOLUME_MIN_ML <= rx["volume_ml"] <= LIMIT_VOLUME_MAX_ML
+        ):
             self.prescription = rx
             log.info("loaded v%s from %s", rx["version"], self.state_file)
+        elif rx is not None:
+            log.warning("discarded invalid saved prescription in %s", self.state_file)
 
     def _save_state(self) -> None:
         if not self.state_file:
@@ -436,8 +453,13 @@ class MqttLink:
         log.warning("MQTT disconnected (%s); feed continues (S6)", reason_code)
 
     def on_message(self, client, userdata, msg) -> None:
-        if msg.topic == self.topic_prescription:
+        if msg.topic != self.topic_prescription:
+            return
+        try:
             self.core.handle_prescription(msg.payload)
+        except Exception:
+            # Never let a bad payload stop paho's network thread.
+            log.exception("error handling prescription; message dropped")
 
     def start(self) -> None:
         """Non-blocking: connects and reconnects in paho's background thread."""

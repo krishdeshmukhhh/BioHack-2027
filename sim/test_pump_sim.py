@@ -483,3 +483,40 @@ def test_state_file_garbage_ignored(tmp_path, clock, pub):
     path = tmp_path / "state.json"
     path.write_text("{oops")
     assert PumpCore("pump-001", publish=pub, clock=clock, state_file=path).version == 0
+
+
+# ---- safety review follow-ups ---------------------------------------------
+
+
+def test_huge_integer_rate_is_malformed_not_an_error(core, pub):
+    payload = rx(2).replace('"rate_ml_hr": 90', '"rate_ml_hr": 1' + "0" * 400)
+    assert '"rate_ml_hr": 1000' in payload
+    assert core.handle_prescription(payload) == "malformed"
+    assert core.status()["last_reject_reason"] == "malformed"
+    assert core.version == 0
+
+
+@pytest.mark.parametrize("version", [2**31, 10**20])
+def test_version_above_int32_is_dropped(core, version):
+    # Outside 1..2147483647 is not a readable version (PROTOCOL.md check 1).
+    assert core.handle_prescription(rx(version)) == "dropped"
+    assert core.status()["last_rejected_version"] is None
+    assert core.handle_prescription(rx(2**31 - 1)) == "applied"
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"rate_ml_hr": 500},
+        {"volume_ml": 5000},
+        {"confirmed_by": ""},
+        {"confirmed_at": None},
+        {"pump_id": "pump-999"},
+    ],
+)
+def test_state_file_with_invalid_prescription_is_discarded(tmp_path, clock, pub, bad):
+    path = tmp_path / "state.json"
+    saved = json.loads(rx(4))
+    saved.update(bad)
+    path.write_text(json.dumps({"prescription": saved}))
+    assert PumpCore("pump-001", publish=pub, clock=clock, state_file=path).version == 0

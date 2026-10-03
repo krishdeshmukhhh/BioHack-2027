@@ -223,3 +223,15 @@ def test_cli_help_runs():
     )
     assert out.returncode == 0
     assert "SIMULATED" in out.stdout and "--speed" in out.stdout
+
+
+def test_handler_error_does_not_escape_on_message(monkeypatch):
+    core, link, client, _ = make()
+    connect(link, client)
+
+    def boom(payload):
+        raise RuntimeError("bug")
+
+    monkeypatch.setattr(core, "handle_prescription", boom)
+    # Must not raise: an exception here would stop paho's network thread.
+    link.on_message(client, None, msg("pump/pump-001/prescription", rx(1)))
