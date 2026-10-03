@@ -114,4 +114,12 @@ export function initPropose(pumpId) {
       setButton(false);
     }
   });
+
+  return {
+    rerender() {
+      setButton(busy);
+      updateCounter();
+      if (!$("form-errors").hidden) validate(); // re-word any field errors
+    },
+  };
 }

@@ -62,6 +62,9 @@ async function request(method, path, body) {
 
 const KNOWN_ERRORS = ["invalid_input", "not_proposed", "unknown_pump", "network"];
 
+/** True when the hub does not offer this endpoint yet (or has no such record). */
+export const isNotAvailable = (err) => err?.status === 404 && err?.code !== "unknown_pump";
+
 /** Plain-language text for an API error. Never a bare code (NFR-A4). */
 export function errorText(err) {
   return KNOWN_ERRORS.includes(err?.code) ? t(`error_${err.code}`) : t("error_generic");
@@ -248,6 +251,8 @@ export function createPumpStore(pumpId) {
       return () => listeners.delete(fn);
     },
     refreshLists,
+    /** Re-run every subscriber, e.g. after a language switch. */
+    rerender: notify,
   };
 }
 
@@ -277,4 +282,18 @@ export function pendingProposal(state) {
 
 export function activeAlerts(state) {
   return state.alerts.filter((a) => a.active);
+}
+
+/**
+ * The alarm to show now: the hub's newest active Alert, else the status alarm
+ * field (for a hub without Alerts). If the hub already reported that alarm as
+ * cleared, a status sent a moment earlier must not bring it back.
+ */
+export function currentAlarm(state) {
+  const alert = activeAlerts(state)[0];
+  if (alert) return { alarm: alert.alarm, since: alert.raised_at };
+  const s = state.status;
+  if (!s?.alarm || !s.received_at) return null;
+  if (state.alerts.some((a) => a.alarm === s.alarm && !a.active)) return null;
+  return { alarm: s.alarm, since: null };
 }

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>Feeding pump (prototype)</title>
+  <title data-i18n="family_page_title">Feeding pump (prototype)</title>
   <link rel="stylesheet" href="/shared/tokens.css">
   <link rel="stylesheet" href="family.css">
   <script>
@@ -22,8 +22,37 @@
   </header>
 
   <main id="main" tabindex="-1">
+    <!-- One tap unlocks vibration, sound and speech (NFR-A6). -->
+    <section id="enable-alerts" class="banner tone-info enable" aria-labelledby="enable-title">
+      <div>
+        <h2 id="enable-title" data-i18n="alerts_enable_title">Turn on alerts</h2>
+        <p data-i18n="alerts_enable_body"></p>
+        <button id="enable-btn" class="btn btn-primary" type="button" data-i18n="alerts_enable_btn">Turn on alerts</button>
+      </div>
+    </section>
+    <p id="enabled-note" class="notice tone-text-ok" role="status" hidden></p>
+
+    <!-- Alert (FR-14): picture, cause, numbered steps, Done. -->
+    <section id="alert" class="card alert-card" aria-labelledby="alert-head" hidden>
+      <div role="alert">
+        <h2 id="alert-head" class="alert-head"></h2>
+      </div>
+      <p id="alert-started" class="hint"></p>
+      <div class="alert-body">
+        <div id="alert-pic" class="alert-pic-wrap"></div>
+        <div>
+          <h3 data-i18n="alert_what">What happened</h3>
+          <p id="alert-cause"></p>
+        </div>
+      </div>
+      <h3 data-i18n="alert_steps">What to do</h3>
+      <ol id="alert-steps" class="steps"></ol>
+      <button id="alert-done" class="btn btn-primary btn-wide" type="button" data-i18n="alert_done">Done, I have checked</button>
+      <p id="alert-waiting" class="notice" tabindex="-1" hidden></p>
+    </section>
+    <p id="alert-cleared" class="banner tone-ok" role="status" hidden></p>
+
     <p id="conn" class="banner conn"></p>
-    <!-- Announces connection changes only (not the ticking update time). -->
     <div id="conn-live" class="visually-hidden" role="status" aria-atomic="true"></div>
 
     <!-- Change to review (FR-3). Shown only while the hub reports a proposal. -->
@@ -36,17 +65,13 @@
         <p id="review-note-text"></p>
       </div>
       <p class="hint" data-i18n="review_queued_hint"></p>
-      <div class="field">
-        <label for="caregiver" data-i18n="review_who">Confirming as</label>
-        <select id="caregiver">
-          <option value="care-01" data-i18n="role_parent">Parent (demo)</option>
-          <option value="care-02" data-i18n="role_school_nurse">School nurse (demo)</option>
-        </select>
-      </div>
+      <p id="review-who" class="hint"></p>
       <div class="answer-row">
         <button id="confirm-btn" class="btn btn-answer" type="button"></button>
         <button id="decline-btn" class="btn btn-answer" type="button"></button>
       </div>
+      <button id="voice-btn" class="btn btn-wide voice-btn" type="button" hidden></button>
+      <p id="voice-status" class="hint" role="status"></p>
       <p id="review-error" class="notice tone-text-danger" role="alert" hidden></p>
     </section>
 
@@ -84,6 +109,30 @@
         <div><dt data-i18n="clin_active_version">Active version</dt><dd id="version"></dd></div>
       </dl>
       <p id="updated" class="updated"></p>
+      <button id="speak-btn" class="btn btn-wide" type="button"></button>
+    </section>
+
+    <section class="card settings" aria-labelledby="settings-title">
+      <h2 id="settings-title" data-i18n="settings_title">Settings</h2>
+      <div class="field">
+        <label for="language" data-i18n="language_label">Language</label>
+        <select id="language"></select>
+      </div>
+      <div class="field">
+        <label for="caregiver" data-i18n="family_caregiver">Who is using this phone?</label>
+        <select id="caregiver">
+          <option value="care-01" data-i18n="role_parent">Parent (demo)</option>
+          <option value="care-02" data-i18n="role_school_nurse">School nurse (demo)</option>
+        </select>
+      </div>
+      <fieldset>
+        <legend id="prefs-legend"></legend>
+        <div class="check-list">
+          <label><input type="checkbox" id="pref-vibrate"> <span data-i18n="pref_vibrate">Vibrate</span></label>
+          <label><input type="checkbox" id="pref-sound"> <span data-i18n="pref_sound">Beep</span></label>
+          <label><input type="checkbox" id="pref-speak"> <span data-i18n="pref_speak">Speak alerts out loud</span></label>
+        </div>
+      </fieldset>
     </section>
   </main>
 
