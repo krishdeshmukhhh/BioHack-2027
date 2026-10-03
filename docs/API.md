@@ -77,6 +77,8 @@ The web app maps `alarm` to the picture, cause, and steps in its strings file. T
 | GET | `/api/pumps/{pump_id}/audit` | — | `[AuditRow]`, newest first | 404 |
 | GET | `/api/patients` | — | `[{id, display_name, pump_id, exceptions:[string], online, simulated}]`, exceptions first | — |
 | GET | `/api/patients/{id}/daily` | `?days=30` | `[{date, delivered_ml, prescribed_ml, alarm_count, simulated}]` | 404 |
+| GET | `/api/patients/{id}/summary` | — | WeeklySummary (below) | 404 |
+| GET | `/api/patients/{id}/profiles` | — | `[{id, patient_id, name, mode, rate_ml_hr, volume_ml, simulated}]`, demo feed profiles that pre-fill the propose form (FR-28) | 404 |
 | GET | `/api/pumps/{pump_id}/stream` | — | SSE (below) | 404 |
 
 `/api/patients` exception codes (demo thresholds, not clinical guidance):
@@ -85,13 +87,14 @@ The web app maps `alarm` to the picture, cause, and steps in its strings file. T
 |---|---|
 | `offline` | No pump status received in the last 10 s, or availability is `offline` |
 | `under_target` | `delivered_ml` below 90% of `prescribed_ml` on each of the last 3 days |
-| `night_alarms` | More than 2 alarms raised in the most recent night window (22:00 to 06:00 UTC) |
+| `night_alarms` | More than 2 alarms raised in the most recent night window (22:00 to 06:00 UTC). A repeated QoS 1 event counts once |
+| `alarm_active` | The pump's latest status has a non-null `alarm` (the portal flag for a live alarm) |
 
 Web pages are served at `/` (family app, `web/family/`) and `/clinician/` (`web/clinician/`). Files used by both apps (tokens, strings, shared modules) are served at `/shared/` (`web/shared/`).
 
 ## SSE stream `/api/pumps/{pump_id}/stream`
 
-Uses `text/event-stream`. Each message has an `event:` name and a JSON `data:` field. On connect, the hub immediately sends one `status`, one `availability`, and one `prescription` for every non-final version, so the page renders without making extra requests.
+Uses `text/event-stream`. Each message has an `event:` name and a JSON `data:` field. On connect, the hub immediately sends one `status`, one `availability`, one `prescription` for every non-final version, and one `alert` for every active alert, so the page renders without making extra requests.
 
 | event | data | When |
 |---|---|---|
@@ -102,6 +105,16 @@ Uses `text/event-stream`. Each message has an `event:` name and a JSON `data:` f
 | `pump_event` | The raw `event` message plus `received_at` | Every pump event (for timelines) |
 
 The browser uses `EventSource`, which reconnects automatically. After a reconnect, the initial snapshot brings the page back in sync.
+
+**WeeklySummary** (FR-21): facts only, as codes and numbers. The web app words them from its strings file.
+
+```json
+{"patient_id": "pat-01", "from_date": "2026-09-27", "to_date": "2026-10-03", "days": 7,
+ "delivered_pct": 97.5, "prior_week_delivered_pct": 98.1, "trend": "steady",
+ "days_under_target": 0, "alarm_count": 1, "alarms_by_code": {"bag_empty": 1}, "simulated": true}
+```
+
+With no history loaded, `days` is 0 and the percentages and `trend` are null.
 
 ## History file (sim to hub hand-off)
 
@@ -121,3 +134,4 @@ The browser uses `EventSource`, which reconnects automatically. After a reconnec
 - 2026-10-03 `contract-v1` frozen. PumpStatus documents the optional pass-through fields, including the R1 reject fields.
 - 2026-10-03 Additive: exception codes and thresholds for `/api/patients`, and the history file format.
 - 2026-10-03 Additive: `/shared/` serves `web/shared/` (found at Sync 1: the family page imports `/shared/*.js`).
+- 2026-10-03 (Sync 2) Additive: `summary` and `profiles` endpoints (as built by the hub lane), the `alarm_active` exception code, active alerts in the SSE snapshot, and the rule that a repeated event counts once.
