@@ -157,10 +157,14 @@ def _require_proposed(conn: sqlite3.Connection, pump_id: str, version: int) -> N
 
 
 def _newer_version_exists(conn: sqlite3.Connection, pump_id: str, version: int) -> int | None:
-    """S3: the highest version above `version` that is confirmed, sent, or active, if any."""
+    """S3: the highest version above `version` that is confirmed, sent, or active, or
+    that was ever published (sent_at set), if any. A newer version the pump rejected
+    still counts: re-publishing an older one would make the pump apply a prescription
+    the clinician had replaced. Declined versions were never published, so they don't.
+    """
     row = conn.execute(
         "SELECT MAX(version) FROM prescriptions WHERE pump_id = ? AND version > ?"
-        " AND state IN ('confirmed', 'sent', 'active')",
+        " AND (state IN ('confirmed', 'sent', 'active') OR sent_at IS NOT NULL)",
         (pump_id, version),
     ).fetchone()
     return row[0]
