@@ -143,3 +143,44 @@ def test_snapshot_includes_active_alerts_only(hub):
     send(hub, "event", raised("occlusion"))
     snap = [d for e, d in hub.snapshot(PUMP) if e == "alert"]
     assert [(a["alarm"], a["active"]) for a in snap] == [("occlusion", True)]
+
+
+def test_late_duplicate_raise_after_clear_is_ignored(hub, client):
+    # Review finding: raise, clear, then a redelivered raise must not reopen the alarm.
+    send(hub, "event", raised())
+    send(hub, "event", cleared())
+    send(hub, "event", raised())
+    body = client.get(f"/api/pumps/{PUMP}/alerts").json()
+    assert [(a["alarm"], a["active"]) for a in body] == [("occlusion", False)]
+    assert hub.conn.execute("SELECT COUNT(*) FROM events").fetchone()[0] == 2
+
+
+def test_late_duplicate_clear_does_not_hide_a_new_alarm(hub, client):
+    # Review finding: an old clear redelivered after a new raise must leave the new alarm open.
+    send(hub, "event", raised())
+    send(hub, "event", cleared())
+    send(hub, "event", raised() | {"uptime_ms": 999000})
+    send(hub, "status", example("status.alarm", uptime_ms=999500))
+    send(hub, "event", cleared())  # the duplicate
+    body = client.get(f"/api/pumps/{PUMP}/alerts").json()
+    assert [(a["alarm"], a["active"]) for a in body] == [
+        ("occlusion", True), ("occlusion", False),
+    ]  # fmt: skip
+
+
+def test_events_alone_do_not_keep_a_pump_online(hub, monkeypatch):
+    # docs/API.md: offline after 10 s with no *status*; an event 8 s later does not count.
+    start = datetime.now(UTC)
+    send(hub, "status", example("status.running"))
+    at = (start + timedelta(seconds=8)).strftime("%Y-%m-%dT%H:%M:%SZ")
+    monkeypatch.setattr("hub.app.service.utc_now", lambda: at)
+    send(hub, "event", example("event.state"))
+    hub.check_stale(start + timedelta(seconds=12))
+    assert not hub.is_online(PUMP)
+
+
+def test_retained_online_without_status_goes_offline(hub):
+    send(hub, "availability", "online")
+    assert hub.is_online(PUMP)
+    hub.check_stale(datetime.now(UTC) + timedelta(seconds=11))
+    assert not hub.is_online(PUMP)

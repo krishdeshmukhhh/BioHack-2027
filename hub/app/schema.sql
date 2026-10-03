@@ -64,6 +64,7 @@ CREATE TABLE IF NOT EXISTS events (
     simulated   INTEGER NOT NULL
 );
 CREATE INDEX IF NOT EXISTS events_pump ON events (pump_id, id);
+CREATE INDEX IF NOT EXISTS events_dedupe ON events (pump_id, uptime_ms, type);
 
 -- Append-only (S7): the triggers below make UPDATE and DELETE fail in the database itself.
 CREATE TABLE IF NOT EXISTS audit (
