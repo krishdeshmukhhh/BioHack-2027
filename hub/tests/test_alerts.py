@@ -130,3 +130,16 @@ def test_duplicate_qos1_events_do_not_double_count(hub, client):
     assert [r["action"] for r in client.get(f"/api/pumps/{PUMP}/audit").json()] == [
         "alarm_cleared", "alarm_raised",
     ]  # fmt: skip
+
+
+def test_alert_carries_simulated(hub, client):
+    send(hub, "event", raised())
+    assert client.get(f"/api/pumps/{PUMP}/alerts").json()[0]["simulated"] is True
+
+
+def test_snapshot_includes_active_alerts_only(hub):
+    send(hub, "event", raised("bag_empty"))
+    send(hub, "event", cleared("bag_empty"))
+    send(hub, "event", raised("occlusion"))
+    snap = [d for e, d in hub.snapshot(PUMP) if e == "alert"]
+    assert [(a["alarm"], a["active"]) for a in snap] == [("occlusion", True)]

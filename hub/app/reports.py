@@ -117,6 +117,14 @@ def night_alarm_count(
     return history + live
 
 
+def alarm_active(conn: sqlite3.Connection, pump_id: str) -> bool:
+    """The pump's latest status reports an alarm (the portal flag, FR-15)."""
+    row = conn.execute(
+        "SELECT alarm FROM status_samples WHERE pump_id = ? ORDER BY id DESC LIMIT 1", (pump_id,)
+    ).fetchone()
+    return row is not None and row["alarm"] is not None
+
+
 def under_target(conn: sqlite3.Connection, patient_id: str) -> bool:
     rows = conn.execute(
         "SELECT delivered_ml, prescribed_ml FROM history_daily WHERE patient_id = ?"
@@ -131,7 +139,7 @@ def under_target(conn: sqlite3.Connection, patient_id: str) -> bool:
 def patients(
     conn: sqlite3.Connection, is_online: Callable[[str], bool], now: datetime | None = None
 ) -> list[dict[str, Any]]:
-    """Patient list with exception codes, patients with exceptions first (FR-19)."""
+    """Patient list with exception codes, patients with exceptions first (FR-19, FR-15)."""
     now = now or datetime.now(UTC)
     rows = []
     for p in conn.execute("SELECT * FROM patients ORDER BY id"):
@@ -139,6 +147,8 @@ def patients(
         exceptions = []
         if not online:
             exceptions.append("offline")
+        if alarm_active(conn, p["pump_id"]):
+            exceptions.append("alarm_active")
         if under_target(conn, p["id"]):
             exceptions.append("under_target")
         if night_alarm_count(conn, p["id"], p["pump_id"], now) > NIGHT_ALARMS_MAX:

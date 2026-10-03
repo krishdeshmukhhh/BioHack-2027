@@ -17,6 +17,7 @@ def as_dict(row: sqlite3.Row) -> dict[str, Any]:
         "active": row["cleared_at"] is None,
         "raised_at": row["raised_at"],
         "cleared_at": row["cleared_at"],
+        "simulated": bool(row["simulated"]),
     }
 
 
