@@ -9,7 +9,7 @@ inline std::string statusJson(const PumpSnapshot& s, const std::string& pumpId,
   doc["pump_id"] = pumpId;
   doc["uptime_ms"] = now;
   doc["state"] = toString(s.state);
-  doc["rate_ml_hr"] = s.hasPrescription ? s.prescription.rateMlHr : 0;
+  doc["rate_ml_hr"] = s.hasPrescription && s.state != PumpState::ALARM ? s.prescription.rateMlHr : 0;
   doc["delivered_ml"] = s.deliveredMl;
   doc["target_ml"] = s.hasPrescription ? s.prescription.volumeMl : 0;
   if (s.alarm.empty()) doc["alarm"] = nullptr;
@@ -17,6 +17,13 @@ inline std::string statusJson(const PumpSnapshot& s, const std::string& pumpId,
   doc["prescription_version"] = s.hasPrescription ? s.prescription.version : 0;
   if (s.hasPending) doc["pending_version"] = s.pending.version;
   else doc["pending_version"] = nullptr;
+  if (s.lastRejectedVersion) {
+    doc["last_rejected_version"] = s.lastRejectedVersion;
+    doc["last_reject_reason"] = s.lastRejectReason;
+  } else {
+    doc["last_rejected_version"] = nullptr;
+    doc["last_reject_reason"] = nullptr;
+  }
   doc["simulated"] = simulated;
   std::string result;
   serializeJson(doc, result);

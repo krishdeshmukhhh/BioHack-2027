@@ -61,7 +61,11 @@ PrescriptionValidation PumpController::receivePrescription(const char* payload,
     event.reason = result.reason;
     // The frozen event schema requires a positive version. The caller can log
     // unversioned malformed input, without falsely rejecting an unrelated v1.
-    if (event.version) emit(event, now);
+    if (event.version) {
+      snapshot_.lastRejectedVersion = event.version;
+      snapshot_.lastRejectReason = event.reason;
+      emit(event, now);
+    }
     return result;
   }
   snapshot_.pending = result.prescription;
@@ -120,6 +124,8 @@ bool PumpController::stop(uint32_t now) {
 }
 
 bool PumpController::raiseAlarm(const char* alarm, uint32_t now) {
+  if (snapshot_.state != PumpState::RUNNING && snapshot_.state != PumpState::PAUSED)
+    return false;
   if (!alarm) return false;
   const std::string name(alarm);
   if (name != "occlusion" && name != "bag_empty" && name != "low_battery" &&
@@ -127,11 +133,11 @@ bool PumpController::raiseAlarm(const char* alarm, uint32_t now) {
   if (snapshot_.state == PumpState::ALARM) return false;
   advanceDelivery(now, 0);
   snapshot_.alarm = name;
-  transitionTo(PumpState::ALARM, now);
   PumpEvent event;
   event.type = "alarm_raised";
   event.alarm = name;
   emit(event, now);
+  transitionTo(PumpState::ALARM, now);
   return true;
 }
 
@@ -141,8 +147,8 @@ bool PumpController::clearAlarm(uint32_t now) {
   event.type = "alarm_cleared";
   event.alarm = snapshot_.alarm;
   snapshot_.alarm.clear();
-  transitionTo(PumpState::PAUSED, now);
   emit(event, now);
+  transitionTo(PumpState::PAUSED, now);
   return true;
 }
 

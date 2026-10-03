@@ -21,6 +21,7 @@ class JsonSyntax {
     whitespace();
     return offset_ == length_;
   }
+  uint32_t readableVersion() const { return readableVersion_; }
 
  private:
   char peek() const { return offset_ < length_ ? text_[offset_] : '\0'; }
@@ -108,9 +109,33 @@ class JsonSyntax {
       if (consume('}')) return true;
       do {
         whitespace();
+        const size_t keyBegin = offset_;
         if (!string()) return false;
+        const size_t keyEnd = offset_;
         whitespace();
-        if (!consume(':') || !value(depth + 1)) return false;
+        if (!consume(':')) return false;
+        whitespace();
+        const size_t valueBegin = offset_;
+        if (!value(depth + 1)) return false;
+        if (depth == 0) {
+          JsonDocument key;
+          if (!deserializeJson(key, text_ + keyBegin, keyEnd - keyBegin) &&
+              key.as<std::string>() == "version") {
+            readableVersion_ = 0;
+            uint32_t candidate = 0;
+            bool integer = valueBegin < offset_;
+            for (size_t i = valueBegin; i < offset_; ++i) {
+              const char digit = text_[i];
+              if (digit < '0' || digit > '9' ||
+                  candidate > (2147483647U - static_cast<uint32_t>(digit - '0')) / 10U) {
+                integer = false;
+                break;
+              }
+              candidate = candidate * 10U + static_cast<uint32_t>(digit - '0');
+            }
+            if (integer && candidate) readableVersion_ = candidate;
+          }
+        }
         whitespace();
         if (consume('}')) return true;
       } while (consume(','));
@@ -135,6 +160,7 @@ class JsonSyntax {
   const char* text_;
   size_t length_;
   size_t offset_ = 0;
+  uint32_t readableVersion_ = 0;
 };
 
 bool allowedKey(JsonString key) {
@@ -230,16 +256,13 @@ PrescriptionValidation parsePrescription(const char* payload, size_t length,
                                         uint32_t currentVersion,
                                         uint32_t pendingVersion) {
   PrescriptionValidation result;
-  if (!JsonSyntax(payload, length).objectDocument()) return reject(result, "malformed");
+  JsonSyntax syntax(payload, length);
+  if (!syntax.objectDocument()) return reject(result, "malformed");
+  result.version = syntax.readableVersion();
   JsonDocument document;
   if (deserializeJson(document, payload, length) || !document.is<JsonObject>())
     return reject(result, "malformed");
   JsonObjectConst object = document.as<JsonObjectConst>();
-  if (number(object["version"])) {
-    const double version = object["version"].as<double>();
-    if (version >= 1 && version <= std::numeric_limits<uint32_t>::max() &&
-        std::floor(version) == version) result.version = static_cast<uint32_t>(version);
-  }
   for (JsonPairConst pair : object)
     if (!allowedKey(pair.key())) return reject(result, "malformed");
   const char* stringKeys[] = {"pump_id", "mode", "proposed_by", "proposed_at"};
@@ -249,11 +272,8 @@ PrescriptionValidation parsePrescription(const char* payload, size_t length,
   for (const char* key : optionalStrings)
     if (!object[key].isUnbound() && !object[key].is<const char*>())
       return reject(result, "malformed");
-  if (!number(object["version"]) || object["version"].as<double>() < 1 ||
-      object["version"].as<double>() > std::numeric_limits<uint32_t>::max() ||
-      std::floor(object["version"].as<double>()) != object["version"].as<double>() ||
-      !number(object["rate_ml_hr"]) || !number(object["volume_ml"]) ||
-      object["rate_ml_hr"].as<double>() <= 0 || object["volume_ml"].as<double>() <= 0)
+  if (!result.version || !number(object["rate_ml_hr"]) ||
+      !number(object["volume_ml"]))
     return reject(result, "malformed");
   const std::string actualPump = object["pump_id"].as<std::string>();
   Prescription& prescription = result.prescription;
@@ -274,7 +294,7 @@ PrescriptionValidation parsePrescription(const char* payload, size_t length,
   if (actualPump != pumpId) return reject(result, "wrong_pump");
   if (prescription.confirmedBy.empty() || prescription.confirmedAt.empty())
     return reject(result, "not_confirmed");
-  if (prescription.version == currentVersion) {
+  if (prescription.version == currentVersion || prescription.version == pendingVersion) {
     result.outcome = PrescriptionValidation::IGNORED;
     return result;
   }

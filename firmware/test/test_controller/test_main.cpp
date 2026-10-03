@@ -2,6 +2,9 @@
 #include <unity.h>
 
 #include <cmath>
+#include <cstdlib>
+#include <fstream>
+#include <iterator>
 #include <limits>
 #include <string>
 #include <vector>
@@ -66,7 +69,7 @@ PrescriptionValidation receive(PumpController& c, const std::string& value,
 }
 
 void valid_prescription_roundtrips_and_accepts_limit_boundaries() {
-  Prescription p = sample(4294967295U, 1, 1000);
+  Prescription p = sample(2147483647U, 1, 1000);
   p.mode = "bolus";
   p.note = "caregiver checked";
   auto result = parse(serializePrescription(p, PUMP));
@@ -113,9 +116,11 @@ void malformed_types_and_schema_constraints() {
     doc[field] = "90";
     rejected(encode(doc), "malformed");
     doc[field] = 0;
-    rejected(encode(doc), "malformed");
+    rejected(encode(doc), std::string(field) == "version" ? "malformed" :
+        std::string(field) == "rate_ml_hr" ? "rate_out_of_range" : "volume_out_of_range");
     doc[field] = -1;
-    rejected(encode(doc), "malformed");
+    rejected(encode(doc), std::string(field) == "version" ? "malformed" :
+        std::string(field) == "rate_ml_hr" ? "rate_out_of_range" : "volume_out_of_range");
   }
   JsonDocument doc;
   deserializeJson(doc, json());
@@ -179,7 +184,7 @@ void confirmation_and_pump_order() {
 
 void stale_replay_and_limit_order() {
   rejected(json(1, 500, 5000), "stale_version", 2);
-  rejected(json(3, 500, 5000), "stale_version", 1, 3);
+  TEST_ASSERT_EQUAL(PrescriptionValidation::IGNORED, parse(json(3, 500, 5000), 1, 3).outcome);
   rejected(json(3, 500, 5000), "rate_out_of_range", 1, 2);
   rejected(json(3, 90, 5000), "volume_out_of_range", 1, 2);
   rejected(json(3, 0.5, 100), "rate_out_of_range");
@@ -298,8 +303,9 @@ void busy_queue_replaces_only_with_newer_version() {
   TEST_ASSERT_EQUAL_STRING("prescription_queued", events.back().type.c_str());
   receive(c, json(2), 12);
   TEST_ASSERT_EQUAL_STRING("stale_version", events.back().reason.c_str());
-  receive(c, json(3), 13);
-  TEST_ASSERT_EQUAL_STRING("stale_version", events.back().reason.c_str());
+  const size_t beforeReplay = events.size();
+  TEST_ASSERT_EQUAL(PrescriptionValidation::IGNORED, receive(c, json(3), 13).outcome);
+  TEST_ASSERT_EQUAL_UINT(beforeReplay, events.size());
   receive(c, json(4, 110), 14);
   TEST_ASSERT_EQUAL_UINT32(4, c.snapshot().pending.version);
   TEST_ASSERT_EQUAL_UINT(1, writes.size());
@@ -368,6 +374,24 @@ void simulated_delivery_pause_resume_and_completion() {
   TEST_ASSERT_FLOAT_WITHIN(1e-6, 0, c.snapshot().deliveredMl);
 }
 
+void alarm_injection_only_applies_to_running_or_paused_feeds() {
+  auto c = controller(true, 10, 20);
+  TEST_ASSERT_FALSE(c.raiseAlarm("occlusion", 0));
+  receive(c, json(1, 90, 1));
+  c.start(0);
+  TEST_ASSERT_FALSE(c.raiseAlarm("occlusion", 1));
+  c.tick(10);
+  c.tick(40010);
+  TEST_ASSERT_EQUAL(PumpState::COMPLETE, c.snapshot().state);
+  TEST_ASSERT_FALSE(c.raiseAlarm("occlusion", 40011));
+  c.tick(40030);
+  c.start(40031);
+  c.tick(40041);
+  c.pause(40042);
+  TEST_ASSERT_TRUE(c.raiseAlarm("bag_empty", 40043));
+  TEST_ASSERT_EQUAL(PumpState::ALARM, c.snapshot().state);
+}
+
 void alarm_clear_pauses_and_requires_caregiver_resume() {
   auto c = controller();
   receive(c, json());
@@ -375,13 +399,16 @@ void alarm_clear_pauses_and_requires_caregiver_resume() {
   c.tick(10);
   TEST_ASSERT_TRUE(c.raiseAlarm("occlusion", 20));
   TEST_ASSERT_EQUAL(PumpState::ALARM, c.snapshot().state);
-  TEST_ASSERT_EQUAL_STRING("alarm_raised", events.back().type.c_str());
+  TEST_ASSERT_EQUAL_STRING("alarm_raised", events[events.size() - 2].type.c_str());
+  TEST_ASSERT_EQUAL_STRING("state_changed", events.back().type.c_str());
   TEST_ASSERT_FALSE(c.raiseAlarm("bag_empty", 21));
   TEST_ASSERT_FALSE(c.resume(22));
   TEST_ASSERT_FALSE(c.stop(23));
   receive(c, json(2), 24);
   TEST_ASSERT_TRUE(c.clearAlarm(25));
   TEST_ASSERT_EQUAL(PumpState::PAUSED, c.snapshot().state);
+  TEST_ASSERT_EQUAL_STRING("alarm_cleared", events[events.size() - 2].type.c_str());
+  TEST_ASSERT_EQUAL_STRING("state_changed", events.back().type.c_str());
   TEST_ASSERT_TRUE(c.snapshot().alarm.empty());
   c.tick(20000);
   TEST_ASSERT_EQUAL_UINT32(1, c.snapshot().prescription.version);
@@ -460,6 +487,114 @@ void malformed_unversioned_input_never_fabricates_rejection_version() {
   TEST_ASSERT_EQUAL_UINT32(9, events.back().version);
   TEST_ASSERT_EQUAL_STRING("prescription_rejected", events.back().type.c_str());
 }
+
+void shared_protocol_cases_pass_parser_and_controller() {
+  const char* path = std::getenv("FIRMWARE_PROTOCOL_CASES");
+#ifdef PROTOCOL_CASES_PATH
+  if (!path) path = PROTOCOL_CASES_PATH;
+#endif
+  if (!path) path = "../shared/protocol/cases/prescription_cases.json";
+  std::ifstream file(path, std::ios::binary);
+  TEST_ASSERT_TRUE_MESSAGE(file.is_open(), "Cannot open shared fixture; set FIRMWARE_PROTOCOL_CASES");
+  const std::string contents((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
+  JsonDocument fixture;
+  TEST_ASSERT_FALSE_MESSAGE(bool(deserializeJson(fixture, contents)), "Invalid shared fixture JSON");
+  JsonArrayConst cases = fixture["cases"].as<JsonArrayConst>();
+  TEST_ASSERT_EQUAL_UINT(55, cases.size());
+  TEST_ASSERT_EQUAL_STRING(PUMP, fixture["pump_id"].as<const char*>());
+  for (JsonObjectConst testCase : cases) {
+    const char* name = testCase["name"].as<const char*>();
+    JsonObjectConst setup = testCase["setup"].as<JsonObjectConst>();
+    const uint32_t current = setup["current_version"].as<uint32_t>();
+    const uint32_t pending = setup["pending_version"].as<uint32_t>();
+    const std::string state = setup["state"].as<std::string>();
+    auto c = controller();
+    if (current) {
+      const std::string stored = json(current, 60, 500);
+      TEST_ASSERT_TRUE_MESSAGE(c.restorePrescription(stored.c_str(), stored.size()), name);
+    }
+    if (state == "running" || state == "paused" || pending) {
+      TEST_ASSERT_TRUE_MESSAGE(c.start(0), name);
+      c.tick(10);
+      TEST_ASSERT_EQUAL_MESSAGE(PumpState::RUNNING, c.snapshot().state, name);
+    }
+    if (pending) {
+      TEST_ASSERT_EQUAL_MESSAGE(PrescriptionValidation::ACCEPTED,
+          receive(c, json(pending, 60, 500), 10).outcome, name);
+    }
+    if (state == "paused") TEST_ASSERT_TRUE_MESSAGE(c.pause(10), name);
+    events.clear();
+    writes.clear();
+    const std::string payload = testCase["payload"].as<std::string>();
+    JsonObjectConst expected = testCase["expect"].as<JsonObjectConst>();
+    const std::string outcome = expected["outcome"].as<std::string>();
+    const auto parsed = parse(payload, current, pending);
+    const auto result = receive(c, payload, 20);
+    TEST_ASSERT_EQUAL_MESSAGE(parsed.outcome, result.outcome, name);
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(parsed.version, result.version, name);
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(parsed.reason.c_str(), result.reason.c_str(), name);
+    if (outcome == "applied" || outcome == "queued") {
+      TEST_ASSERT_EQUAL_MESSAGE(PrescriptionValidation::ACCEPTED, result.outcome, name);
+      TEST_ASSERT_EQUAL_UINT_MESSAGE(1, events.size(), name);
+      TEST_ASSERT_EQUAL_STRING_MESSAGE(outcome == "applied" ? "prescription_applied" :
+                                      "prescription_queued", events.back().type.c_str(), name);
+    } else if (outcome == "ignored") {
+      TEST_ASSERT_EQUAL_MESSAGE(PrescriptionValidation::IGNORED, result.outcome, name);
+      TEST_ASSERT_EQUAL_UINT_MESSAGE(0, events.size(), name);
+    } else if (outcome == "dropped") {
+      TEST_ASSERT_EQUAL_MESSAGE(PrescriptionValidation::REJECTED, result.outcome, name);
+      TEST_ASSERT_EQUAL_UINT32_MESSAGE(0, result.version, name);
+      TEST_ASSERT_EQUAL_UINT_MESSAGE(0, events.size(), name);
+    } else {
+      TEST_ASSERT_EQUAL_STRING_MESSAGE("rejected", outcome.c_str(), name);
+      TEST_ASSERT_EQUAL_MESSAGE(PrescriptionValidation::REJECTED, result.outcome, name);
+      TEST_ASSERT_EQUAL_UINT_MESSAGE(1, events.size(), name);
+      TEST_ASSERT_EQUAL_STRING_MESSAGE("prescription_rejected", events.back().type.c_str(), name);
+      TEST_ASSERT_EQUAL_STRING_MESSAGE(expected["reason"].as<const char*>(), result.reason.c_str(), name);
+    }
+    JsonObjectConst after = expected["status_after"].as<JsonObjectConst>();
+    const PumpSnapshot& snapshot = c.snapshot();
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(after["prescription_version"].as<uint32_t>(),
+        snapshot.hasPrescription ? snapshot.prescription.version : 0, name);
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(after["pending_version"].as<uint32_t>(),
+        snapshot.hasPending ? snapshot.pending.version : 0, name);
+    TEST_ASSERT_EQUAL_UINT32_MESSAGE(after["last_rejected_version"].as<uint32_t>(),
+        snapshot.lastRejectedVersion, name);
+    TEST_ASSERT_EQUAL_STRING_MESSAGE(after["last_reject_reason"].isNull() ? "" :
+        after["last_reject_reason"].as<const char*>(), snapshot.lastRejectReason.c_str(), name);
+  }
+}
+
+void reject_status_survives_replay_drop_queue_and_apply() {
+  auto c = controller();
+  receive(c, json(7));
+  receive(c, json(8, 500));
+  TEST_ASSERT_EQUAL_UINT32(8, c.snapshot().lastRejectedVersion);
+  TEST_ASSERT_EQUAL_STRING("rate_out_of_range", c.snapshot().lastRejectReason.c_str());
+  c.start(0);
+  c.tick(10);
+  receive(c, json(9));
+  const size_t count = events.size();
+  receive(c, json(9));
+  receive(c, json(7));
+  receive(c, "not-json");
+  TEST_ASSERT_EQUAL_UINT(count, events.size());
+  TEST_ASSERT_EQUAL_UINT32(8, c.snapshot().lastRejectedVersion);
+  TEST_ASSERT_EQUAL_STRING("rate_out_of_range", c.snapshot().lastRejectReason.c_str());
+  c.stop(20);
+  TEST_ASSERT_EQUAL_UINT32(9, c.snapshot().prescription.version);
+  TEST_ASSERT_EQUAL_UINT32(8, c.snapshot().lastRejectedVersion);
+  receive(c, json(10, 90, 2000));
+  TEST_ASSERT_EQUAL_UINT32(10, c.snapshot().lastRejectedVersion);
+  TEST_ASSERT_EQUAL_STRING("volume_out_of_range", c.snapshot().lastRejectReason.c_str());
+  std::string exponent = json(11);
+  exponent.replace(exponent.find("\"version\":11"), 12, "\"version\":1.1e1");
+  const auto invalid = receive(c, exponent);
+  TEST_ASSERT_EQUAL_STRING("malformed", invalid.reason.c_str());
+  TEST_ASSERT_EQUAL_UINT32(0, invalid.version);
+  TEST_ASSERT_EQUAL_UINT32(10, c.snapshot().lastRejectedVersion);
+}
+
 }  // namespace
 
 void setUp() {
@@ -499,9 +634,12 @@ int main() {
   RUN_TEST(reboot_restores_only_valid_prescription_and_stays_idle);
   RUN_TEST(simulated_delivery_pause_resume_and_completion);
   RUN_TEST(alarm_clear_pauses_and_requires_caregiver_resume);
+  RUN_TEST(alarm_injection_only_applies_to_running_or_paused_feeds);
   RUN_TEST(timers_and_delivery_survive_millis_wrap);
   RUN_TEST(measured_delivery_rejects_invalid_deltas_and_stops_at_target);
   RUN_TEST(completion_returns_idle_and_applies_pending);
   RUN_TEST(malformed_unversioned_input_never_fabricates_rejection_version);
+  RUN_TEST(shared_protocol_cases_pass_parser_and_controller);
+  RUN_TEST(reject_status_survives_replay_drop_queue_and_apply);
   return UNITY_END();
 }

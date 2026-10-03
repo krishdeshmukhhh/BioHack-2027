@@ -121,6 +121,63 @@ def test_two_hundred_unicode_characters_fit_and_apply():
     )
 
 
+def test_offline_serial_demo_starts_and_fault_clear_requires_separate_resume():
+    messages, errors = run([
+        {"command": "demo"},
+        {"command": "start"},
+        {"command": "tick", "elapsed_ms": 1000},
+        {"command": "tick", "elapsed_ms": 60000},
+        {"command": "occlusion"},
+        {"command": "clear"},
+        {"command": "tick", "elapsed_ms": 60000},
+        {"command": "resume"},
+        {"command": "tick", "elapsed_ms": 60000},
+    ])
+    assert not errors
+    validate(messages)
+    statuses = [m["payload"] for m in messages if m["topic"].endswith("/status")]
+    assert statuses[1]["prescription_version"] == 1
+    assert statuses[1]["rate_ml_hr"] == 60
+    assert statuses[1]["target_ml"] == 5
+    alarm = next(p for p in statuses if p["state"] == "alarm")
+    assert alarm["rate_ml_hr"] == 0
+    paused = [p for p in statuses if p["state"] == "paused"]
+    assert all(p["delivered_ml"] == pytest.approx(1) for p in paused)
+    assert statuses[-1]["state"] == "running"
+    assert statuses[-1]["delivered_ml"] == pytest.approx(2)
+
+
+def test_pending_replay_never_sets_rejection_recovery_fields():
+    commands = demo.demo_commands()[:5]
+    commands.append(commands[4])
+    commands.append({"command": "stop"})
+    messages, errors = run(commands)
+    assert not errors
+    validate(messages)
+    statuses = [m["payload"] for m in messages if m["topic"].endswith("/status")]
+    assert statuses[-2]["pending_version"] == 8
+    assert statuses[-1]["prescription_version"] == 8
+    assert all(p["last_rejected_version"] is None for p in statuses)
+    assert not any(
+        m["payload"].get("type") == "prescription_rejected"
+        for m in messages if isinstance(m["payload"], dict)
+    )
+
+
+def test_versioned_rejection_repeats_in_status_for_lost_event_recovery():
+    messages, errors = run([
+        demo.demo_commands()[0],
+        demo.demo_commands()[5],
+        {"command": "tick", "elapsed_ms": 2000},
+        {"command": "status"},
+    ])
+    assert not errors
+    validate(messages)
+    statuses = [m["payload"] for m in messages if m["topic"].endswith("/status")]
+    assert all(p["last_rejected_version"] == 9 for p in statuses[-3:])
+    assert all(p["last_reject_reason"] == "rate_out_of_range" for p in statuses[-3:])
+
+
 @pytest.mark.parametrize("bad", ["broken-json", "{}", "null"])
 def test_unversioned_malformed_input_never_claims_rejection_of_a_real_version(bad):
     messages, errors = run([{"command": "prescription", "payload": bad}])

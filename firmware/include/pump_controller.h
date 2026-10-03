@@ -28,6 +28,8 @@ struct PumpSnapshot {
   Prescription pending;
   double deliveredMl = 0;
   std::string alarm;
+  uint32_t lastRejectedVersion = 0;  // Serialize as null until a versioned rejection.
+  std::string lastRejectReason;     // Serialize empty as null.
 };
 
 class PumpController {

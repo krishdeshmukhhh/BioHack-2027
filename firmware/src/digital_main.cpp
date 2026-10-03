@@ -8,6 +8,7 @@
 #include <iterator>
 #include <string>
 #include "config.h"
+#include "demo_fixture.h"
 #include "pump_controller.h"
 #include "telemetry.h"
 
@@ -66,7 +67,8 @@ int main(int argc, char** argv) {
     } else if (command == "tick" && request["elapsed_ms"].is<uint32_t>()) {
       now += request["elapsed_ms"].as<uint32_t>();
       controller.tick(now);
-    } else if (command == "start") accepted = controller.start(now);
+    } else if (command == "demo") accepted = loadDemoPrescription(controller, PUMP_ID, now);
+    else if (command == "start") accepted = controller.start(now);
     else if (command == "pause") accepted = controller.pause(now);
     else if (command == "resume") accepted = controller.resume(now);
     else if (command == "stop") accepted = controller.stop(now);

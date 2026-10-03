@@ -6,6 +6,9 @@
 #include "actuator.h"
 #include "buttons.h"
 #include "config.h"
+#ifdef LOCAL_DEMO
+#include "demo_fixture.h"
+#endif
 #include "mqtt_link.h"
 #include "pump_controller.h"
 #include "telemetry.h"
@@ -60,19 +63,32 @@ void toggleFeed(uint32_t now) {
 
 void handleCommand(const std::string& command, uint32_t now) {
   if (restarting) return;
-  if (command == "start") controller.start(now);
-  else if (command == "pause") controller.pause(now);
-  else if (command == "resume") controller.resume(now);
-  else if (command == "stop") controller.stop(now);
-  else if (command == "occlusion") controller.raiseAlarm("occlusion", now);
-  else if (command == "bag_empty") controller.raiseAlarm("bag_empty", now);
-  else if (command == "clear") controller.clearAlarm(now);
+  bool accepted = true;
+  if (command == "demo") {
+#ifdef LOCAL_DEMO
+    accepted = pendingEvents.size() < LOCAL_EVENT_LIMIT - 4 &&
+               loadDemoPrescription(controller, PUMP_ID, now);
+    if (accepted) logLine("Confirmed local digital demo loaded. Enter start to simulate delivery.");
+#else
+    // A local version the hub never issued would make the portal show a false
+    // "Active on pump" (S5). Only the esp32dev_offline build has this command.
+    logLine("demo is only in the esp32dev_offline build (no hub). Use the portal.");
+    accepted = false;
+#endif
+  } else if (command == "start") accepted = controller.start(now);
+  else if (command == "pause") accepted = controller.pause(now);
+  else if (command == "resume") accepted = controller.resume(now);
+  else if (command == "stop") accepted = controller.stop(now);
+  else if (command == "occlusion") accepted = controller.raiseAlarm("occlusion", now);
+  else if (command == "bag_empty") accepted = controller.raiseAlarm("bag_empty", now);
+  else if (command == "clear") accepted = controller.clearAlarm(now);
   else if (command == "status") {
     logLine(statusJson(controller.snapshot(), PUMP_ID, now, true).c_str());
   } else if (command == "reboot" && controller.snapshot().state == PumpState::IDLE) {
     restarting = true;
     mqtt_link::requestShutdown(true);
-  } else logLine("commands: start pause resume stop occlusion bag_empty clear status reboot (idle)");
+  } else logLine("commands: demo start pause resume stop occlusion bag_empty clear status reboot (idle)");
+  if (!accepted) logLine("Command unavailable in current state. Load demo while idle before start; clear alarm before resume.");
 }
 
 void readConsole(uint32_t now) {
@@ -89,6 +105,7 @@ void setup() {
   Serial.setTxBufferSize(2048);
   Serial.begin(115200);
   Serial.println("Smart pump prototype: ESP32 with simulated delivery; no person connected.");
+  Serial.println("For an offline test, enter demo then start (newline after each command).");
   actuator.begin();
   occlusion.begin(); bagEmpty.begin(); pauseButton.begin();
   storageReady = preferences.begin("pump", false);

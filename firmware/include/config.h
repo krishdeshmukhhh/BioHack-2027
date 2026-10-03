@@ -12,7 +12,7 @@ constexpr unsigned int MQTT_TASK_STACK_SIZE = 8192;
 constexpr unsigned int MQTT_EVENT_QUEUE_LENGTH = 32;
 constexpr unsigned int MQTT_INBOUND_QUEUE_LENGTH = 8;
 constexpr unsigned long PRIMING_DURATION_MS = 1000;
-constexpr unsigned long COMPLETE_DURATION_MS = 1000;
+constexpr unsigned long COMPLETE_DURATION_MS = 5000;
 constexpr unsigned long BUTTON_DEBOUNCE_MS = 40;
 constexpr unsigned long BUTTON_STOP_HOLD_MS = 1500;
 
