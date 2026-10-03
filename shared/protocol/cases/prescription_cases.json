@@ -1,0 +1,1035 @@
+{
+ "description": "Prescription test cases shared by the firmware and the simulator. See docs/PROTOCOL.md 'Shared test cases'. Demo values only.",
+ "pump_id": "pump-001",
+ "setup_note": "current_version N: a persisted prescription vN at 60 mL/hr, 500 mL. state: idle; running (a feed started, past priming); paused. pending_version P: from a running feed, send a valid vP (queued).",
+ "cases": [
+  {
+   "name": "valid, idle: applied",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "applied",
+    "status_after": {
+     "prescription_version": 8,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "valid, running: queued (S4)",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "running"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "queued",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": 8,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "valid, paused: queued (S4)",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "paused"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "queued",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": 8,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "newer than pending replaces it",
+   "setup": {
+    "current_version": 7,
+    "pending_version": 9,
+    "state": "running"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":10,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "queued",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": 10,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "replay of current: ignored silently",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":7,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "ignored",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "replay of pending: ignored silently",
+   "setup": {
+    "current_version": 7,
+    "pending_version": 9,
+    "state": "running"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":9,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "ignored",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": 9,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "below current: stale",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":6,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "stale_version",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 6,
+     "last_reject_reason": "stale_version"
+    }
+   }
+  },
+  {
+   "name": "between current and pending: stale",
+   "setup": {
+    "current_version": 7,
+    "pending_version": 9,
+    "state": "running"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "stale_version",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": 9,
+     "last_rejected_version": 8,
+     "last_reject_reason": "stale_version"
+    }
+   }
+  },
+  {
+   "name": "wrong pump",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-002\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "wrong_pump",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "wrong_pump"
+    }
+   }
+  },
+  {
+   "name": "missing confirmed_by",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "not_confirmed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "not_confirmed"
+    }
+   }
+  },
+  {
+   "name": "empty confirmed_by",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "not_confirmed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "not_confirmed"
+    }
+   }
+  },
+  {
+   "name": "missing confirmed_at",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "not_confirmed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "not_confirmed"
+    }
+   }
+  },
+  {
+   "name": "empty confirmed_at",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "not_confirmed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "not_confirmed"
+    }
+   }
+  },
+  {
+   "name": "confirmed_by null",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":null,\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   }
+  },
+  {
+   "name": "confirmed_by not a string",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":5,\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   }
+  },
+  {
+   "name": "confirmed_at not a date-time",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"yesterday\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   }
+  },
+  {
+   "name": "unknown key",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\",\"extra\":1}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   }
+  },
+  {
+   "name": "missing proposed_by",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   }
+  },
+  {
+   "name": "empty proposed_by",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   }
+  },
+  {
+   "name": "proposed_at not a date-time",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"soon\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   }
+  },
+  {
+   "name": "empty pump_id",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   }
+  },
+  {
+   "name": "pump_id not a string",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":7,\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   }
+  },
+  {
+   "name": "mode not allowed",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"drip\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   }
+  },
+  {
+   "name": "rate is a string",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":\"90\",\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   }
+  },
+  {
+   "name": "rate is a boolean",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":true,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   }
+  },
+  {
+   "name": "volume missing",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   }
+  },
+  {
+   "name": "rate too large to represent",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":10000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   },
+   "beyond_schema": "PROTOCOL.md check 1 edge case, stricter than JSON Schema"
+  },
+  {
+   "name": "rate 1e999 (overflows to infinity)",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":1e999,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   },
+   "beyond_schema": "PROTOCOL.md check 1 edge case, stricter than JSON Schema"
+  },
+  {
+   "name": "note 201 characters",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"ééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   }
+  },
+  {
+   "name": "note 200 characters (2-byte UTF-8): applied",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"éééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééééé\"}",
+   "expect": {
+    "outcome": "applied",
+    "status_after": {
+     "prescription_version": 8,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "no note: applied",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\"}",
+   "expect": {
+    "outcome": "applied",
+    "status_after": {
+     "prescription_version": 8,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "not JSON",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{oops",
+   "expect": {
+    "outcome": "dropped",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "NaN is not JSON",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":NaN,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "dropped",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "JSON array",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "[1,2]",
+   "expect": {
+    "outcome": "dropped",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "version missing",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "dropped",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "version 0",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":0,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "dropped",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "version 8.0 is not an integer",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8.0,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "dropped",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   },
+   "beyond_schema": "PROTOCOL.md check 1 edge case, stricter than JSON Schema"
+  },
+  {
+   "name": "version above int32",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":2147483648,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "dropped",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "version int32 max: applied",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":2147483647,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "applied",
+    "status_after": {
+     "prescription_version": 2147483647,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "rate at minimum (1): applied",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":1,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "applied",
+    "status_after": {
+     "prescription_version": 8,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "rate at maximum (150): applied",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":150,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "applied",
+    "status_after": {
+     "prescription_version": 8,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "rate below minimum",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":0.99,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "rate_out_of_range",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "rate_out_of_range"
+    }
+   }
+  },
+  {
+   "name": "rate above maximum",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":150.01,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "rate_out_of_range",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "rate_out_of_range"
+    }
+   }
+  },
+  {
+   "name": "rate 500",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":500,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "rate_out_of_range",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "rate_out_of_range"
+    }
+   }
+  },
+  {
+   "name": "rate zero",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":0,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "rate_out_of_range",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "rate_out_of_range"
+    }
+   }
+  },
+  {
+   "name": "rate negative",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":-5,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "rate_out_of_range",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "rate_out_of_range"
+    }
+   }
+  },
+  {
+   "name": "volume at maximum (1000): applied",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":1000,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "applied",
+    "status_after": {
+     "prescription_version": 8,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "volume above maximum",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":1000.5,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "volume_out_of_range",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "volume_out_of_range"
+    }
+   }
+  },
+  {
+   "name": "volume zero",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":0,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "volume_out_of_range",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "volume_out_of_range"
+    }
+   }
+  },
+  {
+   "name": "order: malformed before wrong pump",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-002\",\"version\":8,\"mode\":\"drip\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   }
+  },
+  {
+   "name": "order: wrong pump before not confirmed",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-002\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "wrong_pump",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "wrong_pump"
+    }
+   }
+  },
+  {
+   "name": "order: not confirmed before stale",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":6,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "not_confirmed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 6,
+     "last_reject_reason": "not_confirmed"
+    }
+   }
+  },
+  {
+   "name": "order: stale before rate",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":6,\"mode\":\"continuous\",\"rate_ml_hr\":500,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "stale_version",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 6,
+     "last_reject_reason": "stale_version"
+    }
+   }
+  },
+  {
+   "name": "order: rate before volume",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":500,\"volume_ml\":5000,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "rate_out_of_range",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "rate_out_of_range"
+    }
+   }
+  },
+  {
+   "name": "order: replay before limits (an old retained message never re-rejects)",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":7,\"mode\":\"continuous\",\"rate_ml_hr\":500,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "ignored",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  }
+ ]
+}

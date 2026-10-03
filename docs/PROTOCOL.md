@@ -65,6 +65,17 @@ The ESP32 can only publish QoS 0 (see `topics.md`), so a `prescription_rejected`
 
 A rejection event must carry a `version`. So a `malformed` payload with a readable integer `version` from 1 to 2147483647 is rejected as usual. One without a readable `version` is dropped with a log line only, and the status fields stay unchanged.
 
+## Shared test cases
+
+`shared/protocol/cases/prescription_cases.json` is the executable form of the check order above: about 55 cases, each with the pump's starting setup, the exact payload text, and the expected outcome (`applied`, `queued`, `ignored`, `dropped`, or `rejected` with a reason) plus the status fields afterwards. Both pumps must pass every case:
+
+- **Simulator:** `sim/test_protocol_cases.py`, part of `make test`.
+- **Firmware:** the native Unity tests read the same file and feed each `payload` to `parsePrescription` and the controller from the given `setup` (a persisted v7 at 60 mL/hr and 500 mL; `running` means a feed started and past priming; a pending version is queued from a running feed).
+
+Payloads are stored as raw text so number edge cases (`8.0`, `1e999`, a 400-digit integer, `NaN`) are exact. Cases marked `beyond_schema` are the check 1 edge cases above that JSON Schema cannot express; every other case agrees with `prescription.schema.json` (checked in `shared/protocol/test_examples.py`).
+
+Adding a behaviour rule means adding a case here first; that is the protocol-first rule in practice.
+
 ## Pump behaviour the hub can see
 
 - **Status `rate_ml_hr`:** the applied prescription's rate, `0` when no prescription is applied, and `0` in `alarm` (the actuator is stopped).
@@ -99,3 +110,4 @@ Record any rename, removal, or change of meaning here with the date.
 - 2026-10-03: clarified check 1 edge cases, status `rate_ml_hr` in idle and alarm, and the automatic `complete` to `idle` after 5 s. Clarifications only; nothing renamed or removed.
 - 2026-10-03: `version` in a prescription has a maximum of 2147483647 (schema and check 1), and an unrepresentable number is `malformed`. From the sim safety review.
 - 2026-10-03 (Sync 1): check 1 is now the full prescription schema shape (unknown keys, `proposed_*`, date-times, note length), adopted from the firmware, which is the stricter and safer of the two. A non-string `confirmed_by`/`confirmed_at` is `malformed`; missing or empty is still `not_confirmed`. Rate or volume of 0 or less is still `*_out_of_range`. Pump events and `online` are now published at QoS 1 (the firmware uses 256dpi arduino-mqtt); see `topics.md`.
+- 2026-10-03: added the shared prescription test cases. No behaviour change; they encode the rules above.
