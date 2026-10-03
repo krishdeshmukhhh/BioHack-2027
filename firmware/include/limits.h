@@ -7,7 +7,13 @@
 // DEMO VALUES ONLY. These are not clinical guidance.
 #pragma once
 
+// PlatformIO adds this directory to the compiler's system-header search path.
+// Preserve the C <limits.h> definitions when this file shadows that name.
+#include_next <limits.h>
+
+#ifdef __cplusplus
 constexpr float LIMIT_RATE_MIN_ML_HR = 1.0f;
 constexpr float LIMIT_RATE_MAX_ML_HR = 150.0f;
 constexpr float LIMIT_VOLUME_MIN_ML = 1.0f;
 constexpr float LIMIT_VOLUME_MAX_ML = 1000.0f;
+#endif
