@@ -12,6 +12,7 @@ import { initHistory } from "./history.js";
 import { initPatients } from "./patients.js";
 import { initProfiles } from "./profiles.js";
 import { initPropose } from "./propose.js";
+import { initSummary } from "./summary.js";
 import { initTimeline } from "./timeline.js";
 
 const $ = (id) => document.getElementById(id);
@@ -23,6 +24,7 @@ const repaintNight = initNightToggle($("night-toggle"));
 
 const store = createPumpStore(pumpId).start();
 let patientName = null;
+let shownPatient;
 
 function renderLive(state) {
   renderConnection($("conn"), $("conn-live"), state);
@@ -41,16 +43,22 @@ function renderLive(state) {
 store.subscribe(renderLive);
 
 const chart = initChart(store);
+const profiles = initProfiles();
+const summary = initSummary();
 const patients = initPatients(store, (rows) => {
   const me = rows.find((p) => p.pump_id === pumpId);
   patientName = me?.display_name || null;
   if (me) chart.setPatient(me.id);
   else chart.noPatients();
+  if (me?.id !== shownPatient) {
+    shownPatient = me?.id;
+    profiles.setPatient(me?.id);
+    summary.setPatient(me?.id);
+  }
   renderLive(store.state);
 });
 initHistory(store);
 const propose = initPropose(pumpId);
-const profiles = initProfiles();
 initTimeline(store);
 const audit = initAudit(store);
 
@@ -59,6 +67,7 @@ initLanguageSelect($("language"), () => {
   repaintNight();
   propose?.rerender?.();
   profiles.rerender();
+  summary.rerender();
   audit.rerender();
   chart.rerender();
   patients.render();

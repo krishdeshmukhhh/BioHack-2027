@@ -287,6 +287,22 @@ export default {
   profile_school: "School day",
   profile_applied: "Form filled from “{name}”. Check it, then propose.",
 
+  // Sync 2 contract additions
+  error_stale_version: "A newer change was already sent to the pump, so this one cannot be confirmed.",
+  exc_alarm_active: "Alarm now",
+  summary_title: "Weekly summary",
+  summary_range: "{from} to {to}",
+  summary_delivered: "Delivered {pct}% of prescribed over {days} days.",
+  summary_prior: "Previous week: {pct}%.",
+  trend_improving: "Trend: improving",
+  trend_steady: "Trend: steady",
+  trend_declining: "Trend: declining",
+  summary_under: "Days under 90% of prescribed: {count}.",
+  summary_alarms: "Alarms: {count} ({list}).",
+  summary_no_alarms: "No alarms this week.",
+  summary_none: "No history loaded yet.",
+  profiles_none: "No feed profiles for this patient.",
+
   users: {
     "clin-01": "Dr. Demo",
     "care-01": "Parent (demo)",

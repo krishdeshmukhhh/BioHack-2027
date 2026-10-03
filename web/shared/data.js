@@ -60,7 +60,7 @@ async function request(method, path, body) {
   return data;
 }
 
-const KNOWN_ERRORS = ["invalid_input", "not_proposed", "unknown_pump", "network"];
+const KNOWN_ERRORS = ["invalid_input", "not_proposed", "stale_version", "unknown_pump", "network"];
 
 /** True when the hub does not offer this endpoint yet (or has no such record). */
 export const isNotAvailable = (err) => err?.status === 404 && err?.code !== "unknown_pump";
@@ -78,6 +78,8 @@ export const api = {
   alerts: (id) => request("GET", `${pumpPath(id)}/alerts`),
   audit: (id) => request("GET", `${pumpPath(id)}/audit`),
   patients: () => request("GET", "/api/patients"),
+  summary: (patientId) => request("GET", `/api/patients/${encodeURIComponent(patientId)}/summary`),
+  profiles: (patientId) => request("GET", `/api/patients/${encodeURIComponent(patientId)}/profiles`),
   daily: (patientId, days = 30) =>
     request("GET", `/api/patients/${encodeURIComponent(patientId)}/daily?days=${days}`),
   propose: (id, body) => request("POST", `${pumpPath(id)}/prescriptions`, body),

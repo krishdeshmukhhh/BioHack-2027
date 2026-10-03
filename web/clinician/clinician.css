@@ -80,3 +80,7 @@ details summary { min-height: var(--target); display: flex; align-items: center;
 .timeline { list-style: none; margin: 0; padding: 0; }
 .timeline li { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 12px; padding: 8px 0; border-bottom: 1px solid var(--surface-2); }
 .timeline time { color: var(--text-muted); min-width: 5.5em; }
+
+/* ---- Weekly summary ---- */
+.summary-list { margin: 0; padding-left: 1.2em; }
+.summary-list li { margin-bottom: 4px; }

@@ -54,6 +54,15 @@ OFFLINE_AFTER_S = 10.0
 DELIVERY_DELAY_S = 1.0  # so the chip visibly shows Sent before the pump answers
 KEEPALIVE_S = 15.0
 NOTE_MAX = 200
+UNDER_FRACTION = 0.9
+WEEK_DAYS = 7
+# Same demo feed profiles as hub/app/reports.py (FR-28). Demo values, not guidance.
+DEMO_PROFILES = [
+    ("pat-01", "Overnight continuous", "continuous", 60.0, 500.0),
+    ("pat-01", "Daytime bolus", "bolus", 120.0, 200.0),
+    ("pat-02", "Overnight continuous", "continuous", 50.0, 400.0),
+    ("pat-03", "Overnight continuous", "continuous", 40.0, 350.0),
+]
 
 
 def now_iso() -> str:
@@ -229,7 +238,7 @@ class MockHub:
                     self._resolve(pump, rx, "superseded", None)
         elif kind == "alarm_raised":
             alert = {"pump_id": pump.pump_id, "alarm": msg["alarm"], "active": True,
-                     "raised_at": now_iso(), "cleared_at": None}
+                     "raised_at": now_iso(), "cleared_at": None, "simulated": True}
             pump.alerts.insert(0, alert)
             self._broadcast(pump, "alert", alert)
         elif kind == "alarm_cleared":
@@ -358,6 +367,11 @@ class MockHub:
             raise ApiError(422, "invalid_input", "confirmed_by must be a caregiver.")
         if rx["state"] != "proposed":
             raise ApiError(HTTPStatus.CONFLICT, "not_proposed", f"State is {rx['state']}.")
+        newer = [v for v, r in pump.prescriptions.items()
+                 if v > rx["version"] and r["state"] in ("confirmed", "sent", "active")]
+        if newer:  # S3: never publish below a version that was already sent
+            raise ApiError(HTTPStatus.CONFLICT, "stale_version",
+                           f"version {max(newer)} was already confirmed or sent")
         rx.update(state="confirmed", confirmed_by=who, confirmed_role=role,
                   confirmed_at=now_iso())
         self._audit(who, role, rx, "confirmed", "proposed", "confirmed")
@@ -390,6 +404,8 @@ class MockHub:
                 exceptions.append("under_target")
             if self._night_alarm_count(p["id"]) > 2:
                 exceptions.append("night_alarms")
+            if pump and pump.status and pump.status.get("alarm"):
+                exceptions.append("alarm_active")
             rows.append({"id": p["id"], "display_name": p["display_name"],
                          "pump_id": p["pump_id"], "exceptions": exceptions,
                          "online": online, "simulated": True})
@@ -416,11 +432,63 @@ class MockHub:
         return [{k: d[k] for k in ("date", "delivered_ml", "prescribed_ml", "alarm_count",
                                    "simulated")} for d in rows]
 
+    def _patient(self, patient_id: str) -> None:
+        if not any(p["id"] == patient_id for p in self.history["patients"]):
+            raise ApiError(HTTPStatus.NOT_FOUND, "unknown_patient", f"No patient {patient_id}.")
+
+    def summary(self, patient_id: str) -> dict[str, Any]:
+        """Same rules as hub/app/reports.py weekly_summary (FR-21). Facts only."""
+        self._patient(patient_id)
+        rows = [d for d in self.history["daily"] if d["patient_id"] == patient_id][-WEEK_DAYS * 2:]
+        week, prior = rows[-WEEK_DAYS:], rows[:-WEEK_DAYS]
+
+        def pct(part: list[dict[str, Any]]) -> float | None:
+            prescribed = sum(r["prescribed_ml"] for r in part)
+            if not prescribed:
+                return None
+            return round(100 * sum(r["delivered_ml"] for r in part) / prescribed, 1)
+
+        week_pct, prior_pct = pct(week), pct(prior)
+        if week_pct is None or prior_pct is None:
+            trend = None
+        elif week_pct - prior_pct >= 5:
+            trend = "improving"
+        elif prior_pct - week_pct >= 5:
+            trend = "declining"
+        else:
+            trend = "steady"
+        alarms: dict[str, int] = {}
+        if week:
+            for a in self.history["alarms"]:
+                if a["patient_id"] == patient_id and a["raised_at"][:10] >= week[0]["date"]:
+                    alarms[a["alarm"]] = alarms.get(a["alarm"], 0) + 1
+        alarms = dict(sorted(alarms.items(), key=lambda kv: (-kv[1], kv[0])))
+        return {
+            "patient_id": patient_id,
+            "from_date": week[0]["date"] if week else None,
+            "to_date": week[-1]["date"] if week else None,
+            "days": len(week), "delivered_pct": week_pct, "prior_week_delivered_pct": prior_pct,
+            "trend": trend,
+            "days_under_target": sum(r["delivered_ml"] < UNDER_FRACTION * r["prescribed_ml"]
+                                     for r in week),
+            "alarm_count": sum(alarms.values()), "alarms_by_code": alarms, "simulated": True,
+        }
+
+    def profiles(self, patient_id: str) -> list[dict[str, Any]]:
+        self._patient(patient_id)
+        return [
+            {"id": i, "patient_id": pid, "name": name, "mode": mode, "rate_ml_hr": rate,
+             "volume_ml": volume, "simulated": True}
+            for i, (pid, name, mode, rate, volume) in enumerate(DEMO_PROFILES, start=1)
+            if pid == patient_id
+        ]
+
     def snapshot(self, pump: Pump) -> list[tuple[str, dict[str, Any]]]:
         events = [("status", pump.status_view()), ("availability", pump.availability())]
         for v in sorted(pump.prescriptions):
             if pump.prescriptions[v]["state"] in OPEN_STATES:
                 events.append(("prescription", pump.prescriptions[v]))
+        events += [("alert", a) for a in pump.alerts if a["active"]]
         return [(e, json.loads(json.dumps(d))) for e, d in events]
 
     # ---- mock-only controls (what a caregiver or fault does at the pump) ---
@@ -561,6 +629,12 @@ class Handler(BaseHTTPRequestHandler):
         if parts == ["api", "patients"] and method == "GET":
             with hub.lock:
                 self._send_json(200, hub.patients())
+            return
+        if len(parts) == 4 and parts[:2] == ["api", "patients"] and parts[3] == "summary":
+            self._send_json(200, hub.summary(parts[2]))
+            return
+        if len(parts) == 4 and parts[:2] == ["api", "patients"] and parts[3] == "profiles":
+            self._send_json(200, hub.profiles(parts[2]))
             return
         if len(parts) == 4 and parts[:2] == ["api", "patients"] and parts[3] == "daily":
             raw = (query.get("days") or ["30"])[0]
