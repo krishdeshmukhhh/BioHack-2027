@@ -35,6 +35,12 @@ Check 1 is a fixed list, so the firmware and the simulator agree exactly. The pa
 - `mode`: `continuous` or `bolus`
 - `rate_ml_hr` and `volume_ml`: numbers (any value; the range is checked in 5 and 6)
 
+Edge cases for check 1, the same in the firmware and the sim:
+
+- A boolean is never a number. `version` must be a JSON integer: `3.0` is malformed.
+- A payload that is not valid JSON (including `NaN` or `Infinity`) has no readable version, so it is dropped with a log line.
+- The limits in checks 5 and 6 are inclusive at both ends.
+
 `confirmed_by` and `confirmed_at` are **not** part of check 1. If they are missing, empty, or not strings, the reason is `not_confirmed` (check 3). The other fields (`proposed_by`, `proposed_at`, `note`) are not checked by the pump.
 
 If all checks pass:
@@ -52,6 +58,15 @@ The ESP32 can only publish QoS 0 (see `topics.md`), so a `prescription_rejected`
 - `last_reject_reason`: the same reason as the event
 
 A rejection event must carry a `version`. So a `malformed` payload with a readable integer `version` of at least 1 is rejected as usual. One without a readable `version` is dropped with a log line only, and the status fields stay unchanged.
+
+## Pump behaviour the hub can see
+
+- **Status `rate_ml_hr`:** the applied prescription's rate, `0` when no prescription is applied, and `0` in `alarm` (the actuator is stopped).
+- **`complete` to `idle`:** automatic, 5 seconds after reaching `complete`. Any pending prescription is applied on that entry to idle.
+- **Feed start:** only from `idle` with a prescription applied. `delivered_ml` resets to 0 at the start of each feed.
+- **Event order:** an alarm sends `alarm_raised` then `state_changed`. A clear sends `alarm_cleared` then `state_changed` to `paused`. A queued apply sends `state_changed` to `idle` then `prescription_applied`.
+- **Timing:** status goes out on the 2 s timer only, not immediately after an event.
+- **Pending:** a newer valid prescription replaces an older pending one.
 
 ## How the hub decides lifecycle state
 
@@ -75,3 +90,4 @@ A rejection event must carry a `version`. So a `malformed` payload with a readab
 Record any rename, removal, or change of meaning here with the date.
 
 - 2026-10-03 (`contract-v1`): added the optional status fields `last_rejected_version` and `last_reject_reason` (PRD R1). Pump-to-hub publishes are QoS 0 to match PubSubClient; `topics.md` was corrected. A replay equal to the pending version is now ignored silently, like one equal to the current version. Additive only; no field renamed or removed.
+- 2026-10-03: clarified check 1 edge cases, status `rate_ml_hr` in idle and alarm, and the automatic `complete` to `idle` after 5 s. Clarifications only; nothing renamed or removed.

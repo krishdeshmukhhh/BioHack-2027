@@ -195,7 +195,7 @@ flowchart TD
     C -- no --> Rw[reject: wrong_pump]
     C -- yes --> D{confirmed_by and<br/>confirmed_at non-empty?}
     D -- no --> Rc[reject: not_confirmed]
-    D -- yes --> E{version == current?}
+    D -- yes --> E{version == current<br/>or == pending?}
     E -- yes --> Ig([ignore silently<br/>retained replay, S3])
     E -- no --> F{version > current<br/>and > pending?}
     F -- no --> Rs[reject: stale_version]
@@ -207,7 +207,7 @@ flowchart TD
     I -- yes --> Ap[apply, persist NVS,<br/>event prescription_applied]
     I -- no --> Qu[store pending,<br/>event prescription_queued]
 
-    Rm & Rw & Rc & Rs & Rr & Rv --> X[publish prescription_rejected + reason<br/>state unchanged]
+    Rm & Rw & Rc & Rs & Rr & Rv --> X[publish prescription_rejected + reason,<br/>set status last_rejected_*,<br/>state unchanged]
 ```
 
 ## 7. Pump state machine
@@ -222,7 +222,7 @@ stateDiagram-v2
     running --> paused: pause
     paused --> running: resume
     running --> complete: delivered >= target
-    complete --> idle
+    complete --> idle: after 5 s
     running --> alarm: fault
     paused --> alarm: fault
     alarm --> paused: cleared by caregiver at pump
