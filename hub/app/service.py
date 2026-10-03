@@ -101,6 +101,7 @@ class Hub:
         for p in reversed(prescriptions.list_for_pump(self.conn, pump_id)):
             if p["state"] in SNAPSHOT_STATES:
                 events.append(("prescription", p))
+        events += [("alert", a) for a in alerts.active_for_pump(self.conn, pump_id)]
         return events
 
     # --- web actions ---

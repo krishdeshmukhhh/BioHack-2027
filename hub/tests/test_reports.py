@@ -168,3 +168,13 @@ def test_history_file_shape_matches_the_contract_example(tmp_path):
     generate_history.write(generate_history.generate(end_date=TODAY), path)
     data = json.loads(path.read_text())
     assert {"simulated", "patients", "daily", "alarms"} <= set(data)
+
+
+def test_alarm_active_flags_the_patient_until_cleared(hub, client):
+    send(hub, "status", example("status.running"))
+    assert "alarm_active" not in by_id(client)["pat-01"]["exceptions"]
+    send(hub, "status", example("status.alarm"))
+    assert by_id(client)["pat-01"]["exceptions"] == ["alarm_active"]
+    assert client.get("/api/patients").json()[0]["id"] == "pat-01"
+    send(hub, "status", example("status.running"))
+    assert by_id(client)["pat-01"]["exceptions"] == []
