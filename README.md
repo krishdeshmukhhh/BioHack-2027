@@ -9,10 +9,10 @@ A prototype smart enteral feeding pump system: a clinician programs the pump rem
 | Folder | What it is | Runs on |
 |---|---|---|
 | `firmware/` | Pump controller: state machine, safety limits, MQTT | ESP32 |
-| `hub/` | Home hub: API, database, MQTT bridge, serves the web apps | Raspberry Pi (or a laptop) |
+| `hub/` | Home hub: API, database, MQTT bridge, serves the web apps | Hub laptop, in Docker (`compose.yaml`) |
 | `web/clinician/` | Clinician portal: prescriptions, exception dashboard | Browser |
 | `web/family/` | Family app: confirm changes, progress, plain-language alerts | Browser (phone) |
-| `sim/` | Software pump simulator and demo data generator | Laptop or Pi |
+| `sim/` | Software pump simulator and demo data generator | Laptop (or Docker) |
 | `shared/protocol/` | JSON schemas for every MQTT message (the contract) | n/a |
 | `fpga/` | Stretch goal: independent hardware safety watchdog | FPGA |
 | `docs/` | Plan, architecture, protocol, safety, demo script | n/a |

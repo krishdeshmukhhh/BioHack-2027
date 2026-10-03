@@ -4,9 +4,9 @@ Target: about three minutes of live demo. Rehearse it timed. Adjust once the slo
 
 ## Setup before you walk up
 
-- Pi on, `make broker` and `make hub` running, pump (or `make sim`) online
+- Hub laptop on the demo network with `make docker-up` running (broker and hub in Docker), pump online (or `make docker-sim`). Without Docker: `make broker` and `make hub`
 - Laptop on the clinician portal, phone on the family app, both on the demo network
-- System reset to the starting state: version 7 active at 60 mL/hr, pump idle. With the hub and simulator stopped and the broker up, run `make reset-demo`, then `make hub` and `python -m sim.pump_sim --demo-seed`
+- System reset to the starting state: version 7 active at 60 mL/hr, pump idle. With the hub and simulator stopped and the broker up, run `make reset-demo`, then `make hub` and `python -m sim.pump_sim --demo-seed`. In Docker: `make docker-reset`, then start the pump
 - Rehearse steps 6 to 8 hands-free with `python -m sim.pump_sim --demo-seed --scenario occlusion --speed 60`. On stage, use the keys (`s`, `o`, `c`, `p`) so the presenter controls the timing
 - Fallbacks ready: simulator, screen recording
 - Exactly one pump per `PUMP_ID` on the broker. A leftover `make sim` with the same id as the ESP32 makes both flap online and offline every second. Check with `mosquitto_sub -t 'pump/+/availability' -v`.
@@ -31,7 +31,7 @@ Target: about three minutes of live demo. Rehearse it timed. Adjust once the slo
 
 - "The portal says active only when the pump itself reports the new version."
 - "The pump refused that change on its own. The limit is in the device, not the app."
-- "Everything you saw is running on a Raspberry Pi with no internet."
+- "Everything you saw is running on one laptop with no internet."
 - "This is a prototype with simulated data. Here is what a real product would still need."
 
 ## If something breaks

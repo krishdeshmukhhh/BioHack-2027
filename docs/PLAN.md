@@ -26,7 +26,7 @@ Our deliverables:
 Four parts, one loop. Details in `ARCHITECTURE.md`.
 
 - **Pump** (ESP32): state machine, hard limits, MQTT. A motor if we have one, otherwise an LED or display stand-in with modelled delivery.
-- **Hub** (Raspberry Pi): MQTT broker, API, SQLite, serves the web apps. Works with no internet.
+- **Hub** (one laptop running Docker; the Pi broke): MQTT broker, API, SQLite, serves the web apps. Works with no internet.
 - **Clinician portal** and **family app** (static web pages).
 - **Simulator**: a software pump identical on the wire, plus generated history. Unblocks software work and is our fallback on demo day.
 
@@ -70,7 +70,7 @@ Adjust to who you have. One person can hold two roles.
 | Role | Owns | Subagent to use |
 |---|---|---|
 | Firmware | `firmware/`, wiring, bench testing | `firmware-engineer` |
-| Hub | `hub/`, the Pi, the broker | `hub-engineer` |
+| Hub | `hub/`, the hub laptop (Docker), the broker | `hub-engineer` |
 | Web | `web/`, accessibility checks | `web-engineer` |
 | Sim, data, and pitch | `sim/`, demo script, slides | `sim-engineer` |
 
@@ -86,11 +86,11 @@ Each phase ends with an acceptance check you can show to someone. Do not start t
 - [x] Protocol schemas with validated examples
 - [x] Stubs that build and a passing test suite
 - [ ] Everyone clones, runs `make setup` and `make test`
-- [ ] Pi set up with `scripts/setup_pi.sh`
+- [ ] Hub laptop set up with Docker (`make docker-up`); the Pi broke
 - [ ] Decide: do we have a motor or pump head? If not, set `DELIVERY_SIMULATED 1` and plan an LED or display stand-in
 - [ ] Fill in the time budget in section 8
 
-**Check:** `make test` passes on every laptop and on the Pi.
+**Check:** `make test` passes on every laptop, and `make docker-up` works on the hub laptop.
 
 ### Phase 1: Walking skeleton (data flows one way, pump to screen)
 
@@ -159,7 +159,7 @@ Each phase ends with an acceptance check you can show to someone. Do not start t
 - [ ] Write and rehearse `docs/DEMO.md` at least three times, timed
 - [ ] Run the whole demo with the internet off
 - [ ] Fallback 1: simulator in place of the ESP32. Fallback 2: a screen recording
-- [ ] Fixed IP or hostname for the Pi; phone and laptop pre-joined to the demo network
+- [ ] Fixed IP for the hub laptop; phone and laptop pre-joined to the demo network
 - [ ] Reset script that returns the system to the starting state
 - [ ] Slides: problem, what exists today, our loop, safety design, cost argument, limits of the prototype, next steps
 - [ ] Freeze code one hour before judging
@@ -171,7 +171,7 @@ Each phase ends with an acceptance check you can show to someone. Do not start t
 | Risk | What we do about it |
 |---|---|
 | Hardware not ready or fails on stage | Simulator is wire-identical; switching is one command |
-| Venue wifi unreliable | Everything runs on the Pi with no internet; bring our own router or use the Pi as an access point |
+| Venue wifi unreliable | Everything runs on the hub laptop with no internet; bring our own travel router or use a hotspot with mobile data off |
 | No motor or pump head | LED or display stand-in with modelled delivery, labelled as simulated |
 | Speech recognition needs internet in some browsers | Spoken output only is the baseline; voice input is optional and always has a button |
 | Firmware and simulator drift apart | Shared schemas, a limits parity test, `safety-reviewer` |

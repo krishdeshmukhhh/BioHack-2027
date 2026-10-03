@@ -9,7 +9,7 @@
         \  HTTP + server-sent events
          \                    /
         +----------------------+
-        |   Hub (Raspberry Pi) |
+        |   Hub (laptop+Docker)|
         |   FastAPI + SQLite   |
         |   Mosquitto broker   |
         +----------+-----------+
@@ -75,6 +75,6 @@ The hub marks a prescription active only when the pump says so. If the pump is o
 ## Why these choices
 
 - **MQTT:** small, well supported on the ESP32, and retained messages plus Last Will give us "latest prescription on reconnect" and "pump offline" for free.
-- **Hub on a Pi, no cloud:** the demo works without internet, and it speaks to the connectivity and cost goals.
+- **Hub on one laptop in Docker, no cloud** (a Pi was planned but broke; a real product would use a small dedicated computer): the demo works without internet, and it speaks to the connectivity and cost goals.
 - **Static web pages:** no build step to break during a hackathon; works on any phone.
 - **SQLite:** one file, no server.

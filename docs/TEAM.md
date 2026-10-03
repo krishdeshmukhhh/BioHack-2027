@@ -12,9 +12,9 @@ Prototype, not a medical device. All values are demo values.
 |---|---|---|---|---|
 | Name | _______ | _______ | _______ | _______ |
 | Lane / branch | `lane/fw` | `lane/hub` | `lane/web` | `main` + `lane/sim` |
-| Owns | `firmware/`, `fpga/`, wiring, bench | `hub/`, the Pi | `web/` | `shared/`, `docs/`, `scripts/`, `sim/`, Makefile, slides |
+| Owns | `firmware/`, `fpga/`, wiring, bench | `hub/`, the hub laptop (Docker) | `web/` | `shared/`, `docs/`, `scripts/`, `sim/`, Makefile, slides |
 | Subagent | `firmware-engineer` | `hub-engineer` | `web-engineer` | `sim-engineer`, `safety-reviewer` |
-| Demo role | Presses the fault button, explains limits in the pump | Runs the Pi, is the backup operator | Caregiver on the phone | Presenter and clinician on the laptop |
+| Demo role | Presses the fault button, explains limits in the pump | Runs the hub laptop, is the backup operator | Caregiver on the phone | Presenter and clinician on the laptop |
 | Biggest risk they own | R1 and R2 (MQTT on the ESP32) | The S5 lifecycle and SSE | Accessibility pass, R7 phone choice | Contract drift, demo timing |
 
 ```mermaid
@@ -77,11 +77,11 @@ Anything not done at its sync point drops to the "Should" or "Stretch" list. Don
 
 **Needs from others:** D gives the frozen protocol (Wave 0) and a running sim to compare behaviour on the wire. B gives a hub that shows your status.
 **Gives to others:** a pump id `pump-001` on the demo network by Sync 3; a 30-second "the limit lives in the device" explanation for the pitch.
-**If there's no hardware:** you take over phase 5 accessibility testing from C and build the demo network (Pi as access point, fixed IP). Ask D to re-plan.
+**If there's no hardware:** you take over phase 5 accessibility testing from C and build the demo network (travel router or hotspot with data off, fixed IP). Ask D to re-plan.
 
 ---
 
-## Person B: Hub (Pi, API, database, MQTT bridge)
+## Person B: Hub (hub laptop in Docker, API, database, MQTT bridge)
 
 **Mission:** the only component that talks to both sides; it never says "active" until the pump does.
 
@@ -111,11 +111,11 @@ Anything not done at its sync point drops to the "Should" or "Stretch" list. Don
 - [ ] Load D's 30-day history into the database.
 
 ### Phase 6
-- [ ] Pi setup with `scripts/setup_pi.sh`, a fixed IP or hostname, Mosquitto with `persistence true`, and services that start on boot.
+- [ ] Hub laptop: `make docker-up` built while online (`compose.yaml`: broker with persistence, hub, optional sim), a fixed IP on the demo router, Windows firewall open for 8000 and 1883, `make docker-reset` tested. (The Pi broke; `scripts/setup_pi.sh` is kept only for reference.).
 - [ ] Reset script support: a "return to v7 at 60 mL/hr, idle" seed (DEMO.md).
 
 **Needs from others:** D gives the frozen API and protocol, plus the sim for end-to-end checks. C reports any API pain early, through D.
-**Gives to others:** the real API on the Pi by Sync 2, so C can switch off the mock.
+**Gives to others:** the real API on the hub laptop by Sync 2, so C can switch off the mock.
 
 ---
 
@@ -194,7 +194,7 @@ Anything not done at its sync point drops to the "Should" or "Stretch" list. Don
 | D | everyone | `contract-v1` tag (protocol plus API) | Before anyone writes lane code |
 | D | B, C, A | A running sim (`make sim`) on the shared broker | Sync 1 |
 | C | — | A mock API, so C needs nothing from B | Sync 1 |
-| B | C | The real hub API on the Pi | Sync 2 |
+| B | C | The real hub API on the hub laptop | Sync 2 |
 | A | D, B | The ESP32 online as `pump-001` | Sync 3 |
 | D | B | 30-day history data | Sync 4 minus a bit |
 | C | D | Screenshots for slides | Sync 4 |

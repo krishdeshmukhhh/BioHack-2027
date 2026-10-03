@@ -5,7 +5,7 @@ PY := .venv/bin/python
 PIP := .venv/bin/pip
 HUB_PORT ?= 8000
 
-.PHONY: setup broker hub sim history reset-demo docker-up docker-sim docker-logs docker-down test lint fw-build fw-upload fw-monitor lanes lanes-status
+.PHONY: setup broker hub sim history reset-demo docker-up docker-sim docker-logs docker-down docker-reset test lint fw-build fw-upload fw-monitor lanes lanes-status
 
 setup:
 	python3 -m venv .venv
@@ -60,3 +60,6 @@ docker-logs:
 
 docker-down:
 	docker compose down
+
+docker-reset:
+	scripts/reset_demo_docker.sh

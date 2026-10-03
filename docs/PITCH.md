@@ -68,10 +68,10 @@ Bill of materials (fill in real prices from receipts; do not estimate on the sli
 | Part | Price |
 |---|---|
 | ESP32 dev board | ___ |
-| Raspberry Pi (hub) | ___ |
+| Hub computer: any laptop for the demo; a small single-board computer in a real product | ___ |
 | Stepper and driver, or LED stand-in | ___ |
 | Buttons, optional OLED | ___ |
-| Software and services | 0 (open source, no cloud, runs offline on the Pi) |
+| Software and services | 0 (open source, no cloud, runs offline on the hub laptop) |
 
 Say: the argument is "no cloud and no subscription", not "cheaper than a medical pump". We have not costed a certified device.
 
@@ -86,7 +86,7 @@ From `SAFETY.md` "Known gaps", said out loud:
 
 Next steps: per-patient limits, real identity and roles, independent flow sensing (stretch: level sensor), and clinical partners to test the workflow with families.
 
-Close: "Everything you saw is running on a Raspberry Pi with no internet. It is a prototype with simulated data; here is what a real product would still need."
+Close: "Everything you saw is running on one laptop with no internet. It is a prototype with simulated data; here is what a real product would still need."
 
 ## Assets to collect
 

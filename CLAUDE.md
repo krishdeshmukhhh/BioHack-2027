@@ -17,9 +17,9 @@ A closed loop. Remote programming goes down to the pump, telemetry comes back up
 ## Architecture
 
 ```
-web/clinician  ─┐                       ┌─ firmware (ESP32 pump)
-                ├─ HTTP ─ hub (Pi) ─ MQTT ┤
-web/family     ─┘        SQLite          └─ sim (software pump)
+web/clinician  ─┐                             ┌─ firmware (ESP32 pump)
+                ├─ HTTP ─ hub (laptop) ─ MQTT ┤
+web/family     ─┘        Docker, SQLite       └─ sim (software pump)
 ```
 
 - **Hub** is the only thing the web apps talk to. Web apps never speak MQTT.
@@ -74,7 +74,7 @@ If a task seems to require breaking one of these, stop and ask.
 - **Protocol first.** Any change to a message starts in `shared/protocol/`, with an updated example, then firmware, sim, and hub follow. See `docs/PROTOCOL.md`.
 - **Firmware and sim stay in step.** A behaviour change in one needs the same change in the other in the same piece of work.
 - **Small, demoable steps.** Follow the phases in `docs/PLAN.md`. Finish a phase's acceptance check before starting the next.
-- **Keep it simple.** No frameworks, build tools, ORMs, or cloud services unless the plan says so. The demo must run on a Pi with no internet.
+- **Keep it simple.** No frameworks, build tools, ORMs, or cloud services unless the plan says so. The demo must run on the hub laptop (Docker, `compose.yaml`) with no internet.
 - **Accessibility is a deliverable, not polish.** Family app rules are in `.claude/rules/web.md`.
 - **Secrets** go in `.env` and `firmware/include/secrets.h`. Both are gitignored. Never print or commit them.
 
