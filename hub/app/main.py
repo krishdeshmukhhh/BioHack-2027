@@ -154,6 +154,8 @@ def create_app(hub: Hub | None = None, bridge: MqttBridge | None = None) -> Fast
             h.live.unsubscribe(pump_id, queue)
 
     # Web apps, mounted last so the API routes win.
+    if (WEB_DIR / "shared").is_dir():
+        app.mount("/shared", StaticFiles(directory=WEB_DIR / "shared"))
     if (WEB_DIR / "clinician").is_dir():
         app.mount("/clinician", StaticFiles(directory=WEB_DIR / "clinician", html=True))
     if (WEB_DIR / "family").is_dir():
