@@ -88,6 +88,8 @@ DEMO_SEED = {
     "mode": "continuous",
     "rate_ml_hr": 60,
     "volume_ml": 500,
+    "proposed_by": "clin-01",
+    "proposed_at": "2026-10-03T07:55:00Z",
     "confirmed_by": "care-01",
     "confirmed_at": "2026-10-03T08:00:00Z",
 }
@@ -108,13 +110,40 @@ def _reject_constant(name: str) -> Any:
     raise ValueError(f"invalid JSON constant {name}")
 
 
+# Keys allowed in a prescription (shared/protocol/prescription.schema.json).
+PRESCRIPTION_KEYS = frozenset({
+    "pump_id", "version", "mode", "rate_ml_hr", "volume_ml", "proposed_by",
+    "proposed_at", "confirmed_by", "confirmed_at", "note",
+})
+NOTE_MAX_CHARS = 200
+
+
+def _date_time(value: Any) -> bool:
+    from jsonschema import Draft202012Validator
+
+    return isinstance(value, str) and Draft202012Validator.FORMAT_CHECKER.conforms(
+        value, "date-time"
+    )
+
+
 def is_well_formed(rx: Any) -> bool:
-    """Check 1 of docs/PROTOCOL.md: the fixed field list, nothing more."""
+    """Check 1 of docs/PROTOCOL.md: the prescription schema shape, except that
+    confirmation may be missing or empty (check 3) and the rate and volume
+    range is left to checks 5 and 6. Same as the firmware's parsePrescription."""
+    if not isinstance(rx, dict) or not set(rx) <= PRESCRIPTION_KEYS:
+        return False
+    if not all(_non_empty_str(rx.get(k)) for k in ("pump_id", "mode", "proposed_by")):
+        return False
+    if not all(k not in rx or isinstance(rx[k], str) for k in (
+        "confirmed_by", "confirmed_at", "note",
+    )):
+        return False
     return (
-        isinstance(rx, dict)
-        and isinstance(rx.get("pump_id"), str)
-        and _is_version(rx.get("version"))
-        and rx.get("mode") in MODES
+        _is_version(rx.get("version"))
+        and rx["mode"] in MODES
+        and _date_time(rx.get("proposed_at"))
+        and (not rx.get("confirmed_at") or _date_time(rx["confirmed_at"]))
+        and len(rx.get("note", "")) <= NOTE_MAX_CHARS
         and _is_number(rx.get("rate_ml_hr"))
         and _is_number(rx.get("volume_ml"))
     )
@@ -294,13 +323,7 @@ class PumpCore:
                 self._reject(version, "volume_out_of_range")
                 return "volume_out_of_range"
 
-            accepted = {
-                k: rx[k]
-                for k in (
-                    "pump_id", "version", "mode", "rate_ml_hr", "volume_ml",
-                    "confirmed_by", "confirmed_at",
-                )
-            }
+            accepted = dict(rx)  # fully validated; kept whole so a reload passes check 1
             if self.state == "idle":
                 self._apply(accepted)
                 return "applied"
@@ -457,10 +480,12 @@ class MqttLink:
         client.on_message = self.on_message
 
     def publish(self, topic: str, payload: str) -> None:
-        """Core publish callback. Lost while offline, like a QoS 0 publish on the ESP32."""
+        """Core publish callback. Lost while offline, like the ESP32 (topics.md):
+        status at QoS 0, events at QoS 1."""
         if self.dropped or not self.connected:
             return
-        self.client.publish(topic, payload, qos=0, retain=False)
+        qos = 0 if topic.endswith("/status") else 1
+        self.client.publish(topic, payload, qos=qos, retain=False)
 
     def on_connect(self, client, userdata, flags, reason_code, properties=None) -> None:
         if getattr(reason_code, "is_failure", False):
@@ -468,7 +493,7 @@ class MqttLink:
             return
         self.connected = True
         log.info("MQTT connected to %s:%s", self.host, self.port)
-        client.publish(self.topic_availability, "online", qos=0, retain=True)
+        client.publish(self.topic_availability, "online", qos=1, retain=True)
         # Subscribe here so it comes back after every reconnect (retained replay).
         client.subscribe(self.topic_prescription, qos=1)
 
@@ -524,7 +549,7 @@ class MqttLink:
         """Graceful exit (R8): a DISCONNECT discards the Last Will, so publish
         retained offline ourselves first."""
         if self.connected and not self.dropped:
-            info = self.client.publish(self.topic_availability, "offline", qos=0, retain=True)
+            info = self.client.publish(self.topic_availability, "offline", qos=1, retain=True)
             try:
                 info.wait_for_publish(timeout=2)
             except (RuntimeError, ValueError):
