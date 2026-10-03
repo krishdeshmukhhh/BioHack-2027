@@ -118,15 +118,15 @@ Each phase ends with an acceptance check you can show to someone. Do not start t
 
 ### Phase 3: Real hardware
 
-- [ ] Firmware: wifi and MQTT with Last Will, non-blocking reconnect
-- [ ] Firmware: state machine with a single `transitionTo()`
-- [ ] Firmware: prescription validate, queue, apply, persist to NVS; same reasons as the sim
-- [ ] Firmware: actuator interface with a stepper implementation or an LED stand-in; delivered volume from steps or from time and rate
-- [ ] Firmware: fault buttons (occlusion, bag empty, pause)
+- [x] Firmware: wifi and MQTT with Last Will, non-blocking reconnect
+- [x] Firmware: state machine with a single `transitionTo()`
+- [x] Firmware: prescription validate, queue, apply, persist to NVS; same reasons as the sim
+- [x] Firmware: actuator interface with a stepper implementation or an LED stand-in; delivered volume from steps or from time and rate
+- [x] Firmware: fault buttons (occlusion, bag empty, pause)
 - [ ] Optional: OLED showing rate, state, and "updated remotely, version N"
-- [ ] Bench: calibrate `STEPS_PER_ML` with a measuring cup if using a real pump head
+- [ ] Bench: calibrate `STEPS_PER_ML` with a measuring cup if using a real pump head (n/a while DELIVERY_SIMULATED=1)
 - [ ] Bench: pull wifi mid-feed and confirm the feed continues (S6)
-- [ ] Run `safety-reviewer`
+- [x] Run `safety-reviewer`
 
 **Check:** repeat the phase 2 check with the ESP32 in place of the simulator, with no changes to the hub or web apps.
 

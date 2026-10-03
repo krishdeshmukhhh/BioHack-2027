@@ -5,7 +5,7 @@ PY := .venv/bin/python
 PIP := .venv/bin/pip
 HUB_PORT ?= 8000
 
-.PHONY: setup broker hub sim history reset-demo docker-up docker-sim docker-logs docker-down docker-reset test lint fw-build fw-upload fw-monitor lanes lanes-status
+.PHONY: fw-test setup broker hub sim history reset-demo docker-up docker-sim docker-logs docker-down docker-reset test lint fw-build fw-upload fw-monitor lanes lanes-status
 
 setup:
 	python3 -m venv .venv
@@ -63,3 +63,9 @@ docker-down:
 
 docker-reset:
 	scripts/reset_demo_docker.sh
+
+# Firmware native tests (incl. the 55 shared prescription cases) and the digital demo
+# tests. Needs PlatformIO; not part of make test because not every laptop has it.
+fw-test:
+	cd firmware && pio test -e native && pio run -e native
+	$(PY) -m pytest -q firmware/test

@@ -4,7 +4,7 @@ Target: about three minutes of live demo. Rehearse it timed. Adjust once the slo
 
 ## Setup before you walk up
 
-- Hub laptop on the demo network with `make docker-up` running (broker and hub in Docker), pump online (or `make docker-sim`). Without Docker: `make broker` and `make hub`
+- Hub laptop on the demo network with `make docker-up` running (Docker path not yet tested end to end; fallback: B's `hub/deploy/laptop.ps1`) (broker and hub in Docker), pump online (or `make docker-sim`). Without Docker: `make broker` and `make hub`
 - Laptop on the clinician portal, phone on the family app, both on the demo network
 - System reset to the starting state: version 7 active at 60 mL/hr, pump idle. With the hub and simulator stopped and the broker up, run `make reset-demo`, then `make hub` and `python -m sim.pump_sim --demo-seed`. In Docker: `make docker-reset`, then start the pump
 - Rehearse steps 6 to 8 hands-free with `python -m sim.pump_sim --demo-seed --scenario occlusion --speed 60`. On stage, use the keys (`s`, `o`, `c`, `p`) so the presenter controls the timing
