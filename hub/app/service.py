@@ -38,6 +38,8 @@ class Hub:
         self.live = Broadcaster()
         # pump_id -> {"online": bool, "last_seen_at": str | None}
         self.availability: dict[str, dict[str, Any]] = {}
+        # pump_id -> when the last status (or an `online`) arrived; drives check_stale.
+        self._fresh_at: dict[str, str] = {}
 
     # --- queries used by the API and the SSE snapshot ---
 
@@ -59,14 +61,16 @@ class Hub:
             return reports.load_history(self.conn)
 
     def check_stale(self, now: datetime | None = None) -> None:
-        """Mark a pump offline once its last message is older than STALE_AFTER (docs/API.md).
+        """Mark a pump offline once it has sent no status for STALE_AFTER (docs/API.md).
 
         A pulled wifi link only fires the Last Will after the broker keepalive runs
-        out, so the hub does not wait for it. The next valid message marks it online.
+        out, so the hub does not wait for it. An `online` starts the clock too, so a
+        retained `online` from a dead pump lasts at most STALE_AFTER after a hub restart.
         """
         now = now or datetime.now(UTC)
         for pump_id, a in self.availability.items():
-            if a["online"] and a["last_seen_at"] and now - _parse(a["last_seen_at"]) > STALE_AFTER:
+            fresh = self._fresh_at.get(pump_id)
+            if a["online"] and (fresh is None or now - _parse(fresh) > STALE_AFTER):
                 a["online"] = False
                 self.live.send(pump_id, "availability", self.availability_of(pump_id))
 
@@ -181,12 +185,34 @@ class Hub:
             log.warning("dropping %s: topic %s but pump_id %s", kind, pump_id, message["pump_id"])
             return
 
+        if kind == "event" and self._is_duplicate_event(message):
+            # topics.md: events are QoS 1, at least once. A redelivery must change nothing,
+            # or a late duplicate raise or clear would reopen or hide an alarm.
+            log.info("ignoring duplicate %s from %s", message["type"], pump_id)
+            return
+
         received_at = utc_now()
         self._seen(pump_id, received_at)
         if kind == "status":
+            self._fresh_at[pump_id] = received_at
             self._on_status(message, received_at)
         else:
             self._on_event(message, received_at)
+
+    def _is_duplicate_event(self, event: dict[str, Any]) -> bool:
+        """Same pump, uptime, and content as a stored event. Uptime only repeats across a
+        reboot, and then the content would have to match too."""
+        row = self.conn.execute(
+            "SELECT 1 FROM events WHERE pump_id = ? AND uptime_ms = ? AND type = ?"
+            " AND version IS ? AND reason IS ? AND alarm IS ? AND from_state IS ?"
+            " AND to_state IS ? LIMIT 1",
+            (
+                event["pump_id"], event["uptime_ms"], event["type"], event.get("version"),
+                event.get("reason"), event.get("alarm"), event.get("from_state"),
+                event.get("to_state"),
+            ),
+        ).fetchone()  # fmt: skip
+        return row is not None
 
     def _seen(self, pump_id: str, at: str) -> None:
         """Any valid message proves the pump is online."""
@@ -203,6 +229,8 @@ class Hub:
         was_online = self.availability.get(pump_id, {}).get("online")
         last_seen = self.availability.get(pump_id, {}).get("last_seen_at")
         online = text == "online"
+        if online:
+            self._fresh_at[pump_id] = utc_now()
         self.availability[pump_id] = {
             "online": online,
             "last_seen_at": utc_now() if online else last_seen,

@@ -1,7 +1,8 @@
 """Alerts: the hub's reading of pump alarms (FR-14, FR-15). Codes only; the copy is in web/.
 
-Alarm events arrive at QoS 0 and can be lost, so the `alarm` field in every status
-also opens and closes alerts. The pump holds at most one alarm at a time.
+Alarm events are QoS 1 but can still be lost while the pump is offline, so the `alarm`
+field in every status also opens and closes alerts. Duplicate events are dropped
+before they get here (Hub._is_duplicate_event). The pump holds one alarm at a time.
 """
 
 import sqlite3

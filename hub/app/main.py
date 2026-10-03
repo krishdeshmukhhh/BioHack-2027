@@ -77,8 +77,7 @@ def create_app(
         app.state.hub = hub
         tasks = []
         if bridge is not None:
-            if not hub.load_history():
-                log.warning("no %s; run `make history` for the dashboard", reports.HISTORY_FILE)
+            load_history_or_warn(hub)
             queue: asyncio.Queue[tuple[str, bytes]] = asyncio.Queue()
             # The startup re-publish (R3) runs when the bridge reports its first connect.
             bridge.start(asyncio.get_running_loop(), queue)
@@ -200,6 +199,15 @@ def create_app(
         app.mount("/", StaticFiles(directory=web_dir / "family", html=True))
 
     return app
+
+
+def load_history_or_warn(hub: Hub) -> None:
+    """A bad history file costs the dashboard, never the hub: the loop matters more."""
+    try:
+        if not hub.load_history():
+            log.warning("no %s; run `make history` for the dashboard", reports.HISTORY_FILE)
+    except Exception:
+        log.exception("could not load %s; continuing without history", reports.HISTORY_FILE)
 
 
 async def _consume(hub: Hub, queue: asyncio.Queue[tuple[str, bytes]]) -> None:

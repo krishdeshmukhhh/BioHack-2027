@@ -178,3 +178,14 @@ def test_alarm_active_flags_the_patient_until_cleared(hub, client):
     assert client.get("/api/patients").json()[0]["id"] == "pat-01"
     send(hub, "status", example("status.running"))
     assert by_id(client)["pat-01"]["exceptions"] == []
+
+
+def test_bad_history_file_does_not_stop_the_hub(hub, tmp_path, monkeypatch):
+    from hub.app.main import load_history_or_warn
+
+    bad = tmp_path / "history.json"
+    bad.write_text('{"simulated": true}')  # missing daily and alarms
+    monkeypatch.setattr(reports, "HISTORY_FILE", bad)
+    monkeypatch.setattr(reports.load_history, "__defaults__", (bad,))
+    load_history_or_warn(hub)  # logs, does not raise
+    assert hub.conn.execute("SELECT COUNT(*) FROM history_daily").fetchone()[0] == 0
