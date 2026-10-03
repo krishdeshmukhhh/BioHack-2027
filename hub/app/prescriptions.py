@@ -199,7 +199,7 @@ def confirm(
     newer = _newer_version_exists(conn, pump_id, version)
     if newer is not None:
         # Publishing this would replace the retained v{newer} with an older version.
-        raise LifecycleError("stale_version", f"version {newer} is already confirmed or newer")
+        raise LifecycleError("stale_version", f"version {newer} was already confirmed or sent")
     changed = [
         _set_state(
             conn, pump_id, version, "confirmed",
@@ -297,8 +297,12 @@ def republish_latest(
 
     Duplicates are harmless because the pump ignores versions it already has (S3).
     """
+    # Skip a version that a newer, already published one has overtaken: the gate would
+    # refuse it anyway (S3), and retrying it on every reconnect only adds audit noise.
     row = conn.execute(
-        "SELECT version FROM prescriptions WHERE pump_id = ? AND state IN ('confirmed', 'sent')"
+        "SELECT version FROM prescriptions p WHERE pump_id = ? AND state IN ('confirmed', 'sent')"
+        " AND NOT EXISTS (SELECT 1 FROM prescriptions n WHERE n.pump_id = p.pump_id"
+        " AND n.version > p.version AND n.sent_at IS NOT NULL)"
         " ORDER BY version DESC LIMIT 1",
         (pump_id,),
     ).fetchone()

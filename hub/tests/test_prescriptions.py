@@ -359,6 +359,8 @@ def test_republish_never_goes_back_below_a_pump_rejected_version(client, hub, pu
     hub.handle_message(CONNECTED, b"")  # hub or broker reconnect
     send(hub, "availability", "online")  # pump back online
     assert publisher.sent == before, "re-published a version older than one already sent"
+    actions = [r["action"] for r in client.get(f"/api/pumps/{PUMP}/audit").json()]
+    assert "publish_failed" not in actions  # skipped quietly, not retried
     assert [m["version"] for _, m, _, _ in publisher.sent] == [v1, v2]
 
 
