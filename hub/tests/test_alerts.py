@@ -117,3 +117,16 @@ def test_web_apps_and_shared_files_are_served(hub, tmp_path):
     for path, text in expected.items():
         assert client.get(path).text == text, path
     assert client.get("/health").json() == {"status": "ok"}  # API routes still win
+
+
+def test_duplicate_qos1_events_do_not_double_count(hub, client):
+    # topics.md: events are QoS 1 (at least once), so the same event can arrive twice.
+    for _ in range(2):
+        send(hub, "event", raised())
+    for _ in range(2):
+        send(hub, "event", cleared())
+    body = client.get(f"/api/pumps/{PUMP}/alerts").json()
+    assert [(a["alarm"], a["active"]) for a in body] == [("occlusion", False)]
+    assert [r["action"] for r in client.get(f"/api/pumps/{PUMP}/audit").json()] == [
+        "alarm_cleared", "alarm_raised",
+    ]  # fmt: skip
