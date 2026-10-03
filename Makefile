@@ -5,7 +5,7 @@ PY := .venv/bin/python
 PIP := .venv/bin/pip
 HUB_PORT ?= 8000
 
-.PHONY: setup broker hub sim history test lint fw-build fw-upload fw-monitor lanes lanes-status
+.PHONY: setup broker hub sim history reset-demo test lint fw-build fw-upload fw-monitor lanes lanes-status
 
 setup:
 	python3 -m venv .venv
@@ -23,6 +23,9 @@ sim:
 
 history:
 	$(PY) -m sim.generate_history
+
+reset-demo:
+	scripts/reset_demo.sh
 
 test:
 	$(PY) -m pytest

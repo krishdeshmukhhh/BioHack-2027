@@ -179,7 +179,7 @@ Anything not done at its sync point drops to the "Should" or "Stretch" list. Don
 
 ### Pitch and demo (start the outline at Sync 2, not at the end)
 - [ ] Slides: problem (REFERENCES §1), what exists today (Kangaroo Connect, R3; check the manual first), our loop, safety design (S1–S8, defence in depth), cost argument, honest gaps (SAFETY.md, IEC 60601-2-24, ENFit, FDA cybersecurity), next steps.
-- [ ] `docs/DEMO.md` final script with the roles from "At a glance". Reset script. Screen recording fallback.
+- [ ] `docs/DEMO.md` final script with the roles from "At a glance". Reset script. Screen recording fallback. (Reset script done: `make reset-demo`.)
 - [ ] Time the slot; rehearse three times (Sync 5).
 
 **Needs from others:** decisions at Sync 0; screenshots from C; a hardware status call from A by Sync 3.
