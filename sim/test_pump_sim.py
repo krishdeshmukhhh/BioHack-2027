@@ -520,3 +520,18 @@ def test_state_file_with_invalid_prescription_is_discarded(tmp_path, clock, pub,
     saved.update(bad)
     path.write_text(json.dumps({"prescription": saved}))
     assert PumpCore("pump-001", publish=pub, clock=clock, state_file=path).version == 0
+
+
+def test_demo_seed_starts_feed_and_is_superseded_normally(core, clock, pub):
+    assert core.seed_demo_prescription()
+    assert core.version == 7 and not pub.messages  # loaded like NVS: no events
+    run_to_running(core, clock)
+    assert core.status()["rate_ml_hr"] == 60
+    assert core.handle_prescription(rx(7)) == "ignored"
+    assert core.handle_prescription(rx(8)) == "queued"
+
+
+def test_demo_seed_never_overrides_a_loaded_prescription(core):
+    core.handle_prescription(rx(9))
+    assert not core.seed_demo_prescription()
+    assert core.version == 9

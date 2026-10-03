@@ -32,3 +32,14 @@ Shape (a hand-off contract with the hub):
 - `daily` is sorted by patient then date; `alarm_count` is the number of alarms whose `raised_at` falls on that UTC date.
 - Alarm codes come from `shared/protocol/event.schema.json`; timestamps are ISO-8601 UTC with `Z`.
 - Output is deterministic for a given `--seed`, `--days`, and `--end-date`. All values are demo values.
+
+## Running the simulated pump
+
+```bash
+make sim                                        # PUMP_ID, MQTT_HOST, MQTT_PORT from .env
+python -m sim.pump_sim --demo-feed --speed 60   # PLAN phase 1 check: starts v7 at 60 mL/hr at once
+```
+
+Keys (type, then Enter): `s` start, `p` pause/resume, `o` occlusion, `b` bag empty, `c` clear alarm, `d` drop/restore wifi, `i` status, `q` quit (publishes `offline` first).
+
+`--demo-feed` loads the `docs/DEMO.md` starting state only if no prescription was loaded from `--state-file`, as if it came from the pump's own storage. Any later prescription still goes through every check in `docs/PROTOCOL.md`.

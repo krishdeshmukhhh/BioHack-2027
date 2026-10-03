@@ -82,6 +82,16 @@ def _is_number(value: Any) -> bool:
         return False
 
 
+# --demo-feed starting state, from docs/DEMO.md. Demo values only.
+DEMO_SEED = {
+    "version": 7,
+    "mode": "continuous",
+    "rate_ml_hr": 60,
+    "volume_ml": 500,
+    "confirmed_by": "care-01",
+    "confirmed_at": "2026-10-03T08:00:00Z",
+}
+
 VERSION_MAX = 2**31 - 1  # check 1 bound in docs/PROTOCOL.md (int32 on the ESP32)
 
 
@@ -384,7 +394,12 @@ class PumpCore:
         except (OSError, ValueError, AttributeError):
             log.warning("could not read state file %s, starting empty", self.state_file)
             return
-        # Defence in depth: a saved prescription passes checks 1, 2, 3, 5, 6 again.
+        if rx is not None:
+            self._restore(rx, str(self.state_file))
+
+    def _restore(self, rx: Any, source: str) -> bool:
+        """Boot-time load, like NVS. Defence in depth: the record must pass
+        checks 1, 2, 3, 5 and 6 again. Publishes nothing."""
         if (
             is_well_formed(rx)
             and rx["pump_id"] == self.pump_id
@@ -394,9 +409,18 @@ class PumpCore:
             and LIMIT_VOLUME_MIN_ML <= rx["volume_ml"] <= LIMIT_VOLUME_MAX_ML
         ):
             self.prescription = rx
-            log.info("loaded v%s from %s", rx["version"], self.state_file)
-        elif rx is not None:
-            log.warning("discarded invalid saved prescription in %s", self.state_file)
+            log.info("loaded v%s from %s", rx["version"], source)
+            return True
+        log.warning("discarded invalid prescription from %s", source)
+        return False
+
+    def seed_demo_prescription(self) -> bool:
+        """PLAN phase 1: a hard-coded starting prescription, as if loaded from
+        NVS, matching the docs/DEMO.md reset state (v7 at 60 mL/hr). Only used
+        when nothing was loaded, so it never overrides a real prescription."""
+        if self.prescription is not None:
+            return False
+        return self._restore(dict(DEMO_SEED, pump_id=self.pump_id), "the demo seed")
 
     def _save_state(self) -> None:
         if not self.state_file:
@@ -582,6 +606,12 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         default=os.environ.get("SIM_STATE_FILE") or None,
         help="persist the applied prescription across restarts, like NVS (env SIM_STATE_FILE)",
     )
+    p.add_argument(
+        "--demo-feed",
+        action="store_true",
+        help="if no prescription is loaded, start from the DEMO.md seed (v7 at 60 mL/hr) "
+        "and start a feed straight away (PLAN phase 1 check)",
+    )
     p.add_argument("-v", "--verbose", action="store_true", help="debug logging")
     args = p.parse_args(argv)
     if args.speed <= 0:
@@ -615,6 +645,10 @@ def main(argv: list[str] | None = None) -> None:
     stop = threading.Event()
     signal.signal(signal.SIGTERM, lambda *_: stop.set())
     threading.Thread(target=_stdin_reader, args=(core, link, stop), daemon=True).start()
+
+    if args.demo_feed:
+        core.seed_demo_prescription()
+        core.start()
 
     link.start()
     try:
