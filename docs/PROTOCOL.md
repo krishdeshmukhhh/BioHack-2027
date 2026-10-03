@@ -28,6 +28,15 @@ Checks run in this order. The first failure wins, the pump publishes `prescripti
 | 5 | `rate_ml_hr` within the limits in `limits.h` | `rate_out_of_range` |
 | 6 | `volume_ml` within the limits in `limits.h` | `volume_out_of_range` |
 
+Check 1 is a fixed list, so the firmware and the simulator agree exactly. The payload is a JSON object with:
+
+- `pump_id`: a string
+- `version`: an integer of at least 1
+- `mode`: `continuous` or `bolus`
+- `rate_ml_hr` and `volume_ml`: numbers (any value; the range is checked in 5 and 6)
+
+`confirmed_by` and `confirmed_at` are **not** part of check 1. If they are missing, empty, or not strings, the reason is `not_confirmed` (check 3). The other fields (`proposed_by`, `proposed_at`, `note`) are not checked by the pump.
+
 If all checks pass:
 
 - Pump is idle: apply, persist, publish `prescription_applied`, and report the new `prescription_version` in status.
