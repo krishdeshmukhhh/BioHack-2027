@@ -159,7 +159,7 @@ Anything not done at its sync point drops to the "Should" or "Stretch" list. Don
 ### Wave 0 (first, before others need it; see PARALLEL.md)
 - [x] Apply the R1 decision to `status.schema.json`, plus an example and a PROTOCOL.md note. Fix the QoS column in `topics.md`.
 - [x] R3: `persistence true`. R4: `jsonschema[format]` plus a format checker. R5: `fastapi>=0.135`.
-- [ ] Freeze `docs/API.md` with B and C (15 minutes, together). Tag `contract-v1`. Run `scripts/worktrees.sh up fw` (it creates the hub, sim, web, and fw worktrees).
+- [ ] Freeze `docs/API.md` with B and C (15 minutes, together). Tag `contract-v1`. Run `scripts/worktrees.sh up hub sim web fw` (with no arguments it creates only hub, sim, and web).
 
 ### Before Sync 1 and Sync 2 (sim lane)
 - [ ] `sim/pump_sim.py`: environment config, Last Will plus online, status every 2 s with `simulated: true` (FR-11).
