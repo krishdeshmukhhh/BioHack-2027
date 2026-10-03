@@ -1,0 +1,52 @@
+{
+  "timestamp_utc": "2026-10-03T23:45:25.730810+00:00",
+  "prototype": true,
+  "firmware_environment": "esp32dev",
+  "checks": {
+    "mode_gate": {
+      "result": "pass",
+      "detail": "Hub marker and simulated=true serial status observed"
+    },
+    "initial_idle": {
+      "result": "pass",
+      "detail": "Normal firmware initially idle with no pending update or alarm"
+    },
+    "start_progression": {
+      "result": "pass",
+      "detail": "Digital delivery advances with existing accepted prescription"
+    },
+    "bag_empty_stops_delivery": {
+      "result": "pass",
+      "detail": "Actual bag-empty injection reported alarm, zero rate and frozen volume for >=4 seconds"
+    },
+    "clear_remains_paused": {
+      "result": "pass",
+      "detail": "Clear removed bag-empty alarm and stayed paused"
+    },
+    "resume_progression": {
+      "result": "pass",
+      "detail": "Explicit resume advances digital volume"
+    },
+    "stop_returns_idle": {
+      "result": "pass",
+      "detail": "Test feed stopped to idle"
+    }
+  },
+  "device_mode": "hub",
+  "last_status": {
+    "pump_id": "pump-001",
+    "uptime_ms": 28000,
+    "state": "idle",
+    "rate_ml_hr": 75,
+    "delivered_ml": 0.230125,
+    "target_ml": 5,
+    "alarm": null,
+    "prescription_version": 4,
+    "pending_version": null,
+    "last_rejected_version": null,
+    "last_reject_reason": null,
+    "simulated": true
+  },
+  "simulated": true,
+  "result": "pass"
+}

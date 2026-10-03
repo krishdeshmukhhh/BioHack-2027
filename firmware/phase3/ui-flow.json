@@ -1,0 +1,173 @@
+{
+  "timestamp_utc": "2026-10-03T23:53:14.243566+00:00",
+  "prototype": true,
+  "simulated": true,
+  "method": "Actual clinician form Propose change and family Confirm change buttons in installed headless Chrome, isolated temporary profile; real ESP32 and isolated Phase 3 hub database",
+  "checks": {
+    "clinician_ui_proposal_waits_confirmation": {
+      "result": "pass"
+    },
+    "family_ui_review_before_confirm": {
+      "result": "pass"
+    },
+    "family_ui_confirm_applies": {
+      "result": "pass"
+    },
+    "family_ui_shows_device_ack": {
+      "result": "pass"
+    },
+    "clinician_ui_shows_device_ack": {
+      "result": "pass"
+    },
+    "excessive_ui_proposal_reaches_caregiver": {
+      "result": "pass"
+    },
+    "excessive_ui_confirmation_rejected_by_device": {
+      "result": "pass"
+    },
+    "family_ui_shows_rejection": {
+      "result": "pass"
+    },
+    "clinician_ui_shows_rejection": {
+      "result": "pass"
+    },
+    "accepted_settings_preserved": {
+      "result": "pass"
+    },
+    "simulated_labels": {
+      "result": "pass"
+    }
+  },
+  "api_evidence": {
+    "unconfirmed": {
+      "timestamp_utc": "2026-10-03T23:49:36.756229+00:00",
+      "status": {
+        "pump_id": "pump-001",
+        "state": "idle",
+        "rate_ml_hr": 75,
+        "delivered_ml": 0.230125,
+        "target_ml": 5,
+        "alarm": null,
+        "prescription_version": 4,
+        "pending_version": null,
+        "last_rejected_version": null,
+        "last_reject_reason": null,
+        "simulated": true,
+        "online": true,
+        "received_at": "2026-10-03T23:49:36Z"
+      },
+      "latest_prescription": {
+        "pump_id": "pump-001",
+        "version": 5,
+        "mode": "continuous",
+        "rate_ml_hr": 90.0,
+        "volume_ml": 5.0,
+        "note": "Fictional UI acceptance prescription",
+        "state": "proposed",
+        "reject_reason": null,
+        "proposed_by": "clin-01",
+        "proposed_at": "2026-10-03T23:49:33Z",
+        "confirmed_by": null,
+        "confirmed_role": null,
+        "confirmed_at": null,
+        "sent_at": null,
+        "resolved_at": null
+      }
+    },
+    "applied": {
+      "timestamp_utc": "2026-10-03T23:50:44.706752+00:00",
+      "status": {
+        "pump_id": "pump-001",
+        "state": "idle",
+        "rate_ml_hr": 90,
+        "delivered_ml": 0,
+        "target_ml": 5,
+        "alarm": null,
+        "prescription_version": 5,
+        "pending_version": null,
+        "last_rejected_version": null,
+        "last_reject_reason": null,
+        "simulated": true,
+        "online": true,
+        "received_at": "2026-10-03T23:50:44Z"
+      },
+      "latest_prescription": {
+        "pump_id": "pump-001",
+        "version": 5,
+        "mode": "continuous",
+        "rate_ml_hr": 90.0,
+        "volume_ml": 5.0,
+        "note": "Fictional UI acceptance prescription",
+        "state": "active",
+        "reject_reason": null,
+        "proposed_by": "clin-01",
+        "proposed_at": "2026-10-03T23:49:33Z",
+        "confirmed_by": "care-01",
+        "confirmed_role": "parent",
+        "confirmed_at": "2026-10-03T23:50:35Z",
+        "sent_at": "2026-10-03T23:50:35Z",
+        "resolved_at": "2026-10-03T23:50:35Z"
+      }
+    },
+    "rejected": {
+      "timestamp_utc": "2026-10-03T23:52:24.822739+00:00",
+      "status": {
+        "pump_id": "pump-001",
+        "state": "idle",
+        "rate_ml_hr": 90,
+        "delivered_ml": 0,
+        "target_ml": 5,
+        "alarm": null,
+        "prescription_version": 5,
+        "pending_version": null,
+        "last_rejected_version": 6,
+        "last_reject_reason": "rate_out_of_range",
+        "simulated": true,
+        "online": true,
+        "received_at": "2026-10-03T23:52:24Z"
+      },
+      "latest_prescription": {
+        "pump_id": "pump-001",
+        "version": 6,
+        "mode": "continuous",
+        "rate_ml_hr": 500.0,
+        "volume_ml": 5.0,
+        "note": "Fictional UI rejection acceptance case",
+        "state": "rejected",
+        "reject_reason": "rate_out_of_range",
+        "proposed_by": "clin-01",
+        "proposed_at": "2026-10-03T23:51:50Z",
+        "confirmed_by": "care-01",
+        "confirmed_role": "parent",
+        "confirmed_at": "2026-10-03T23:52:16Z",
+        "sent_at": "2026-10-03T23:52:16Z",
+        "resolved_at": "2026-10-03T23:52:16Z"
+      }
+    }
+  },
+  "ui_evidence": {
+    "valid_confirmation": {
+      "controls": {
+        "confirm_visible": true,
+        "review_visible": true,
+        "prior_version_visible": true
+      },
+      "family": "Skip to main content\nFeeding pump\nSimulated data\nNight mode\nTurn on alerts\n\nTap once so this phone can vibrate, beep and speak when the pump needs you.\n\nTurn on alerts\n\nPump connected. Last update 07:50 PM\n\nPump connected. Last update 07:48 PM\nYour last answer\n\nActive on pump\n\nDone. The pump is now using version 5.\n\nOK\nA change is waiting for your review.\nToday\n\nReady, not feeding\n\nDelivered\n0 mL of 5 mL\n\nRate now\n90 mL/hr\nActive version\nVersion 5\n\nLast update 07:50 PM\n\nRead status aloud\nSettings\nLanguage \nEnglish\nEspa\u00f1ol\nWho is using this phone? \nParent (demo)\nSchool nurse (demo)\nAlerts for Parent (demo)\nVibrate\nBeep\nSpeak alerts out loud\n\nPrototype, not for clinical use. Demo users and fictional data only. Never connect to a person.",
+      "clinician": "Skip to main content\nClinician portal\n\nSigned in as Dr. Demo (demo user, no real login)\n\nSimulated data\nLanguage\nEnglish\nEspa\u00f1ol\nNight mode\nPatients\n\nPatients who need attention are listed first.\n\nDemo Child Bramble\nPump pump-002\nPump offline\nOpen\nDemo Child Bramble\nDemo Child Cobalt\nPump pump-003\nPump offline\nOpen\nDemo Child Cobalt\nDemo Child Aster\nPump pump-001\nNo exceptions\nShowing now\n\nPump connected. Last update 07:50 PM\n\nPump connected. Last update 07:48 PM\nPump now Demo Child Aster \u00b7 Pump pump-001\nState\nReady, not feeding\nRate now\n90 mL/hr\nActive version\nVersion 5\nDelivered\n0 mL of 5 mL\nPropose a change\n\nThe caregiver must confirm it. The pump checks its own limits and may refuse it.\n\nFeed profiles\n\nFills in the form. Demo values only, not guidance.\n\nOvernight continuous\nDaytime bolus\n\nMode\nContinuous\nBolus\nRate \n\nMillilitres per hour\n\nFeed volume \n\nTotal for one feed, in millilitres\n\nNote \n\nOptional. Up to 200 characters. 200 left.\n\nPropose change\n\nVersion 5 proposed. Waiting for the caregiver.\n\nPrescriptions\nVersion 5\nActive on pump\n\nContinuous, 90 mL/hr, 5 mL\n\nThe pump reported this version\n\nFictional UI acceptance prescription\n\nProposed 07:49 PM \u00b7 Confirmed by Parent (demo) \u00b7 Sent 07:50 PM \u00b7 Pump answered 07:50 PM\n\nVersion 4\nReplaced\n\nContinuous, 75 mL/hr, 5 mL\n\nA newer version replaced this one\n\nFictional queued bench update\n\nProposed 07:36 PM \u00b7 Confirmed by Parent (demo) \u00b7 Sent 07:36 PM\n\nVersion 3\nRejected: rate out of range\n\nContinuous, 500 mL/hr, 5 mL\n\nFictional out-of-range bench case\n\nProposed 07:36 PM \u00b7 Confirmed by Parent (demo) \u00b7 Sent 07:36 PM \u00b7 Pump answered 07:36 PM\n\nVersion 2\nReplaced\n\nContinuous, 90 mL/hr, 5 mL\n\nA newer version replaced this one\n\nFictional ESP32 bench prescription; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\nProposed 07:36 PM \u00b7 Confirmed by Parent (demo) \u00b7 Sent 07:36 PM\n\nVersion 4: Replaced\nDelivered vs prescribed\n24 h\n7 days\n30 days\n\nNo data yet.\n\nDelivered\nPrescribed\n\nWeekly summary\n\nNo history loaded yet.\n\nAlarm timeline\n07:45 PM\nBag empty\nCleared 07:45 PM, after 1 min\n07:37 PM\nTube blocked\nCleared 07:37 PM, after 1 min\nAudit trail\nWhen\tWho\tWhat\tVersion\n07:50 PM\tpump-001 (Pump)\tsuperseded_by_5\t4\n07:50 PM\tpump-001 (Pump)\tapplied_by_pump\t5\n07:50 PM\tHub (Hub)\tSent to pump\t5\n07:50 PM\tParent (demo) ("
+    },
+    "invalid_proposal": {
+      "family": "Skip to main content\nFeeding pump\nSimulated data\nNight mode\nTurn on alerts\n\nTap once so this phone can vibrate, beep and speak when the pump needs you.\n\nTurn on alerts\n\nPump connected. Last update 07:51 PM\n\nPump connected. Last update 07:48 PM\nChange to review\n\nDr. Demo asked to change the feed. Nothing changes until you confirm.\n\nMode\nSame\n\nNow\nContinuous\n\nNew\nContinuous\n\nRate\nChanged\n\nNow\n90 mL/hr\n\nNew\n500 mL/hr\n\nFeed volume\nSame\n\nNow\n5 mL\n\nNew\n5 mL\n\nNote from the clinician\n\nFictional UI rejection acceptance case\n\nIf a feed is running, the pump waits until it finishes before changing.\n\nConfirming as Parent (demo). Change who is using this phone in Settings below.\n\nConfirm change\nDecline\n\nA change is waiting for your review.\nToday\n\nReady, not feeding\n\nDelivered\n0 mL of 5 mL\n\nRate now\n90 mL/hr\nActive version\nVersion 5\n\nLast update 07:51 PM\n\nRead status aloud\nSettings\nLanguage \nEnglish\nEspa\u00f1ol\nWho is using this phone? \nParent (demo)\nSchool nurse (demo)\nAlerts for Parent (demo)\nVibrate\nBeep\nSpeak alerts out loud\n\nPrototype, not for clinical use. Demo users and fictional data only. Never connect to a person.",
+      "clinician": "Skip to main content\nClinician portal\n\nSigned in as Dr. Demo (demo user, no real login)\n\nSimulated data\nLanguage\nEnglish\nEspa\u00f1ol\nNight mode\nPatients\n\nPatients who need attention are listed first.\n\nDemo Child Bramble\nPump pump-002\nPump offline\nOpen\nDemo Child Bramble\nDemo Child Cobalt\nPump pump-003\nPump offline\nOpen\nDemo Child Cobalt\nDemo Child Aster\nPump pump-001\nNo exceptions\nShowing now\n\nPump connected. Last update 07:51 PM\n\nPump connected. Last update 07:48 PM\nPump now Demo Child Aster \u00b7 Pump pump-001\nState\nReady, not feeding\nRate now\n90 mL/hr\nActive version\nVersion 5\nDelivered\n0 mL of 5 mL\nPropose a change\n\nThe caregiver must confirm it. The pump checks its own limits and may refuse it.\n\nFeed profiles\n\nFills in the form. Demo values only, not guidance.\n\nOvernight continuous\nDaytime bolus\n\nMode\nContinuous\nBolus\nRate \n\nMillilitres per hour\n\nFeed volume \n\nTotal for one feed, in millilitres\n\nNote \n\nOptional. Up to 200 characters. 200 left.\n\nPropose change\n\nVersion 6 proposed. Waiting for the caregiver.\n\nPrescriptions\nVersion 6\nPending\n\nContinuous, 500 mL/hr, 5 mL\n\nWaiting for the caregiver to confirm\n\nFictional UI rejection acceptance case\n\nProposed 07:51 PM\n\nVersion 5\nActive on pump\n\nContinuous, 90 mL/hr, 5 mL\n\nThe pump reported this version\n\nFictional UI acceptance prescription\n\nProposed 07:49 PM \u00b7 Confirmed by Parent (demo) \u00b7 Sent 07:50 PM \u00b7 Pump answered 07:50 PM\n\nVersion 4\nReplaced\n\nContinuous, 75 mL/hr, 5 mL\n\nA newer version replaced this one\n\nFictional queued bench update\n\nProposed 07:36 PM \u00b7 Confirmed by Parent (demo) \u00b7 Sent 07:36 PM\n\nVersion 3\nRejected: rate out of range\n\nContinuous, 500 mL/hr, 5 mL\n\nFictional out-of-range bench case\n\nProposed 07:36 PM \u00b7 Confirmed by Parent (demo) \u00b7 Sent 07:36 PM \u00b7 Pump answered 07:36 PM\n\nVersion 2\nReplaced\n\nContinuous, 90 mL/hr, 5 mL\n\nA newer version replaced this one\n\nFictional ESP32 bench prescription; xxxxxxxxxxxxxxxxxxxx"
+    },
+    "invalid_confirmation": {
+      "controls": {
+        "confirm_visible": true,
+        "review_500_visible": true,
+        "active_90_visible": true
+      },
+      "family": "Skip to main content\nFeeding pump\nSimulated data\nNight mode\nTurn on alerts\n\nTap once so this phone can vibrate, beep and speak when the pump needs you.\n\nTurn on alerts\n\nPump connected. Last update 07:52 PM\n\nPump connected. Last update 07:48 PM\nYour last answer\n\nRejected: rate out of range\n\nThe pump refused this change: rate out of range. The pump settings did not change.\n\nOK\nA change is waiting for your review.\nToday\n\nReady, not feeding\n\nDelivered\n0 mL of 5 mL\n\nRate now\n90 mL/hr\nActive version\nVersion 5\n\nLast update 07:52 PM\n\nRead status aloud\nSettings\nLanguage \nEnglish\nEspa\u00f1ol\nWho is using this phone? \nParent (demo)\nSchool nurse (demo)\nAlerts for Parent (demo)\nVibrate\nBeep\nSpeak alerts out loud\n\nPrototype, not for clinical use. Demo users and fictional data only. Never connect to a person.",
+      "clinician": "Skip to main content\nClinician portal\n\nSigned in as Dr. Demo (demo user, no real login)\n\nSimulated data\nLanguage\nEnglish\nEspa\u00f1ol\nNight mode\nPatients\n\nPatients who need attention are listed first.\n\nDemo Child Bramble\nPump pump-002\nPump offline\nOpen\nDemo Child Bramble\nDemo Child Cobalt\nPump pump-003\nPump offline\nOpen\nDemo Child Cobalt\nDemo Child Aster\nPump pump-001\nNo exceptions\nShowing now\n\nPump connected. Last update 07:52 PM\n\nPump connected. Last update 07:48 PM\nPump now Demo Child Aster \u00b7 Pump pump-001\nState\nReady, not feeding\nRate now\n90 mL/hr\nActive version\nVersion 5\nDelivered\n0 mL of 5 mL\nPropose a change\n\nThe caregiver must confirm it. The pump checks its own limits and may refuse it.\n\nFeed profiles\n\nFills in the form. Demo values only, not guidance.\n\nOvernight continuous\nDaytime bolus\n\nMode\nContinuous\nBolus\nRate \n\nMillilitres per hour\n\nFeed volume \n\nTotal for one feed, in millilitres\n\nNote \n\nOptional. Up to 200 characters. 200 left.\n\nPropose change\n\nVersion 6 proposed. Waiting for the caregiver.\n\nPrescriptions\nVersion 6\nRejected: rate out of range\n\nContinuous, 500 mL/hr, 5 mL\n\nFictional UI rejection acceptance case\n\nProposed 07:51 PM \u00b7 Confirmed by Parent (demo) \u00b7 Sent 07:52 PM \u00b7 Pump answered 07:52 PM\n\nVersion 5\nActive on pump\n\nContinuous, 90 mL/hr, 5 mL\n\nThe pump reported this version\n\nFictional UI acceptance prescription\n\nProposed 07:49 PM \u00b7 Confirmed by Parent (demo) \u00b7 Sent 07:50 PM \u00b7 Pump answered 07:50 PM\n\nVersion 4\nReplaced\n\nContinuous, 75 mL/hr, 5 mL\n\nA newer version replaced this one\n\nFictional queued bench update\n\nProposed 07:36 PM \u00b7 Confirmed by Parent (demo) \u00b7 Sent 07:36 PM\n\nVersion 3\nRejected: rate out of range\n\nContinuous, 500 mL/hr, 5 mL\n\nFictional out-of-range bench case\n\nProposed 07:36 PM \u00b7 Confirmed by Parent (demo) \u00b7 Sent 07:36 PM \u00b7 Pump answered 07:36 PM\n\nVersion 2\nReplaced\n\nContinuous, 90 mL/hr, 5 mL\n\nA newer version replaced this one\n\nFict"
+    }
+  },
+  "result": "pass"
+}

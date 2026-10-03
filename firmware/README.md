@@ -95,11 +95,13 @@ For standalone bench tests with **no hub running**, start the broker with `make 
 
 Use a version newer than both current and pending. This helper is a test fixture injector that bypasses the hub's publish gate (S2), so it is bench only; run `make reset-demo` before the hub is used again. The hub remains responsible for the clinician/caregiver workflow. Broker acknowledgement means sent, and only pump telemetry proves applied or rejected. Use serial `start` after an idle apply; remote prescription updates do not start feeding.
 
-## Remaining checks and team handoff
+## Phase 3 results and team handoff
 
-The connected ESP32 passed all ten offline serial checks on 2026-10-03; actual evidence is in [phase3/offline-bench.json](phase3/offline-bench.json). Delivery advanced, pause and occlusion froze volume, alarm clear remained paused, explicit resume advanced volume, stop returned idle, and NVS restored the same prescription after reboot. All delivery was digitally simulated. Physical button wiring is unverified.
+Person A's Phase 3 acceptance passed on a real ESP32 on 2026-10-03 with digitally simulated delivery and serial fault injection. Actual reports and their scope are indexed in [phase3/README.md](phase3/README.md): ten offline controller checks, thirteen hub/MQTT checks, eleven WiFi-loss checks, seven normal-firmware bag-empty checks, rendered app checks, and the clinician-form/family-confirmation click-through.
 
-Phase 3 remains incomplete until the ESP32 repeats the clinician/caregiver loop through the hub, receives a 200-character note, rejects the excessive rate, and keeps delivering while WiFi is lost. MQTT availability, retained replay, and connected-mode persistence also need actual network checks.
+The confirmed 200-character note reached the ESP32; excessive rates rejected; pending updates waited for idle; replay was silent; alarms stopped delivery and cleared to paused; NVS survived reboot; and availability went offline/online correctly. During an actual 30-second ESP32 WiFi disconnection, v4 continued at 75 mL/hr and modelled volume increased by 0.625 mL. The Mac's network was unchanged. The normal `esp32dev` profile is restored, and the final UI-confirmed v5 prescription is 90 mL/hr with a 5 mL target, idle. The UI-confirmed v6 at 500 mL/hr was rejected. These are fictional test values.
+
+Physical button wiring, OLED, sensors, measured fluid delivery, and pump calibration were not tested; the user selected digital simulation. Person D can use the evidence to update the shared Phase 3 checklist and decide the hardware-loop tag. Shared documents and other lanes were not edited.
 
 ## Connected bench without a router
 
@@ -136,13 +138,37 @@ After joining the network, run the connected helper, then press the ESP32 reset 
 
 It requires a hub-mode startup marker, simulated telemetry, and an initially idle pump with no alarm or pending prescription. Through the real HTTP/MQTT path it proposes a fictional 90 mL/hr prescription with a 200-character note, confirms it as the demo caregiver, checks pump acknowledgement, replays the exact confirmed MQTT payload, and confirms a 500 mL/hr case that the ESP32 must reject. It starts digital delivery, queues a new 75 mL/hr version without changing the running feed, checks pause/alarm/clear/resume, stops to apply the pending update, and verifies NVS and ordered offline/online availability across an idle reboot. It ends idle after success. It creates test prescriptions and audit entries in the selected hub database; use the isolated Phase 3 database above. Defaults limit the run to three minutes and individual waits to 15 seconds.
 
-The helper does not disconnect WiFi or stop the broker; `wifi_loss` is explicitly `not_run`. S6 requires a separate actual disconnect while a digital feed is running: record USB status before and during disconnection, verify the same accepted version/rate and increasing volume, then rejoin and verify fresh hub telemetry. Do not mark Phase 3 complete solely from a successful connected-helper report.
+The connected helper does not disconnect WiFi or stop the broker; `wifi_loss` is explicitly `not_run`. Run the separate device WiFi interruption check below for S6. Do not mark Phase 3 complete solely from a successful connected-helper report.
 
 ```bash
 .venv/bin/python -m pytest firmware/test/test_network_bench.py
 ```
 
-Firmware now matches the simulator on all 55 shared prescription cases, including the pending replay that caused commit `e091d59` to revert the earlier firmware merge. Both status and event fields follow the current contract. Completion returns idle after five seconds; alarm status reports rate zero; alarm and clear events precede their state changes. Person B can consume the existing QoS 1 events and rejection recovery fields. Whole-system ESP32 loop acceptance and timing parity on real hardware still require bench checks.
+## Device WiFi interruption check
+
+The `esp32dev_network_test` profile joins the configured router using the private `WIFI_SSID`, `WIFI_PASSWORD`, `MQTT_HOST`, and `MQTT_PORT` in `include/secrets.h`. It adds only the bench commands `wifi_off` and `wifi_on`. Those commands queue atomic requests; the network worker changes the ESP32 station connection, while the delivery loop continues. This profile cannot be combined with offline or AP mode. It does not change the Mac's WiFi or stop the broker.
+
+First run the connected helper successfully so there is an active caregiver-confirmed prescription in the hub and NVS. Then upload this profile and run its helper, pressing ESP32 reset when the helper starts listening:
+
+```bash
+pio run -d firmware -e esp32dev_network_test -t upload --upload-port /dev/cu.usbserial-120
+.venv/bin/python firmware/tools/wifi_bench.py --port /dev/cu.usbserial-120 \
+  --hub http://127.0.0.1:8000 --broker 127.0.0.1 \
+  --output /tmp/esp32-wifi-bench.json
+```
+
+The helper requires the additional `Network bench controls enabled; simulated=true` startup marker, idle/no alarm/no pending state, and a matching active caregiver-confirmed hub prescription. It starts a digital feed, waits for an actual ESP32 WiFi-disconnection acknowledgement, and checks increasing volume with unchanged version/rate/settings for at least 30 device seconds. It checks hub offline state and broker Last Will availability, re-enables WiFi, requires fresh online hub/MQTT telemetry with the same running feed, and stops to idle. Defaults bound the run to three minutes. On failure it attempts to restore only a connection it disabled and stop only a feed it started; it preserves alarms. A reconnect acknowledgement alone does not count as successful recovery.
+
+After checking the report, restore the normal profile so interruption controls are absent:
+
+```bash
+pio run -d firmware -e esp32dev -t upload --upload-port /dev/cu.usbserial-120
+.venv/bin/python -m pytest firmware/test/test_wifi_bench.py
+```
+
+Passing fake helper tests or compiling this profile does not establish S6 on hardware. Only an actual successful `wifi_bench.py` report establishes the tested digital-delivery outage behavior.
+
+Firmware now matches the simulator on all 55 shared prescription cases, including the pending replay that caused commit `e091d59` to revert the earlier firmware merge. Both status and event fields follow the current contract. Completion returns idle after five seconds; alarm status reports rate zero; alarm and clear events precede their state changes. Person B can consume the existing QoS 1 events and rejection recovery fields. The real ESP32 programming loop and delivery continuity across WiFi loss have passed; optional physical peripherals and measured delivery remain outside the tested digital scope.
 
 Digital fault commands apply only while running or paused, as in the simulator. The shared fixture covers prescription behavior, not every hardware failure. Persistence failures remain a deliberate difference: firmware preserves the old applied version, keeps the new one pending, and refuses to start until it can persist; the simulator currently logs a failed file write after applying. Person D should align that failure path without weakening the firmware's persistence gate.
 

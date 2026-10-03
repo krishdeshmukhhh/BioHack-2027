@@ -1,0 +1,95 @@
+{
+  "timestamp_utc": "2026-10-03T23:38:52.532874+00:00",
+  "prototype": true,
+  "simulated": true,
+  "device_mode": "hub",
+  "network_bench_profile": true,
+  "port": "/dev/cu.usbserial-120",
+  "mechanism": "Compile-gated device-only WiFi.disconnect",
+  "checks": {
+    "mode_gate": {
+      "result": "pass",
+      "detail": "Hub and compile-gated network bench markers plus simulated USB status"
+    },
+    "initial_idle": {
+      "result": "pass",
+      "detail": "Idle accepted prescription; no alarm/pending update; adequate digital target"
+    },
+    "confirmed_prescription": {
+      "result": "pass",
+      "detail": "Existing active hub prescription matches device and has caregiver confirmation"
+    },
+    "hub_live_status": {
+      "result": "pass",
+      "detail": "Fresh MQTT status and advancing hub received_at agree with USB pump"
+    },
+    "start_progression": {
+      "result": "pass",
+      "detail": "Helper-started digital feed is running and advancing"
+    },
+    "device_wifi_disconnected": {
+      "result": "pass",
+      "detail": "Network worker positively acknowledged actual device WiFi disconnection"
+    },
+    "delivery_during_wifi_loss": {
+      "result": "pass",
+      "detail": "Digital volume advanced throughout >=30 device seconds without changing settings"
+    },
+    "hub_offline": {
+      "result": "pass",
+      "detail": "Hub marked pump offline during device-only WiFi loss"
+    },
+    "mqtt_last_will_offline": {
+      "result": "pass",
+      "detail": "Broker delivered retained offline after ungraceful device connection loss"
+    },
+    "network_restored": {
+      "result": "pass",
+      "detail": "Device rejoined; fresh MQTT/hub online; same running feed and rejection fields"
+    },
+    "stop_returns_idle": {
+      "result": "pass",
+      "detail": "Helper-started digital feed stopped safely to idle"
+    }
+  },
+  "last_status": {
+    "pump_id": "pump-001",
+    "uptime_ms": 50000,
+    "state": "idle",
+    "rate_ml_hr": 75,
+    "delivered_ml": 0.928375,
+    "target_ml": 5,
+    "alarm": null,
+    "prescription_version": 4,
+    "pending_version": null,
+    "last_rejected_version": null,
+    "last_reject_reason": null,
+    "simulated": true
+  },
+  "tested_version": 4,
+  "outage_window": {
+    "device_elapsed_ms": 30000,
+    "start_delivered_ml": 0.135,
+    "end_delivered_ml": 0.76,
+    "rate_ml_hr": 75,
+    "prescription_version": 4
+  },
+  "offline_availability": "Observed via broker during device WiFi loss",
+  "restored_status": {
+    "pump_id": "pump-001",
+    "uptime_ms": 48000,
+    "state": "running",
+    "rate_ml_hr": 75,
+    "delivered_ml": 0.926666667,
+    "target_ml": 5,
+    "alarm": null,
+    "prescription_version": 4,
+    "pending_version": null,
+    "last_rejected_version": null,
+    "last_reject_reason": null,
+    "simulated": true
+  },
+  "result": "pass",
+  "firmware_environment": "esp32dev_network_test",
+  "startup_reset": "Operator EN-only RTS reset after opening serial; IO0 remained high."
+}

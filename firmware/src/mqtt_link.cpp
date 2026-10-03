@@ -23,6 +23,9 @@
 #if defined(BENCH_AP) && defined(LOCAL_DEMO)
 #error "BENCH_AP is hub-connected and must not enable LOCAL_DEMO"
 #endif
+#if defined(NETWORK_BENCH) && (defined(LOCAL_DEMO) || defined(BENCH_AP))
+#error "NETWORK_BENCH requires hub-connected station mode"
+#endif
 #ifdef BENCH_AP
 #if !defined(BENCH_AP_SSID) || !defined(BENCH_AP_PASSWORD)
 #error "BENCH_AP requires a private SSID and WPA2 password in secrets.h"
@@ -55,6 +58,9 @@ std::atomic<bool> started{false};
 std::atomic<bool> isConnected{false};
 std::atomic<bool> shutdownRequested{false};
 std::atomic<bool> restartRequested{false};
+#ifdef NETWORK_BENCH
+std::atomic<bool> benchWifiEnabled{true};
+#endif
 // Used only on the network task, including its synchronous MQTT callback.
 #ifndef LOCAL_DEMO
 bool replayRequired = false;
@@ -167,6 +173,10 @@ void runNetwork() {
 #endif
   unsigned long lastWifiAttempt = millis();
   unsigned long lastBrokerAttempt = millis() - NETWORK_RETRY_INTERVAL_MS;
+#ifdef NETWORK_BENCH
+  bool benchWifiActive = true;
+  bool benchDisconnectReported = false;
+#endif
   bool shutdownStarted = false;
   unsigned long shutdownAt = 0;
   Message message{};
@@ -200,6 +210,38 @@ void runNetwork() {
       vTaskDelay(pdMS_TO_TICKS(10));
       continue;
     }
+
+#ifdef NETWORK_BENCH
+    const bool wifiEnabled = benchWifiEnabled.load();
+    if (wifiEnabled != benchWifiActive) {
+      benchWifiActive = wifiEnabled;
+      if (!wifiEnabled) {
+        // A real station disconnect tests S6 without altering the Mac network.
+        // Close TCP without MQTT DISCONNECT so the broker publishes the LWT.
+        WiFi.setAutoReconnect(false);
+        socket.stop();
+        isConnected.store(false);
+        WiFi.disconnect(false, false);
+        benchDisconnectReported = false;
+      } else {
+        WiFi.setAutoReconnect(true);
+        WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+        lastWifiAttempt = now;
+        lastBrokerAttempt = now - NETWORK_RETRY_INTERVAL_MS;
+        Serial.println("Bench WiFi reconnect enabled");
+      }
+    }
+    if (!wifiEnabled) {
+      if (!benchDisconnectReported && WiFi.status() != WL_CONNECTED) {
+        Serial.println("Bench WiFi disconnected");
+        benchDisconnectReported = true;
+      }
+      // Diagnostics and shutdown still run above. Keep queued MQTT events
+      // for reconnect and let the one-item status mailbox retain the latest.
+      vTaskDelay(pdMS_TO_TICKS(10));
+      continue;
+    }
+#endif
 
 #ifdef BENCH_AP
     if (!apReady && now - lastWifiAttempt >= NETWORK_RETRY_INTERVAL_MS) {
@@ -364,6 +406,10 @@ bool publishEvent(const char* json) {
 }
 
 bool connected() { return isConnected.load(); }
+
+#ifdef NETWORK_BENCH
+void setBenchWifiEnabled(bool enabled) { benchWifiEnabled.store(enabled); }
+#endif
 
 void requestShutdown(bool restart) {
   if (!started.load()) return;

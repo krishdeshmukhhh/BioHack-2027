@@ -76,6 +76,10 @@ void handleCommand(const std::string& command, uint32_t now) {
     accepted = false;
 #endif
   } else if (command == "start") accepted = controller.start(now);
+#ifdef NETWORK_BENCH
+  else if (command == "wifi_off") mqtt_link::setBenchWifiEnabled(false);
+  else if (command == "wifi_on") mqtt_link::setBenchWifiEnabled(true);
+#endif
   else if (command == "pause") accepted = controller.pause(now);
   else if (command == "resume") accepted = controller.resume(now);
   else if (command == "stop") accepted = controller.stop(now);
@@ -111,6 +115,9 @@ void setup() {
 #else
   Serial.println("Mode: hub; local demo disabled; simulated=true");
   Serial.println("Confirm a prescription through the hub, then enter start to simulate delivery.");
+#endif
+#ifdef NETWORK_BENCH
+  Serial.println("Network bench controls enabled; simulated=true");
 #endif
   actuator.begin();
   occlusion.begin(); bagEmpty.begin(); pauseButton.begin();
