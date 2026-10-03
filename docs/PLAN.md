@@ -104,15 +104,15 @@ Each phase ends with an acceptance check you can show to someone. Do not start t
 
 ### Phase 2: Remote programming loop (the core)
 
-- [ ] `hub`: tables for prescriptions and audit; lifecycle proposed, confirmed, sent, active, rejected, superseded
-- [ ] `hub`: `POST /api/pumps/{id}/prescriptions` (clinician proposes), `POST .../{version}/confirm` and `.../decline` (caregiver)
-- [ ] `hub`: single publish gate that refuses anything unconfirmed (S2); retained, QoS 1
+- [x] `hub`: tables for prescriptions and audit; lifecycle proposed, confirmed, sent, active, rejected, superseded
+- [x] `hub`: `POST /api/pumps/{id}/prescriptions` (clinician proposes), `POST .../{version}/confirm` and `.../decline` (caregiver)
+- [x] `hub`: single publish gate that refuses anything unconfirmed (S2); retained, QoS 1
 - [x] `sim`: validate in order (shape, confirmation, version, limits); reject with reason; queue if not idle; apply when idle; report version in status
-- [ ] `hub`: set `active` or `rejected` only from pump events and status (S5)
-- [ ] `web/clinician`: propose form and a status chip (Pending, Sent, Active on pump, Rejected with reason)
-- [ ] `web/family`: "Change to review" screen with old versus new and Confirm or Decline
-- [ ] Tests for unhappy paths: unconfirmed, out of range, stale version, pump offline
-- [ ] Run `safety-reviewer`
+- [x] `hub`: set `active` or `rejected` only from pump events and status (S5)
+- [x] `web/clinician`: propose form and a status chip (Pending, Sent, Active on pump, Rejected with reason)
+- [x] `web/family`: "Change to review" screen with old versus new and Confirm or Decline
+- [x] Tests for unhappy paths: unconfirmed, out of range, stale version, pump offline
+- [x] Run `safety-reviewer`
 
 **Check:** propose 90 mL/hr in the portal, confirm on the phone, see the chip go Pending, Sent, Active on pump. Then propose 500 mL/hr and see Rejected: rate out of range.
 
