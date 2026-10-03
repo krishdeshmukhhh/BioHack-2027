@@ -95,10 +95,10 @@ Each phase ends with an acceptance check you can show to someone. Do not start t
 ### Phase 1: Walking skeleton (data flows one way, pump to screen)
 
 - [x] `sim/pump_sim.py`: connects to the broker, publishes `availability` and a `status` every 2 seconds, runs a feed from a hard-coded prescription
-- [ ] `hub`: MQTT bridge subscribes to status, event, availability; validates against schemas; stores in SQLite
-- [ ] `hub`: `GET /api/pumps/{id}/status` (latest) and a server-sent events stream
-- [ ] `web/family`: one bare page showing live state and delivered volume
-- [ ] Hub serves `web/` as static files
+- [x] `hub`: MQTT bridge subscribes to status, event, availability; validates against schemas; stores in SQLite
+- [x] `hub`: `GET /api/pumps/{id}/status` (latest) and a server-sent events stream
+- [x] `web/family`: one bare page showing live state and delivered volume
+- [x] Hub serves `web/` as static files
 
 **Check:** start broker, hub, sim; open the family page on a phone on the same network; watch delivered volume rise.
 
