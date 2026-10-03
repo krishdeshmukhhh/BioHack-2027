@@ -73,6 +73,9 @@
 
 *, *::before, *::after { box-sizing: border-box; }
 
+/* The hidden attribute always wins over component display rules. */
+[hidden] { display: none !important; }
+
 html { -webkit-text-size-adjust: 100%; }
 
 body {
@@ -222,6 +225,27 @@ fieldset { border: 0; padding: 0; margin: 0 0 var(--gap); }
 }
 .topbar h1 { margin: 0; font-size: 1.25rem; }
 .topbar .who { color: var(--text-muted); font-size: var(--text-small); }
+
+/* ---- Shared by both apps ---- */
+.topbar-right { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.btn-small { padding: 8px 14px; font-size: var(--text-small); }
+
+.conn strong { color: var(--text); }
+.conn-body { display: block; color: var(--text); font-weight: 400; }
+
+.tone-text-ok      { color: var(--ok); }
+.tone-text-info    { color: var(--info); }
+.tone-text-warn    { color: var(--warn); }
+.tone-text-danger  { color: var(--danger); }
+.tone-text-neutral { color: var(--text); }
+
+.notice { display: flex; gap: 10px; align-items: flex-start; font-weight: 600; margin: 8px 0 0; }
+.notice svg { width: 24px; height: 24px; flex: none; margin-top: 2px; }
+.notice[hidden] { display: none; }
+
+/* Motion: short fades only. */
+.fade { animation: fade-in 160ms ease-out; }
+@keyframes fade-in { from { opacity: 0.4; } to { opacity: 1; } }
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
