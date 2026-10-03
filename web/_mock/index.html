@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Mock pump controls (developer tool)</title>
+  <link rel="stylesheet" href="/shared/tokens.css">
+  <style>
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+    pre { white-space: pre-wrap; word-break: break-word; background: var(--surface-2); padding: 12px; border-radius: 8px; font-size: 0.9rem; }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <h1>Mock pump controls</h1>
+    <span class="sim-label">Simulated data</span>
+  </header>
+  <main id="main">
+    <p class="banner tone-info"><span><strong>Developer tool for the web lane, not part of the product.</strong>
+      These buttons stand in for what happens at the pump itself (start, pause, faults, wifi). They exist only on the mock server.</span></p>
+
+    <div class="card">
+      <label for="pump">Pump</label>
+      <select id="pump">
+        <option>pump-001</option><option>pump-002</option><option>pump-003</option>
+      </select>
+    </div>
+
+    <section class="card" aria-labelledby="h-feed">
+      <h2 id="h-feed">At the pump</h2>
+      <div class="grid">
+        <button class="btn" data-action="start">Start feed</button>
+        <button class="btn" data-action="pause">Pause / resume</button>
+        <button class="btn" data-action="clear">Clear alarm</button>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="h-faults">
+      <h2 id="h-faults">Faults</h2>
+      <div class="grid">
+        <button class="btn" data-action="occlusion">Occlusion</button>
+        <button class="btn" data-action="bag_empty">Bag empty</button>
+        <button class="btn" data-action="low_battery">Low battery</button>
+        <button class="btn" data-action="offline">Drop wifi</button>
+        <button class="btn" data-action="online">Restore wifi</button>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="h-out">
+      <h2 id="h-out">Result</h2>
+      <pre id="out" aria-live="polite">Press a button.</pre>
+      <p><a href="/family/">Family app</a> · <a href="/clinician/">Clinician portal</a></p>
+    </section>
+  </main>
+  <footer class="site-footer"><p><strong>Prototype, not for clinical use.</strong> Demo users and fictional data only.</p></footer>
+  <script>
+    document.querySelectorAll("[data-action]").forEach((b) => b.addEventListener("click", async () => {
+      const pump = document.getElementById("pump").value;
+      const out = document.getElementById("out");
+      try {
+        const res = await fetch(`/_mock/pumps/${pump}/${b.dataset.action}`, { method: "POST" });
+        out.textContent = `${b.textContent}: ` + JSON.stringify(await res.json());
+      } catch (e) {
+        out.textContent = "Mock server not reachable.";
+      }
+    }));
+  </script>
+</body>
+</html>

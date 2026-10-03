@@ -1,0 +1,59 @@
+/* Family app. Mobile first: one column, large type, one clear thing per card. */
+
+.topbar-right { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.btn-small { padding: 8px 14px; font-size: var(--text-small); }
+
+.conn { margin-top: 0; }
+.conn strong { color: var(--text); }
+.conn-body { display: block; color: var(--text); font-weight: 400; }
+
+.state {
+  display: flex; align-items: center; gap: 12px;
+  font-size: var(--text-huge); font-weight: 800; line-height: 1.15;
+  margin: 0 0 12px;
+}
+.state svg { width: 44px; height: 44px; flex: none; }
+.tone-text-ok      { color: var(--ok); }
+.tone-text-info    { color: var(--info); }
+.tone-text-warn    { color: var(--warn); }
+.tone-text-danger  { color: var(--danger); }
+.tone-text-neutral { color: var(--text); }
+
+.alarm-line {
+  display: flex; gap: 10px; align-items: flex-start;
+  font-weight: 700; padding: 10px 14px; border-radius: var(--radius);
+  border: 2px solid currentColor;
+}
+.alarm-line svg { width: 26px; height: 26px; flex: none; }
+.alarm-line[hidden] { display: none; }
+
+.progress-block { margin: 16px 0; }
+.delivered { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 12px; margin-bottom: 8px; }
+.delivered strong { font-size: var(--text-large); }
+
+.meter {
+  height: 20px; border-radius: 999px;
+  background: var(--surface-2);
+  border: 2px solid var(--border);
+  overflow: hidden;
+}
+.meter-fill {
+  height: 100%; width: 0;
+  background: var(--primary);
+}
+
+.facts { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 0 0 12px; }
+.facts div { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; }
+.facts dt { color: var(--text-muted); font-size: var(--text-small); }
+.facts dd { margin: 0; font-weight: 700; font-size: 1.25rem; }
+
+.updated { color: var(--text-muted); margin: 0; }
+
+/* Motion: short fades only, removed by prefers-reduced-motion in tokens.css. */
+.fade { animation: fade-in 160ms ease-out; }
+@keyframes fade-in { from { opacity: 0.4; } to { opacity: 1; } }
+
+@media (max-width: 360px) {
+  .facts { grid-template-columns: 1fr; }
+  .state { font-size: 1.9rem; }
+}

@@ -1,0 +1,153 @@
+// Every user-facing string, for both apps (FR-25). Add a language by copying
+// this file to strings.<lang>.js and translating the values; keep the keys.
+// {name} placeholders are filled in by t(). Demo copy only: no clinical guidance.
+
+export default {
+  lang: "en",
+  language_name: "English",
+
+  // Shared
+  prototype_footer: "Prototype, not for clinical use.",
+  prototype_footer_detail: "Demo users and fictional data only. Never connect to a person.",
+  simulated_data: "Simulated data",
+  skip_to_content: "Skip to main content",
+  loading: "Loading…",
+  unit_ml_hr: "{value} mL/hr",
+  unit_ml: "{value} mL",
+  version: "Version {version}",
+  updated_at: "Last update {time}",
+  never_updated: "No update from the pump yet",
+
+  // Connection
+  pump_online: "Pump connected",
+  pump_offline: "Pump offline",
+  pump_offline_since: "Pump offline since {time}",
+  pump_offline_body: "The pump keeps running its last accepted settings. Updates will show here when it reconnects.",
+  hub_lost: "Lost contact with the home hub. Trying again…",
+  offline_last_update: "Offline, last update {time}",
+  offline_no_update: "Offline, no update yet",
+  connecting: "Connecting to the home hub…",
+  online_last_update: "Pump connected. Last update {time}",
+
+  // Settings
+  night_mode: "Night mode",
+
+  // Pump states
+  state_idle: "Ready, not feeding",
+  state_priming: "Getting ready",
+  state_running: "Feeding",
+  state_paused: "Paused",
+  state_alarm: "Needs attention",
+  state_complete: "Feed finished",
+
+  // Alarms (short names; full alert screens come later)
+  alarm_occlusion: "Tube blocked",
+  alarm_bag_empty: "Bag empty",
+  alarm_low_battery: "Battery low",
+  alarm_sensor_mismatch: "Bag level does not match",
+  alarm_line: "Alarm: {alarm}. Check the pump.",
+
+  // Prescription fields
+  field_mode: "Mode",
+  field_rate: "Rate",
+  field_volume: "Feed volume",
+  field_note: "Note",
+  mode_continuous: "Continuous",
+  mode_bolus: "Bolus",
+
+  // Prescription chip (exactly the hub's state, S5)
+  rx_proposed: "Pending",
+  rx_proposed_detail: "Waiting for the caregiver to confirm",
+  rx_confirmed: "Pending",
+  rx_confirmed_detail: "Confirmed, sending to pump",
+  rx_sent: "Sent",
+  rx_sent_detail: "Waiting for the pump to report it",
+  rx_sent_offline: "Sent: pump offline since {time}",
+  rx_active: "Active on pump",
+  rx_active_detail: "The pump reported this version",
+  rx_rejected: "Rejected",
+  rx_rejected_reason: "Rejected: {reason}",
+  rx_superseded: "Replaced",
+  rx_superseded_detail: "A newer version replaced this one",
+
+  // Reject reasons (pump reasons from event.schema.json, plus declined)
+  reason_rate_out_of_range: "rate out of range",
+  reason_volume_out_of_range: "volume out of range",
+  reason_not_confirmed: "no caregiver confirmation",
+  reason_stale_version: "older than the version on the pump",
+  reason_malformed: "the pump could not read it",
+  reason_wrong_pump: "sent to the wrong pump",
+  reason_declined: "declined by caregiver",
+
+  // API errors (codes from docs/API.md)
+  error_invalid_input: "Some details are missing or not valid. Check the form.",
+  error_not_proposed: "This change was already answered.",
+  error_unknown_pump: "The hub does not know this pump.",
+  error_network: "Could not reach the home hub. Check the connection and try again.",
+  error_generic: "Something went wrong. Try again.",
+
+  // Family app
+  family_title: "Feeding pump",
+  family_today: "Today",
+  family_delivered: "Delivered",
+  family_of_target: "{delivered} of {target}",
+  family_progress_label: "Feed progress",
+  family_rate_now: "Rate now",
+  family_no_feed: "No feed set yet",
+  family_status_spoken: "{state}. {delivered} of {target} delivered.",
+  family_caregiver: "Who is using this phone?",
+  role_parent: "Parent (demo)",
+  role_school_nurse: "School nurse (demo)",
+
+  review_title: "Change to review",
+  review_intro: "{clinician} asked to change the feed. Nothing changes until you confirm.",
+  review_now: "Now",
+  review_new: "New",
+  review_changed: "Changed",
+  review_same: "Same",
+  review_note: "Note from the clinician",
+  review_confirm: "Confirm change",
+  review_decline: "Decline",
+  review_working: "Sending…",
+  review_sent: "Confirmed. Sent to the pump. Waiting for the pump to report it.",
+  review_active: "Done. The pump is now using version {version}.",
+  review_rejected: "The pump refused this change: {reason}. The pump settings did not change.",
+  review_declined: "You declined this change. The pump settings did not change.",
+  review_queued_hint: "If a feed is running, the pump waits until it finishes before changing.",
+  review_none: "No changes waiting for you.",
+
+  // Clinician portal
+  clin_title: "Clinician portal",
+  clin_user: "Signed in as Dr. Demo (demo user, no real login)",
+  clin_patient: "Patient",
+  clin_pump: "Pump {pump}",
+  clin_live: "Pump now",
+  clin_active_version: "Active version",
+  clin_none: "None",
+  clin_propose_title: "Propose a change",
+  clin_propose_intro: "The caregiver must confirm it. The pump checks its own limits and may refuse it.",
+  clin_rate_hint: "Millilitres per hour",
+  clin_volume_hint: "Total for one feed, in millilitres",
+  clin_note_hint: "Optional. Up to 200 characters. {left} left.",
+  clin_submit: "Propose change",
+  clin_submitting: "Proposing…",
+  clin_proposed_ok: "Version {version} proposed. Waiting for the caregiver.",
+  clin_history_title: "Prescriptions",
+  clin_history_empty: "No prescriptions yet.",
+  clin_proposed_by: "Proposed {time}",
+  clin_confirmed_by: "Confirmed by {who}",
+
+  val_required: "Enter a value.",
+  val_positive: "Enter a number greater than 0.",
+  val_mode: "Choose a mode.",
+  val_note_long: "Keep the note to 200 characters or fewer.",
+  val_fix: "Fix {count} problem(s) in the form.",
+
+  users: {
+    "clin-01": "Dr. Demo",
+    "care-01": "Parent (demo)",
+    "care-02": "School nurse (demo)",
+    pump: "Pump",
+    hub: "Hub",
+  },
+};
