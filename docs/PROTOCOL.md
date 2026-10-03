@@ -28,12 +28,46 @@ Checks run in this order. The first failure wins, the pump publishes `prescripti
 | 5 | `rate_ml_hr` within the limits in `limits.h` | `rate_out_of_range` |
 | 6 | `volume_ml` within the limits in `limits.h` | `volume_out_of_range` |
 
+Check 1 is a fixed list, so the firmware and the simulator agree exactly. The payload is a JSON object with:
+
+- `pump_id`: a string
+- `version`: an integer from 1 to 2147483647 (fits a signed 32-bit int on the ESP32)
+- `mode`: `continuous` or `bolus`
+- `rate_ml_hr` and `volume_ml`: numbers (any value; the range is checked in 5 and 6)
+
+Edge cases for check 1, the same in the firmware and the sim:
+
+- A number too large to represent (for example a 400-digit integer) is malformed, never an error that stops the pump's MQTT handling.
+- A boolean is never a number. `version` must be a JSON integer: `3.0` is malformed.
+- A payload that is not valid JSON (including `NaN` or `Infinity`) has no readable version, so it is dropped with a log line.
+- The limits in checks 5 and 6 are inclusive at both ends.
+
+`confirmed_by` and `confirmed_at` are **not** part of check 1. If they are missing, empty, or not strings, the reason is `not_confirmed` (check 3). The other fields (`proposed_by`, `proposed_at`, `note`) are not checked by the pump.
+
 If all checks pass:
 
 - Pump is idle: apply, persist, publish `prescription_applied`, and report the new `prescription_version` in status.
 - Pump is not idle: store as pending, publish `prescription_queued`, report `pending_version` in status, and apply on the next return to idle.
 
-Because the prescription topic is retained, the pump will see the same message again on every reconnect. Check 4 makes that harmless, and the pump should not publish a rejection for a version equal to its current one.
+Because the prescription topic is retained, the pump will see the same message again on every reconnect. Check 4 makes that harmless. A version **equal to the current or the pending version** is a replay: the pump ignores it silently, with no event and no change to the status reject fields. Any other version that is not greater than both is rejected as `stale_version`.
+
+### Rejections are also reported in status (R1)
+
+The ESP32 can only publish QoS 0 (see `topics.md`), so a `prescription_rejected` event can be lost. Every rejection therefore also sets two status fields, which the pump repeats in every status message until the next rejection:
+
+- `last_rejected_version`: the version just rejected (null until the first rejection since boot)
+- `last_reject_reason`: the same reason as the event
+
+A rejection event must carry a `version`. So a `malformed` payload with a readable integer `version` from 1 to 2147483647 is rejected as usual. One without a readable `version` is dropped with a log line only, and the status fields stay unchanged.
+
+## Pump behaviour the hub can see
+
+- **Status `rate_ml_hr`:** the applied prescription's rate, `0` when no prescription is applied, and `0` in `alarm` (the actuator is stopped).
+- **`complete` to `idle`:** automatic, 5 seconds after reaching `complete`. Any pending prescription is applied on that entry to idle.
+- **Feed start:** only from `idle` with a prescription applied. `delivered_ml` resets to 0 at the start of each feed.
+- **Event order:** an alarm sends `alarm_raised` then `state_changed`. A clear sends `alarm_cleared` then `state_changed` to `paused`. A queued apply sends `state_changed` to `idle` then `prescription_applied`.
+- **Timing:** status goes out on the 2 s timer only, not immediately after an event.
+- **Pending:** a newer valid prescription replaces an older pending one.
 
 ## How the hub decides lifecycle state
 
@@ -43,8 +77,8 @@ Because the prescription topic is retained, the pump will see the same message a
 | `confirmed` | Caregiver confirms |
 | `sent` | Hub publishes to the broker |
 | `active` | `prescription_applied` event, or a status with that `prescription_version` |
-| `rejected` | `prescription_rejected` event, or the caregiver declines |
-| `superseded` | A newer version becomes active |
+| `rejected` | `prescription_rejected` event, a status whose `last_rejected_version` is that version, or the caregiver declines |
+| `superseded` | A newer version becomes active, or (R6) a newer version is reported as pending or active while this one is still `sent` |
 
 ## Conventions
 
@@ -56,4 +90,6 @@ Because the prescription topic is retained, the pump will see the same message a
 
 Record any rename, removal, or change of meaning here with the date.
 
-- (none yet)
+- 2026-10-03 (`contract-v1`): added the optional status fields `last_rejected_version` and `last_reject_reason` (PRD R1). Pump-to-hub publishes are QoS 0 to match PubSubClient; `topics.md` was corrected. A replay equal to the pending version is now ignored silently, like one equal to the current version. Additive only; no field renamed or removed.
+- 2026-10-03: clarified check 1 edge cases, status `rate_ml_hr` in idle and alarm, and the automatic `complete` to `idle` after 5 s. Clarifications only; nothing renamed or removed.
+- 2026-10-03: `version` in a prescription has a maximum of 2147483647 (schema and check 1), and an unrepresentable number is `malformed`. From the sim safety review.

@@ -94,7 +94,7 @@ Each phase ends with an acceptance check you can show to someone. Do not start t
 
 ### Phase 1: Walking skeleton (data flows one way, pump to screen)
 
-- [ ] `sim/pump_sim.py`: connects to the broker, publishes `availability` and a `status` every 2 seconds, runs a feed from a hard-coded prescription
+- [x] `sim/pump_sim.py`: connects to the broker, publishes `availability` and a `status` every 2 seconds, runs a feed from a hard-coded prescription
 - [ ] `hub`: MQTT bridge subscribes to status, event, availability; validates against schemas; stores in SQLite
 - [ ] `hub`: `GET /api/pumps/{id}/status` (latest) and a server-sent events stream
 - [ ] `web/family`: one bare page showing live state and delivered volume
@@ -107,7 +107,7 @@ Each phase ends with an acceptance check you can show to someone. Do not start t
 - [ ] `hub`: tables for prescriptions and audit; lifecycle proposed, confirmed, sent, active, rejected, superseded
 - [ ] `hub`: `POST /api/pumps/{id}/prescriptions` (clinician proposes), `POST .../{version}/confirm` and `.../decline` (caregiver)
 - [ ] `hub`: single publish gate that refuses anything unconfirmed (S2); retained, QoS 1
-- [ ] `sim`: validate in order (shape, confirmation, version, limits); reject with reason; queue if not idle; apply when idle; report version in status
+- [x] `sim`: validate in order (shape, confirmation, version, limits); reject with reason; queue if not idle; apply when idle; report version in status
 - [ ] `hub`: set `active` or `rejected` only from pump events and status (S5)
 - [ ] `web/clinician`: propose form and a status chip (Pending, Sent, Active on pump, Rejected with reason)
 - [ ] `web/family`: "Change to review" screen with old versus new and Confirm or Decline
@@ -135,7 +135,7 @@ Each phase ends with an acceptance check you can show to someone. Do not start t
 - [ ] Hub: map alarms to plain-language cause and steps (content in the strings file)
 - [ ] Family app: alert screen with picture, steps, and vibration; daily progress toward goal
 - [ ] Sim: scripted scenarios with a time-speed factor; fault injection from the keyboard
-- [ ] Sim: `generate_history.py`, 30 days for three fictional patients (on target, drifting under target, repeated night occlusions)
+- [x] Sim: `generate_history.py`, 30 days for three fictional patients (on target, drifting under target, repeated night occlusions)
 - [ ] Hub: daily totals, delivered versus prescribed, exception rules (under target for 3 days, more than N alarms per night, pump offline)
 - [ ] Clinician portal: patient list with exceptions first; patient detail with a delivered versus prescribed chart and alarm timeline
 - [ ] Clinician portal: weekly summary (rule-based text)

@@ -1,4 +1,4 @@
-# Hub HTTP and SSE API (contract v1 draft)
+# Hub HTTP and SSE API (contract v1, frozen)
 
 The contract between the **hub lane** (which implements it) and the **web lane** (which uses it and mocks it). It is frozen in Wave 0 (see `PARALLEL.md`). After that, only the lead changes it, on `main`, and records the change under "Changes" at the bottom.
 
@@ -31,6 +31,8 @@ Prototype rules apply here too: there is no authentication, and users are fixed 
   "online": true, "received_at": "2026-10-03T12:00:00Z"
 }
 ```
+
+Optional status fields pass through when the pump sends them: `battery_pct`, `level_pct`, `last_rejected_version`, and `last_reject_reason` (see `docs/PROTOCOL.md`). The web app must not use the last two to drive the chip. The hub folds them into the Prescription `state`, and the chip reads only that.
 
 **Prescription**:
 
@@ -77,6 +79,14 @@ The web app maps `alarm` to the picture, cause, and steps in its strings file. T
 | GET | `/api/patients/{id}/daily` | `?days=30` | `[{date, delivered_ml, prescribed_ml, alarm_count, simulated}]` | 404 |
 | GET | `/api/pumps/{pump_id}/stream` | — | SSE (below) | 404 |
 
+`/api/patients` exception codes (demo thresholds, not clinical guidance):
+
+| code | Rule |
+|---|---|
+| `offline` | No pump status received in the last 10 s, or availability is `offline` |
+| `under_target` | `delivered_ml` below 90% of `prescribed_ml` on each of the last 3 days |
+| `night_alarms` | More than 2 alarms raised in the most recent night window (22:00 to 06:00 UTC) |
+
 Web pages are served at `/` (family app, `web/family/`) and `/clinician/` (`web/clinician/`).
 
 ## SSE stream `/api/pumps/{pump_id}/stream`
@@ -93,6 +103,20 @@ Uses `text/event-stream`. Each message has an `event:` name and a JSON `data:` f
 
 The browser uses `EventSource`, which reconnects automatically. After a reconnect, the initial snapshot brings the page back in sync.
 
+## History file (sim to hub hand-off)
+
+`make history` writes `sim/data/history.json` (gitignored; regenerate before the demo so the dates end today). The hub loads it into its database for `/api/patients` and `/api/patients/{id}/daily`.
+
+```json
+{"simulated": true, "seed": 2026, "generated_for_end_date": "2026-10-03",
+ "patients": [{"id": "pat-01", "display_name": "Demo Child Aster", "pump_id": "pump-001", "pattern": "on_target", "simulated": true}],
+ "daily": [{"patient_id": "pat-01", "pump_id": "pump-001", "date": "2026-10-03", "delivered_ml": 880.0, "prescribed_ml": 900.0, "alarm_count": 0, "simulated": true}],
+ "alarms": [{"patient_id": "pat-01", "pump_id": "pump-001", "alarm": "bag_empty", "raised_at": "2026-09-04T11:57:00Z", "cleared_at": "2026-09-04T12:07:00Z", "simulated": true}]}
+```
+
+`pattern` is a label for people. The hub computes exceptions from the rows, not from `pattern`. `alarm_count` counts by the UTC date of `raised_at`.
+
 ## Changes
 
-- (none yet)
+- 2026-10-03 `contract-v1` frozen. PumpStatus documents the optional pass-through fields, including the R1 reject fields.
+- 2026-10-03 Additive: exception codes and thresholds for `/api/patients`, and the history file format.

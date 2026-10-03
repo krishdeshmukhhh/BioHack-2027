@@ -45,11 +45,11 @@ The lanes share one Mosquitto broker (started once with `make broker` in the lea
 
 None of this is application code. It is everything two lanes would otherwise both need to change.
 
-- [ ] Decide R1 (PRD §10): add optional `last_rejected_version` and `last_reject_reason` to `status.schema.json`, with an example and a note in `docs/PROTOCOL.md`. Fix the QoS column in `topics.md`.
-- [ ] Review and freeze `docs/API.md`, the HTTP and SSE contract between hub and web.
-- [ ] R3: `persistence true` in `scripts/mosquitto.conf`.
-- [ ] R4 and R5: `jsonschema[format]` and `fastapi>=0.135` in `requirements.txt`. Add a format checker in `shared/protocol/test_examples.py`.
-- [ ] `make test` green. Commit, then `git tag contract-v1 && git push --tags`.
+- [x] Decide R1 (PRD §10): add optional `last_rejected_version` and `last_reject_reason` to `status.schema.json`, with an example and a note in `docs/PROTOCOL.md`. Fix the QoS column in `topics.md`.
+- [x] Review and freeze `docs/API.md`, the HTTP and SSE contract between hub and web.
+- [x] R3: `persistence true` in `scripts/mosquitto.conf`.
+- [x] R4 and R5: `jsonschema[format]` and `fastapi>=0.135` in `requirements.txt`. Add a format checker in `shared/protocol/test_examples.py`.
+- [x] `make test` green. Commit, then `git tag contract-v1 && git push --tags`.
 - [ ] `scripts/worktrees.sh up` (add `fw` if hardware is present).
 
 ## Wave 1: lane briefs (PLAN phases 1 and 2)

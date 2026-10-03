@@ -24,6 +24,14 @@
     "pending_version": { "type": ["integer", "null"], "minimum": 1, "description": "Version queued until the pump is idle, or null." },
     "battery_pct": { "type": "integer", "minimum": 0, "maximum": 100 },
     "level_pct": { "type": "number", "minimum": 0, "maximum": 100, "description": "Independent bag level estimate from the level sensor, if fitted." },
+    "last_rejected_version": {
+      "type": ["integer", "null"], "minimum": 1,
+      "description": "Most recent prescription version this pump rejected since boot, or null. Repeats the prescription_rejected event in telemetry so a lost QoS 0 event is recovered (PRD R1)."
+    },
+    "last_reject_reason": {
+      "description": "Reason for last_rejected_version, same values as the event reason. Null when last_rejected_version is null.",
+      "enum": [null, "malformed", "not_confirmed", "stale_version", "rate_out_of_range", "volume_out_of_range", "wrong_pump"]
+    },
     "simulated": { "type": "boolean", "description": "True when this message comes from the simulator or uses simulated delivery." }
   }
 }
