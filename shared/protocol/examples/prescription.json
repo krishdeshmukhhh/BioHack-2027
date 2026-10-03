@@ -1,0 +1,12 @@
+{
+  "pump_id": "pump-001",
+  "version": 8,
+  "mode": "continuous",
+  "rate_ml_hr": 90,
+  "volume_ml": 500,
+  "proposed_by": "clinician-demo",
+  "proposed_at": "2026-10-03T14:02:00Z",
+  "confirmed_by": "caregiver-demo",
+  "confirmed_at": "2026-10-03T14:03:10Z",
+  "note": "Demo value only"
+}

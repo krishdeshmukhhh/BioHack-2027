@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "prescription.schema.json",
+  "title": "Prescription",
+  "description": "A caregiver-confirmed feeding prescription sent from the hub to the pump.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pump_id", "version", "mode", "rate_ml_hr", "volume_ml",
+    "proposed_by", "proposed_at", "confirmed_by", "confirmed_at"
+  ],
+  "properties": {
+    "pump_id": { "type": "string", "minLength": 1 },
+    "version": { "type": "integer", "minimum": 1, "description": "Increases by one for every new prescription for this pump." },
+    "mode": { "enum": ["continuous", "bolus"] },
+    "rate_ml_hr": { "type": "number", "exclusiveMinimum": 0 },
+    "volume_ml": { "type": "number", "exclusiveMinimum": 0, "description": "Total volume to deliver for one feed." },
+    "proposed_by": { "type": "string", "minLength": 1, "description": "Clinician user id." },
+    "proposed_at": { "type": "string", "format": "date-time" },
+    "confirmed_by": { "type": "string", "minLength": 1, "description": "Caregiver user id. Required by safety invariant S2." },
+    "confirmed_at": { "type": "string", "format": "date-time" },
+    "note": { "type": "string", "maxLength": 200 }
+  }
+}

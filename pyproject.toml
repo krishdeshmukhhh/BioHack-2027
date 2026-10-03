@@ -1,0 +1,11 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["firmware", "fpga"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP"]
+
+[tool.pytest.ini_options]
+testpaths = ["hub/tests", "shared/protocol", "sim"]
+python_files = ["test_*.py"]

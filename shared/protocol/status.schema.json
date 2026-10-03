@@ -1,0 +1,29 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "status.schema.json",
+  "title": "Status",
+  "description": "Telemetry published by the pump every 2 seconds.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "pump_id", "uptime_ms", "state", "rate_ml_hr", "delivered_ml",
+    "target_ml", "alarm", "prescription_version", "pending_version", "simulated"
+  ],
+  "properties": {
+    "pump_id": { "type": "string", "minLength": 1 },
+    "uptime_ms": { "type": "integer", "minimum": 0, "description": "Milliseconds since boot. The hub adds wall-clock time on receipt." },
+    "state": { "enum": ["idle", "priming", "running", "paused", "alarm", "complete"] },
+    "rate_ml_hr": { "type": "number", "minimum": 0, "description": "Rate the pump is currently set to." },
+    "delivered_ml": { "type": "number", "minimum": 0, "description": "Volume delivered in the current feed, from motor steps." },
+    "target_ml": { "type": "number", "minimum": 0 },
+    "alarm": {
+      "description": "Null when there is no active alarm.",
+      "enum": [null, "occlusion", "bag_empty", "low_battery", "sensor_mismatch"]
+    },
+    "prescription_version": { "type": "integer", "minimum": 0, "description": "Version currently applied. 0 means none yet." },
+    "pending_version": { "type": ["integer", "null"], "minimum": 1, "description": "Version queued until the pump is idle, or null." },
+    "battery_pct": { "type": "integer", "minimum": 0, "maximum": 100 },
+    "level_pct": { "type": "number", "minimum": 0, "maximum": 100, "description": "Independent bag level estimate from the level sensor, if fitted." },
+    "simulated": { "type": "boolean", "description": "True when this message comes from the simulator or uses simulated delivery." }
+  }
+}

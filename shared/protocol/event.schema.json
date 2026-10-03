@@ -1,0 +1,50 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "event.schema.json",
+  "title": "Event",
+  "description": "A discrete thing that happened on the pump.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["pump_id", "uptime_ms", "type", "simulated"],
+  "properties": {
+    "pump_id": { "type": "string", "minLength": 1 },
+    "uptime_ms": { "type": "integer", "minimum": 0 },
+    "type": {
+      "enum": [
+        "prescription_applied",
+        "prescription_rejected",
+        "prescription_queued",
+        "alarm_raised",
+        "alarm_cleared",
+        "state_changed"
+      ]
+    },
+    "version": { "type": "integer", "minimum": 1, "description": "Prescription version this event refers to." },
+    "reason": {
+      "description": "Why a prescription was rejected.",
+      "enum": ["malformed", "not_confirmed", "stale_version", "rate_out_of_range", "volume_out_of_range", "wrong_pump"]
+    },
+    "alarm": { "enum": ["occlusion", "bag_empty", "low_battery", "sensor_mismatch"] },
+    "from_state": { "enum": ["idle", "priming", "running", "paused", "alarm", "complete"] },
+    "to_state": { "enum": ["idle", "priming", "running", "paused", "alarm", "complete"] },
+    "simulated": { "type": "boolean" }
+  },
+  "allOf": [
+    {
+      "if": { "properties": { "type": { "enum": ["prescription_applied", "prescription_rejected", "prescription_queued"] } } },
+      "then": { "required": ["version"] }
+    },
+    {
+      "if": { "properties": { "type": { "const": "prescription_rejected" } } },
+      "then": { "required": ["reason"] }
+    },
+    {
+      "if": { "properties": { "type": { "enum": ["alarm_raised", "alarm_cleared"] } } },
+      "then": { "required": ["alarm"] }
+    },
+    {
+      "if": { "properties": { "type": { "const": "state_changed" } } },
+      "then": { "required": ["from_state", "to_state"] }
+    }
+  ]
+}

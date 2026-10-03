@@ -1,0 +1,27 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+
+# Hub runtime data
+hub/data/
+*.sqlite3
+*.db
+
+# Firmware
+firmware/.pio/
+firmware/include/secrets.h
+
+# Secrets and local config
+.env
+.claude/settings.local.json
+
+# OS and editors
+.DS_Store
+.vscode/
+.idea/
+
+# Parallel lanes (written by scripts/worktrees.sh)
+.lane

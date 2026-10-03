@@ -1,0 +1,28 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(make test)",
+      "Bash(make lint)",
+      "Bash(make fw-build)",
+      "Bash(.venv/bin/python -m pytest:*)",
+      "Bash(.venv/bin/python -m ruff:*)"
+    ],
+    "deny": [
+      "Read(./.env)",
+      "Read(./firmware/include/secrets.h)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write|NotebookEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PROJECT_DIR/.claude/hooks/lane_guard.py\""
+          }
+        ]
+      }
+    ]
+  }
+}

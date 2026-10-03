@@ -1,0 +1,1 @@
+{ "pump_id": "pump-001", "uptime_ms": 1300120, "type": "prescription_rejected", "version": 9, "reason": "rate_out_of_range", "simulated": true }

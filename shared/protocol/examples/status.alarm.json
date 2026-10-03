@@ -1,0 +1,13 @@
+{
+  "pump_id": "pump-001",
+  "uptime_ms": 912004,
+  "state": "alarm",
+  "rate_ml_hr": 0,
+  "delivered_ml": 171.0,
+  "target_ml": 500,
+  "alarm": "occlusion",
+  "prescription_version": 7,
+  "pending_version": null,
+  "level_pct": 64.5,
+  "simulated": true
+}
