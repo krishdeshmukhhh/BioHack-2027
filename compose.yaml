@@ -1,0 +1,56 @@
+# The hub stack in Docker, replacing the Raspberry Pi. See docs/DEMO.md.
+#
+#   make docker-up      build and start broker + hub (needs internet the first time)
+#   make docker-sim     simulated pump with keyboard (only when the ESP32 is NOT on)
+#   make docker-reset   back to the DEMO.md starting state
+#   make docker-down    stop
+#
+# Ports: 1883 for the ESP32 (MQTT), 8000 for the phone and laptop browsers.
+# PUMP_ID comes from .env (default pump-001).
+name: smartpump
+
+services:
+  broker:
+    image: eclipse-mosquitto:2
+    ports:
+      - "1883:1883"
+    volumes:
+      - ./docker/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - broker-data:/mosquitto/data
+    restart: unless-stopped
+
+  hub:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+    image: smartpump-hub
+    ports:
+      - "8000:8000"
+    environment:
+      MQTT_HOST: broker
+      MQTT_PORT: "1883"
+      PUMP_ID: ${PUMP_ID:-pump-001}
+      HUB_DB_PATH: /data/hub.sqlite3
+    volumes:
+      - hub-data:/data
+    depends_on:
+      - broker
+    restart: unless-stopped
+
+  # Off by default: a simulator with the same PUMP_ID as the ESP32 makes both flap.
+  sim:
+    image: smartpump-hub
+    profiles: ["sim"]
+    command: ["python", "-m", "sim.pump_sim", "--demo-seed"]
+    environment:
+      MQTT_HOST: broker
+      MQTT_PORT: "1883"
+      PUMP_ID: ${PUMP_ID:-pump-001}
+    stdin_open: true
+    tty: true
+    depends_on:
+      - broker
+
+volumes:
+  broker-data:
+  hub-data:

@@ -1,0 +1,12 @@
+.git
+.venv
+.env
+.mosquitto
+.pytest_cache
+.ruff_cache
+**/__pycache__
+docs
+firmware
+fpga
+hub/data
+sim/data

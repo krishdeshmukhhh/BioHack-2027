@@ -5,7 +5,7 @@ PY := .venv/bin/python
 PIP := .venv/bin/pip
 HUB_PORT ?= 8000
 
-.PHONY: setup broker hub sim history reset-demo test lint fw-build fw-upload fw-monitor lanes lanes-status
+.PHONY: setup broker hub sim history reset-demo docker-up docker-sim docker-logs docker-down test lint fw-build fw-upload fw-monitor lanes lanes-status
 
 setup:
 	python3 -m venv .venv
@@ -47,3 +47,16 @@ lanes:
 
 lanes-status:
 	scripts/worktrees.sh status
+
+# Docker hub stack (replaces the Raspberry Pi). Build once while online.
+docker-up:
+	docker compose up -d --build broker hub
+
+docker-sim:
+	docker compose --profile sim run --rm sim
+
+docker-logs:
+	docker compose logs -f broker hub
+
+docker-down:
+	docker compose down
