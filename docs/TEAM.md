@@ -162,13 +162,13 @@ Anything not done at its sync point drops to the "Should" or "Stretch" list. Don
 - [ ] Freeze `docs/API.md` with B and C (15 minutes, together). Tag `contract-v1`. Run `scripts/worktrees.sh up hub sim web fw` (with no arguments it creates only hub, sim, and web).
 
 ### Before Sync 1 and Sync 2 (sim lane)
-- [ ] `sim/pump_sim.py`: environment config, Last Will plus online, status every 2 s with `simulated: true` (FR-11).
-- [ ] The same state machine and validation order and reasons as the firmware. Ignore silently on `version == current`. Queue when busy (FR-5, FR-6).
-- [ ] Publish `offline` on a graceful exit (R8). Keyboard fault injection. A time-speed factor.
-- [ ] pytest for each rejection reason, queue then apply, and retained replay. The limits parity test stays green.
+- [x] `sim/pump_sim.py`: environment config, Last Will plus online, status every 2 s with `simulated: true` (FR-11).
+- [x] The same state machine and validation order and reasons as the firmware. Ignore silently on `version == current`. Queue when busy (FR-5, FR-6).
+- [x] Publish `offline` on a graceful exit (R8). Keyboard fault injection. A time-speed factor.
+- [x] pytest for each rejection reason, queue then apply, and retained replay. The limits parity test stays green.
 
 ### Before Sync 4
-- [ ] `sim/generate_history.py`: 30 days, 3 fictional patients (on target, drifting under, night occlusions), every row `simulated` (FR-18).
+- [x] `sim/generate_history.py`: 30 days, 3 fictional patients (on target, drifting under, night occlusions), every row `simulated` (FR-18).
 - [ ] Scripted scenarios for rehearsals (start feed, occlusion, clear).
 - [ ] Ask A whether the firmware and sim still behave the same on the wire.
 
