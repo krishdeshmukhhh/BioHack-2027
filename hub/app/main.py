@@ -8,14 +8,14 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 from typing import Literal
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 from fastapi.sse import EventSourceResponse, ServerSentEvent
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel, Field
 
-from hub.app import prescriptions
+from hub.app import alerts, prescriptions, reports
 from hub.app.live import CLOSE
 from hub.app.mqtt_bridge import MqttBridge
 from hub.app.prescriptions import LifecycleError
@@ -24,6 +24,7 @@ from hub.app.service import Hub
 log = logging.getLogger("hub")
 
 WEB_DIR = Path(__file__).resolve().parents[2] / "web"
+STALE_CHECK_S = 2.0
 
 LIFECYCLE_STATUS = {
     "unknown_prescription": 404,
@@ -56,7 +57,9 @@ class DeclineBody(BaseModel):
     reason: str | None = Field(default=None, max_length=200)
 
 
-def create_app(hub: Hub | None = None, bridge: MqttBridge | None = None) -> FastAPI:
+def create_app(
+    hub: Hub | None = None, bridge: MqttBridge | None = None, web_dir: Path = WEB_DIR
+) -> FastAPI:
     """Tests pass a Hub with a fake publisher and no bridge; `make hub` builds both from env."""
 
     @asynccontextmanager
@@ -72,15 +75,18 @@ def create_app(hub: Hub | None = None, bridge: MqttBridge | None = None) -> Fast
                 publisher=bridge,
             )
         app.state.hub = hub
-        consumer = None
+        tasks = []
         if bridge is not None:
+            if not hub.load_history():
+                log.warning("no %s; run `make history` for the dashboard", reports.HISTORY_FILE)
             queue: asyncio.Queue[tuple[str, bytes]] = asyncio.Queue()
             # The startup re-publish (R3) runs when the bridge reports its first connect.
             bridge.start(asyncio.get_running_loop(), queue)
-            consumer = asyncio.create_task(_consume(hub, queue))
+            tasks.append(asyncio.create_task(_consume(hub, queue)))
+            tasks.append(asyncio.create_task(_watch_stale(hub)))
         yield
-        if consumer is not None:
-            consumer.cancel()
+        for task in tasks:
+            task.cancel()
         if bridge is not None:
             bridge.stop()
 
@@ -108,6 +114,12 @@ def create_app(hub: Hub | None = None, bridge: MqttBridge | None = None) -> Fast
         h: Hub = request.app.state.hub
         if not h.known_pump(pump_id):
             raise ApiError(404, "unknown_pump", f"no pump {pump_id}")
+        return h
+
+    def hub_for_patient(request: Request, patient_id: str) -> Hub:
+        h: Hub = request.app.state.hub
+        if not reports.known_patient(h.conn, patient_id):
+            raise ApiError(404, "unknown_patient", f"no patient {patient_id}")
         return h
 
     # Handlers are async so all database access stays on the event loop thread.
@@ -138,6 +150,33 @@ def create_app(hub: Hub | None = None, bridge: MqttBridge | None = None) -> Fast
         h = get_hub(request, pump_id)
         return h.decline(pump_id, version, body.declined_by, body.reason)
 
+    @app.get("/api/pumps/{pump_id}/alerts")
+    async def list_alerts(request: Request, pump_id: str) -> list[dict]:
+        return alerts.list_for_pump(get_hub(request, pump_id).conn, pump_id)
+
+    @app.get("/api/pumps/{pump_id}/audit")
+    async def list_audit(request: Request, pump_id: str) -> list[dict]:
+        return get_hub(request, pump_id).audit_for_pump(pump_id)
+
+    @app.get("/api/patients")
+    async def list_patients(request: Request) -> list[dict]:
+        h: Hub = request.app.state.hub
+        return reports.patients(h.conn, h.is_online)
+
+    @app.get("/api/patients/{patient_id}/daily")
+    async def patient_daily(
+        request: Request, patient_id: str, days: int = Query(default=30, ge=1, le=90)
+    ) -> list[dict]:
+        return reports.daily(hub_for_patient(request, patient_id).conn, patient_id, days)
+
+    @app.get("/api/patients/{patient_id}/summary")
+    async def patient_summary(request: Request, patient_id: str) -> dict:
+        return reports.weekly_summary(hub_for_patient(request, patient_id).conn, patient_id)
+
+    @app.get("/api/patients/{patient_id}/profiles")
+    async def patient_profiles(request: Request, patient_id: str) -> list[dict]:
+        return reports.profiles(hub_for_patient(request, patient_id).conn, patient_id)
+
     @app.get("/api/pumps/{pump_id}/stream", response_class=EventSourceResponse)
     async def stream(request: Request, pump_id: str) -> AsyncIterator[ServerSentEvent]:
         h = get_hub(request, pump_id)
@@ -153,11 +192,12 @@ def create_app(hub: Hub | None = None, bridge: MqttBridge | None = None) -> Fast
         finally:
             h.live.unsubscribe(pump_id, queue)
 
-    # Web apps, mounted last so the API routes win.
-    if (WEB_DIR / "clinician").is_dir():
-        app.mount("/clinician", StaticFiles(directory=WEB_DIR / "clinician", html=True))
-    if (WEB_DIR / "family").is_dir():
-        app.mount("/", StaticFiles(directory=WEB_DIR / "family", html=True))
+    # Web apps, mounted last so the API routes win. Both apps import from /shared/.
+    for prefix in ("shared", "clinician", "family"):
+        if (web_dir / prefix).is_dir():
+            app.mount(f"/{prefix}", StaticFiles(directory=web_dir / prefix, html=True))
+    if (web_dir / "family").is_dir():
+        app.mount("/", StaticFiles(directory=web_dir / "family", html=True))
 
     return app
 
@@ -169,6 +209,15 @@ async def _consume(hub: Hub, queue: asyncio.Queue[tuple[str, bytes]]) -> None:
             hub.handle_message(topic, payload)
         except Exception:
             log.exception("error handling %s", topic)  # one bad message must not stop ingest
+
+
+async def _watch_stale(hub: Hub) -> None:
+    while True:
+        await asyncio.sleep(STALE_CHECK_S)
+        try:
+            hub.check_stale()
+        except Exception:
+            log.exception("stale check failed")
 
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(name)s %(levelname)s %(message)s")

@@ -88,6 +88,37 @@ BEGIN
     SELECT RAISE(ABORT, 'audit is append-only');
 END;
 
+-- Live alerts: the hub's reading of pump alarms (FR-14, FR-15). At most one open per code.
+CREATE TABLE IF NOT EXISTS alerts (
+    id         INTEGER PRIMARY KEY,
+    pump_id    TEXT NOT NULL,
+    alarm      TEXT NOT NULL,
+    raised_at  TEXT NOT NULL,             -- hub wall clock
+    cleared_at TEXT,
+    simulated  INTEGER NOT NULL
+);
+CREATE UNIQUE INDEX IF NOT EXISTS alerts_open ON alerts (pump_id, alarm) WHERE cleared_at IS NULL;
+
+-- Generated 30-day history from sim/data/history.json (docs/API.md). Every row simulated (S8).
+CREATE TABLE IF NOT EXISTS history_daily (
+    patient_id    TEXT NOT NULL REFERENCES patients (id),
+    date          TEXT NOT NULL,
+    delivered_ml  REAL NOT NULL,
+    prescribed_ml REAL NOT NULL,
+    alarm_count   INTEGER NOT NULL,
+    simulated     INTEGER NOT NULL DEFAULT 1,
+    PRIMARY KEY (patient_id, date)
+);
+
+CREATE TABLE IF NOT EXISTS history_alarms (
+    id         INTEGER PRIMARY KEY,
+    patient_id TEXT NOT NULL REFERENCES patients (id),
+    alarm      TEXT NOT NULL,
+    raised_at  TEXT NOT NULL,
+    cleared_at TEXT,
+    simulated  INTEGER NOT NULL DEFAULT 1
+);
+
 CREATE TABLE IF NOT EXISTS profiles (
     id         INTEGER PRIMARY KEY,
     patient_id TEXT NOT NULL REFERENCES patients (id),

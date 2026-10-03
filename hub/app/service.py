@@ -8,9 +8,10 @@ active, rejected by the pump, or superseded (S5).
 import json
 import logging
 import sqlite3
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
-from hub.app import prescriptions, protocol
+from hub.app import alerts, prescriptions, protocol, reports
 from hub.app.db import connect, known_pump, seed, transaction, utc_now
 from hub.app.live import Broadcaster
 from hub.app.mqtt_bridge import CONNECTED
@@ -19,12 +20,20 @@ from hub.app.prescriptions import Publisher
 log = logging.getLogger("hub.service")
 
 SNAPSHOT_STATES = ("proposed", "confirmed", "sent", "active")
+# docs/API.md: a pump with no status for this long counts as offline.
+STALE_AFTER = timedelta(seconds=10)
+
+
+def _parse(at: str) -> datetime:
+    return datetime.strptime(at, "%Y-%m-%dT%H:%M:%SZ").replace(tzinfo=UTC)
 
 
 class Hub:
     def __init__(self, db_path: str, demo_pump_id: str, publisher: Publisher | None) -> None:
         self.conn: sqlite3.Connection = connect(db_path)
-        seed(self.conn, demo_pump_id)
+        with transaction(self.conn):
+            seed(self.conn, demo_pump_id)
+            reports.seed_profiles(self.conn)
         self.publisher = publisher
         self.live = Broadcaster()
         # pump_id -> {"online": bool, "last_seen_at": str | None}
@@ -42,6 +51,25 @@ class Hub:
         a = self.availability.get(pump_id, {"online": False, "last_seen_at": None})
         return {"pump_id": pump_id, **a}
 
+    def is_online(self, pump_id: str) -> bool:
+        return bool(self.availability_of(pump_id)["online"])
+
+    def load_history(self) -> bool:
+        with transaction(self.conn):
+            return reports.load_history(self.conn)
+
+    def check_stale(self, now: datetime | None = None) -> None:
+        """Mark a pump offline once its last message is older than STALE_AFTER (docs/API.md).
+
+        A pulled wifi link only fires the Last Will after the broker keepalive runs
+        out, so the hub does not wait for it. The next valid message marks it online.
+        """
+        now = now or datetime.now(UTC)
+        for pump_id, a in self.availability.items():
+            if a["online"] and a["last_seen_at"] and now - _parse(a["last_seen_at"]) > STALE_AFTER:
+                a["online"] = False
+                self.live.send(pump_id, "availability", self.availability_of(pump_id))
+
     def pump_status(self, pump_id: str) -> dict[str, Any]:
         """PumpStatus from docs/API.md: latest status plus `online` and `received_at`."""
         row = self.conn.execute(
@@ -54,6 +82,15 @@ class Hub:
         status = json.loads(row["raw"])
         status.pop("uptime_ms", None)
         return {**status, "online": online, "received_at": row["received_at"]}
+
+    def audit_for_pump(self, pump_id: str) -> list[dict[str, Any]]:
+        """AuditRow list for one pump, newest first. Covers prescriptions and alarms."""
+        prefix = f"{pump_id}/"
+        rows = self.conn.execute(
+            "SELECT * FROM audit WHERE substr(entity_id, 1, ?) = ? ORDER BY id DESC",
+            (len(prefix), prefix),
+        ).fetchall()
+        return [dict(r) for r in rows]
 
     def snapshot(self, pump_id: str) -> list[tuple[str, Any]]:
         """What a new SSE subscriber gets first, so the page renders without extra requests."""
@@ -71,6 +108,10 @@ class Hub:
     def broadcast_prescriptions(self, changed: list[dict[str, Any]]) -> None:
         for p in changed:
             self.live.send(p["pump_id"], "prescription", p)
+
+    def broadcast_alerts(self, changed: list[dict[str, Any]]) -> None:
+        for a in changed:
+            self.live.send(a["pump_id"], "alert", a)
 
     def propose(self, pump_id: str, **fields: Any) -> dict[str, Any]:
         with transaction(self.conn):
@@ -190,6 +231,7 @@ class Hub:
             ),
         )  # fmt: skip
         self.broadcast_prescriptions(prescriptions.apply_pump_status(self.conn, status))
+        self.broadcast_alerts(alerts.apply_pump_status(self.conn, status))
         self.live.send(status["pump_id"], "status", self.pump_status(status["pump_id"]))
 
     def _on_event(self, event: dict[str, Any], received_at: str) -> None:
@@ -203,4 +245,5 @@ class Hub:
             ),
         )  # fmt: skip
         self.broadcast_prescriptions(prescriptions.apply_pump_event(self.conn, event))
+        self.broadcast_alerts(alerts.apply_pump_event(self.conn, event))
         self.live.send(event["pump_id"], "pump_event", {**event, "received_at": received_at})
