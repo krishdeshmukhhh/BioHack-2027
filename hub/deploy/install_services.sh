@@ -65,4 +65,4 @@ sudo systemctl enable --now smart-pump-broker smart-pump-hub
 
 echo "Running. Logs: journalctl -u smart-pump-hub -f"
 echo "Portal: http://$(hostname).local:8000/clinician/  Family: http://$(hostname).local:8000/family/"
-echo "Demo reset: sudo systemctl stop smart-pump-hub && .venv/bin/python -m hub.reset && sudo systemctl start smart-pump-hub"
+echo "Demo reset: sudo systemctl stop smart-pump-hub && make reset-demo && sudo systemctl start smart-pump-hub"
