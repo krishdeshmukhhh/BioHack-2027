@@ -157,8 +157,8 @@ Anything not done at its sync point drops to the "Should" or "Stretch" list. Don
 **Folders:** `main` (`shared/`, `docs/`, `scripts/`, Makefile, requirements) plus `sim/` (worktree `../Biohack2-sim`, `PUMP_ID=pump-sim`).
 
 ### Wave 0 (first, before others need it; see PARALLEL.md)
-- [ ] Apply the R1 decision to `status.schema.json`, plus an example and a PROTOCOL.md note. Fix the QoS column in `topics.md`.
-- [ ] R3: `persistence true`. R4: `jsonschema[format]` plus a format checker. R5: `fastapi>=0.135`.
+- [x] Apply the R1 decision to `status.schema.json`, plus an example and a PROTOCOL.md note. Fix the QoS column in `topics.md`.
+- [x] R3: `persistence true`. R4: `jsonschema[format]` plus a format checker. R5: `fastapi>=0.135`.
 - [ ] Freeze `docs/API.md` with B and C (15 minutes, together). Tag `contract-v1`. Run `scripts/worktrees.sh up fw` (it creates the hub, sim, web, and fw worktrees).
 
 ### Before Sync 1 and Sync 2 (sim lane)

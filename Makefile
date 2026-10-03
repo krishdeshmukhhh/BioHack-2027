@@ -12,6 +12,7 @@ setup:
 	$(PIP) install -r requirements.txt
 
 broker:
+	mkdir -p .mosquitto
 	mosquitto -c scripts/mosquitto.conf
 
 hub:

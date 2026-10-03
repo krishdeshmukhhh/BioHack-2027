@@ -25,3 +25,6 @@ firmware/include/secrets.h
 
 # Parallel lanes (written by scripts/worktrees.sh)
 .lane
+
+# Mosquitto persistence (make broker)
+.mosquitto/

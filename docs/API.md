@@ -1,4 +1,4 @@
-# Hub HTTP and SSE API (contract v1 draft)
+# Hub HTTP and SSE API (contract v1, frozen)
 
 The contract between the **hub lane** (which implements it) and the **web lane** (which uses it and mocks it). It is frozen in Wave 0 (see `PARALLEL.md`). After that, only the lead changes it, on `main`, and records the change under "Changes" at the bottom.
 
@@ -31,6 +31,8 @@ Prototype rules apply here too: there is no authentication, and users are fixed 
   "online": true, "received_at": "2026-10-03T12:00:00Z"
 }
 ```
+
+Optional status fields pass through when the pump sends them: `battery_pct`, `level_pct`, `last_rejected_version`, and `last_reject_reason` (see `docs/PROTOCOL.md`). The web app must not use the last two to drive the chip. The hub folds them into the Prescription `state`, and the chip reads only that.
 
 **Prescription**:
 
@@ -95,4 +97,4 @@ The browser uses `EventSource`, which reconnects automatically. After a reconnec
 
 ## Changes
 
-- (none yet)
+- 2026-10-03 `contract-v1` frozen. PumpStatus documents the optional pass-through fields, including the R1 reject fields.

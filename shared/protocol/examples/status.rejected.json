@@ -1,0 +1,15 @@
+{
+  "pump_id": "pump-001",
+  "uptime_ms": 1302150,
+  "state": "idle",
+  "rate_ml_hr": 60,
+  "delivered_ml": 0,
+  "target_ml": 500,
+  "alarm": null,
+  "prescription_version": 8,
+  "pending_version": null,
+  "battery_pct": 79,
+  "last_rejected_version": 9,
+  "last_reject_reason": "rate_out_of_range",
+  "simulated": true
+}
