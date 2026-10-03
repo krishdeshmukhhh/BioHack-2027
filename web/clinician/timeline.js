@@ -1,7 +1,7 @@
 // Portal: alarm timeline for the selected pump. Uses the hub's Alerts when it has
 // them; otherwise pairs up alarm_raised / alarm_cleared pump events from SSE.
 
-import { escapeHtml, fmtTime, icon, t } from "/shared/core.js";
+import { escapeHtml, fmtDateTime, icon, simLabelHtml, t } from "/shared/core.js";
 import { setHtml } from "/shared/ui.js";
 
 const $ = (id) => document.getElementById(id);
@@ -11,7 +11,7 @@ function fromEvents(events) {
   const open = new Map();
   for (const e of [...events].reverse()) { // oldest first
     if (e.type === "alarm_raised") {
-      const a = { alarm: e.alarm, active: true, raised_at: e.received_at, cleared_at: null };
+      const a = { alarm: e.alarm, active: true, raised_at: e.received_at, cleared_at: null, simulated: e.simulated };
       open.set(e.alarm, a);
       out.push(a);
     } else if (e.type === "alarm_cleared" && open.has(e.alarm)) {
@@ -34,9 +34,9 @@ export function initTimeline(store) {
         const status = a.active
           ? `<span class="chip tone-danger">${icon("alert")}<span>${escapeHtml(t("timeline_active"))}</span></span>`
           : `<span class="chip tone-ok">${icon("check")}<span>${escapeHtml(
-            t("timeline_cleared", { time: fmtTime(a.cleared_at), minutes }))}</span></span>`;
-        return `<li><time datetime="${escapeHtml(a.raised_at)}">${escapeHtml(fmtTime(a.raised_at))}</time>` +
-          `<strong>${escapeHtml(t(`alarm_${a.alarm}`))}</strong>${status}</li>`;
+            t("timeline_cleared", { time: fmtDateTime(a.cleared_at), minutes }))}</span></span>`;
+        return `<li><time datetime="${escapeHtml(a.raised_at)}">${escapeHtml(fmtDateTime(a.raised_at))}</time>` +
+          `<strong>${escapeHtml(t(`alarm_${a.alarm}`))}</strong>${status}${a.simulated ? simLabelHtml() : ""}</li>`;
       }).join("")
       : `<li class="empty">${escapeHtml(t("timeline_empty"))}</li>`;
     setHtml($("timeline"), html, { fade: false });

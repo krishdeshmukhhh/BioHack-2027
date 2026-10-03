@@ -4,9 +4,9 @@
 // browsers allow only 6 connections per host, and each SSE stream holds one.
 // The selected pump's own stream (already open) names its alarm without delay.
 
-import { escapeHtml, icon, t } from "/shared/core.js";
+import { escapeHtml, icon, simLabelHtml, t } from "/shared/core.js";
 import { api, currentAlarm, isNotAvailable } from "/shared/data.js";
-import { setHtml } from "/shared/ui.js";
+import { setHtml, setText } from "/shared/ui.js";
 
 const $ = (id) => document.getElementById(id);
 const REFRESH_MS = 5000;
@@ -23,6 +23,8 @@ export function initPatients(currentStore, onPatients) {
   const currentPump = currentStore.state.pumpId;
   let patients = [];
   let unavailable = false;
+  let failed = false;
+  let loaded = false;
 
   // For the selected pump, the live stream is newer than the last list refresh:
   // show its alarm by name, or drop a stale `alarm_active` once it has cleared.
@@ -44,7 +46,10 @@ export function initPatients(currentStore, onPatients) {
   }
 
   function render() {
+    $("patients-error").hidden = !failed;
+    setText($("patients-error"), t(loaded ? "patients_stale" : "error_network"));
     if (unavailable) {
+      setText($("patients-count"), "");
       setHtml($("patients"), `<li class="empty">${escapeHtml(t("clin_unavailable"))}</li>`, { fade: false });
       return;
     }
@@ -60,23 +65,37 @@ export function initPatients(currentStore, onPatients) {
         : `<span class="chip tone-ok">${icon("check")}<span>${escapeHtml(t("exc_none"))}</span></span>`;
       const action = current
         ? `<span class="current" aria-current="page">${escapeHtml(t("clin_current_patient"))}</span>`
-        : `<a class="btn btn-small" href="?pump=${encodeURIComponent(p.pump_id)}">` +
+        : `<a class="btn btn-small" data-pump="${escapeHtml(p.pump_id)}" href="?pump=${encodeURIComponent(p.pump_id)}">` +
           `${escapeHtml(t("clin_open_patient"))}<span class="visually-hidden"> ${escapeHtml(p.display_name)}</span></a>`;
       return `<li class="patient${current ? " is-current" : ""}">` +
         `<div class="patient-main"><strong>${escapeHtml(p.display_name)}</strong>` +
-        `<span class="muted">${escapeHtml(t("clin_pump", { pump: p.pump_id }))}</span></div>` +
+        `<span class="muted">${escapeHtml(t("clin_pump", { pump: p.pump_id }))}</span>` +
+        (p.simulated ? simLabelHtml() : "") + `</div>` +
         `<div class="patient-chips">${chips}</div>${action}</li>`;
     }).join("");
-    setHtml($("patients"), html, { fade: false });
+    const focusedPump = $("patients").contains(document.activeElement)
+      ? document.activeElement.dataset.pump : null;
+    const changed = setHtml($("patients"), html || `<li class="empty">${escapeHtml(t(loaded ? "patients_empty" : "loading"))}</li>`, { fade: false });
+    if (changed && focusedPump) {
+      const link = [...$("patients").querySelectorAll("[data-pump]")]
+        .find((el) => el.dataset.pump === focusedPump);
+      link?.focus({ preventScroll: true });
+    }
+    setText($("patients-count"), loaded ? t("patients_count", {
+      count: rows.length, attention: rows.filter((r) => r.exc.length).length,
+    }) : "");
   }
 
   async function load() {
     try {
       patients = await api.patients();
       unavailable = false;
+      failed = false;
+      loaded = true;
       onPatients?.(patients);
     } catch (err) {
       unavailable = isNotAvailable(err);
+      failed = !unavailable;
       if (unavailable) onPatients?.([]); // dependent sections show "not available"
       else console.warn("patients", err);
     }

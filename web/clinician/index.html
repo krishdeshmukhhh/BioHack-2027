@@ -14,9 +14,12 @@
   <a class="skip-link" href="#main" data-i18n="skip_to_content">Skip to main content</a>
 
   <header class="topbar">
-    <div>
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 44 44" fill="none" aria-hidden="true"><rect width="44" height="44" rx="14" fill="currentColor" fill-opacity=".12"/><path d="M22 8s-10 11-10 18a10 10 0 0 0 20 0C32 19 22 8 22 8Z" stroke="currentColor" stroke-width="2"/><path d="M17 27h10M22 22v10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <div><p class="brand-label" data-i18n="brand_name">Smart Pump</p>
       <h1 data-i18n="clin_title">Clinician portal</h1>
       <p class="who" data-i18n="clin_user">Signed in as Dr. Demo (demo user, no real login)</p>
+      </div>
     </div>
     <div class="topbar-right">
       <span id="sim-slot"></span>
@@ -26,19 +29,27 @@
     </div>
   </header>
 
+<div class="app-shell">
+  <aside class="app-sidebar"><div class="rail-inner"><p class="rail-caption" data-i18n="clinical_space"></p><nav class="rail-nav" data-i18n-attr="aria-label:page_sections"><a href="#patients-section" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 21v-3a6 6 0 0 1 12 0v3M17 5a3 3 0 0 1 0 6M18 15a5 5 0 0 1 3 4v2"/></svg><span data-i18n="clin_patients_title"></span></a><a href="#reports-section"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 3v17h17M8 16v-5M13 16V7M18 16V4"/></svg><span data-i18n="reports_nav"></span></a><a href="#propose-section"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m15 4 5 5-11 11H4v-5zM13 6l5 5"/></svg><span data-i18n="clin_propose_title"></span></a><a href="#audit-section"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/></svg><span data-i18n="audit_title"></span></a></nav><p class="rail-note" data-i18n="prototype_footer"></p></div></aside>
   <main id="main" class="wide" tabindex="-1">
-    <section class="card" aria-labelledby="patients-title">
+    <div class="page-heading">
+      <div><p class="eyebrow" data-i18n="clinical_space">Clinical workspace</p><h2 data-i18n="care_overview">Care overview</h2><p class="page-intro" data-i18n="clinical_dashboard_intro"></p></div>
+
+    </div>
+    <div class="clinical-layout">
+    <section id="patients-section" class="card patient-panel" aria-labelledby="patients-title">
       <h2 id="patients-title" data-i18n="clin_patients_title">Patients</h2>
       <p class="hint" data-i18n="clin_patients_intro"></p>
       <ul id="patients" class="patients"></ul>
+      <p id="patients-count" class="hint" role="status" aria-atomic="true"></p>
+      <p id="patients-error" class="notice tone-text-warn" role="status" hidden></p>
     </section>
 
+    <div class="clinical-detail">
     <p id="conn" class="banner conn"></p>
     <div id="conn-live" class="visually-hidden" role="status" aria-atomic="true"></div>
 
-    <div class="columns">
-      <div>
-        <section class="card" aria-labelledby="live-title">
+        <section class="card live-panel" aria-labelledby="live-title">
           <h2 id="live-title"><span data-i18n="clin_live">Pump now</span> <span id="pump-name" class="muted"></span></h2>
           <dl class="facts">
             <div><dt data-i18n="clin_state">State</dt><dd id="live-state"></dd></div>
@@ -48,7 +59,28 @@
           </dl>
         </section>
 
-        <section class="card" aria-labelledby="propose-title">
+    <section id="reports-section" class="card" aria-labelledby="chart-title">
+      <div class="section-head">
+        <h2 id="chart-title" data-i18n="chart_title">Delivered vs prescribed</h2>
+        <div id="ranges" class="ranges" role="group" data-i18n-attr="aria-label:range_label">
+          <button type="button" class="btn btn-small range" data-range="24h" data-i18n="range_24h">24 h</button>
+          <button type="button" class="btn btn-small range" data-range="7d" data-i18n="range_7d">7 days</button>
+          <button type="button" class="btn btn-small range" data-range="30d" data-i18n="range_30d">30 days</button>
+        </div>
+      </div>
+      <div id="chart" class="chart"></div>
+      <p id="chart-summary" class="notice"></p>
+      <ul id="chart-legend" class="legend"></ul>
+      <p id="chart-note" class="hint"></p>
+      <details id="chart-details">
+        <summary data-i18n="chart_show_table">Show as a table</summary>
+        <div id="chart-table" class="table-wrap" tabindex="0" role="region" aria-labelledby="chart-title"></div>
+      </details>
+    </section>
+
+    <div class="columns">
+      <div>
+        <section id="propose-section" class="card" aria-labelledby="propose-title">
           <h2 id="propose-title" data-i18n="clin_propose_title">Propose a change</h2>
           <p class="hint" data-i18n="clin_propose_intro"></p>
 
@@ -106,24 +138,6 @@
       </section>
     </div>
 
-    <section class="card" aria-labelledby="chart-title">
-      <div class="section-head">
-        <h2 id="chart-title" data-i18n="chart_title">Delivered vs prescribed</h2>
-        <div id="ranges" class="ranges" role="group" data-i18n-attr="aria-label:range_label">
-          <button type="button" class="btn btn-small range" data-range="24h" data-i18n="range_24h">24 h</button>
-          <button type="button" class="btn btn-small range" data-range="7d" data-i18n="range_7d">7 days</button>
-          <button type="button" class="btn btn-small range" data-range="30d" data-i18n="range_30d">30 days</button>
-        </div>
-      </div>
-      <div id="chart" class="chart"></div>
-      <ul id="chart-legend" class="legend"></ul>
-      <p id="chart-note" class="hint"></p>
-      <details id="chart-details">
-        <summary data-i18n="chart_show_table">Show as a table</summary>
-        <div id="chart-table" class="table-wrap"></div>
-      </details>
-    </section>
-
     <section class="card" aria-labelledby="summary-title">
       <h2 id="summary-title" data-i18n="summary_title">Weekly summary</h2>
       <div id="summary"></div>
@@ -132,15 +146,20 @@
     <div class="columns">
       <section class="card" aria-labelledby="timeline-title">
         <h2 id="timeline-title" data-i18n="timeline_title">Alarm timeline</h2>
+        <p class="hint" data-i18n="timeline_intro"></p>
         <ol id="timeline" class="timeline"></ol>
       </section>
 
-      <section class="card" aria-labelledby="audit-title">
+      <section id="audit-section" class="card" aria-labelledby="audit-title">
         <h2 id="audit-title" data-i18n="audit_title">Audit trail</h2>
-        <div id="audit" class="table-wrap"></div>
+        <p class="hint" data-i18n="audit_intro"></p>
+        <div id="audit" class="table-wrap" tabindex="0" role="region" aria-labelledby="audit-title"></div>
       </section>
     </div>
+    </div>
+    </div>
   </main>
+</div>
 
   <footer id="footer" class="site-footer"></footer>
 

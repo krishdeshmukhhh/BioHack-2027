@@ -5,7 +5,7 @@
 import { escapeHtml, fmtTime, icon, t, tList } from "/shared/core.js";
 import { currentAlarm } from "/shared/data.js";
 import { beep, isUnlocked, speak, unlock, vibrate } from "/shared/speech.js";
-import { setHtml } from "/shared/ui.js";
+import { setHtml, setText } from "/shared/ui.js";
 import { alertPicture } from "./pictures.js";
 import { onSettingsChange, prefsFor } from "./settings.js";
 
@@ -24,7 +24,9 @@ export function initAlerts(store) {
     unlock();
     $("enable-alerts").hidden = true;
     $("enabled-note").hidden = false;
-    $("enabled-note").textContent = t("alerts_enabled");
+    setText($("enabled-note"), t("alerts_enabled"));
+    $("enabled-note").tabIndex = -1;
+    $("enabled-note").focus();
     if (shownKey && !acknowledged) cue(store.state);
   });
 
@@ -52,6 +54,10 @@ export function initAlerts(store) {
   }
 
   function render(state) {
+    setText($("enabled-note"), t("alerts_enabled"));
+    if (!$("alert-cleared").hidden) {
+      setHtml($("alert-cleared"), `${icon("check")}<span>${escapeHtml(t("alert_cleared"))}</span>`);
+    }
     const now = currentAlarm(state);
     const card = $("alert");
     const key = now ? `${now.alarm}|${now.since || ""}` : null;
@@ -67,12 +73,19 @@ export function initAlerts(store) {
         stopRepeat();
         repeatTimer = setInterval(() => !acknowledged && cue(store.state), REPEAT_MS);
       } else if (shownKey) {
+        const hadFocus = card.contains(document.activeElement);
         // The hub reports the alarm cleared.
         stopRepeat();
         $("alert-cleared").hidden = false;
         setHtml($("alert-cleared"), `${icon("check")}<span>${escapeHtml(t("alert_cleared"))}</span>`);
+        if (hadFocus) {
+          $("alert-cleared").tabIndex = -1;
+          $("alert-cleared").focus();
+        }
         if (isUnlocked() && prefsFor().speak) speak(t("alert_cleared"));
-        clearedTimer = setTimeout(() => ($("alert-cleared").hidden = true), 10000);
+        clearedTimer = setTimeout(() => {
+          if (document.activeElement !== $("alert-cleared")) $("alert-cleared").hidden = true;
+        }, 10000);
       }
       shownKey = key;
     }

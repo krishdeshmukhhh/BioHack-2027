@@ -122,11 +122,13 @@ export function initChart(store) {
     const days = range === "30d" ? 30 : 7;
     const key = `${patientId}/${days}`;
     if (daily.key === key) return;
-    daily = { key, rows: null, error: null };
+    const request = { key, rows: null, error: null };
+    daily = request;
+    render();
     try {
-      daily.rows = await api.daily(patientId, days);
+      request.rows = await api.daily(patientId, days);
     } catch (err) {
-      daily.error = isNotAvailable(err) ? "clin_unavailable" : "error_generic";
+      request.error = isNotAvailable(err) ? "clin_unavailable" : "error_generic";
     }
   }
 
@@ -137,6 +139,7 @@ export function initChart(store) {
     let legend = [["c-delivered", t("chart_delivered")], ["line", t("chart_prescribed")]];
     let note = "";
     let tableHtml = "";
+    let summary = "";
 
     if (range === "24h") {
       const points = store.state.history.filter((p) => p.target_ml > 0);
@@ -145,6 +148,8 @@ export function initChart(store) {
         svg = `<p class="empty">${escapeHtml(t("chart_no_data"))}</p>`;
       } else {
         svg = liveSvg(points, w);
+        const last = points[points.length - 1];
+        summary = t("chart_live_desc", { delivered: ml(last.delivered_ml), target: ml(last.target_ml) });
         legend = [["c-delivered", t("chart_delivered")], ["line", t("chart_prescribed")]];
         tableHtml = table([t("chart_col_time"), t("chart_delivered"), t("chart_prescribed")],
           points.slice(-12).map((p) => [fmtTime(p.at), ml(p.delivered_ml), ml(p.target_ml)]));
@@ -157,17 +162,25 @@ export function initChart(store) {
       svg = `<p class="empty">${escapeHtml(t("chart_no_data"))}</p>`;
     } else {
       svg = dailySvg(daily.rows, w);
+      summary = t("chart_totals", {
+        days: daily.rows.length,
+        delivered: ml(daily.rows.reduce((sum, r) => sum + r.delivered_ml, 0)),
+        prescribed: ml(daily.rows.reduce((sum, r) => sum + r.prescribed_ml, 0)),
+        under: daily.rows.filter((r) => r.delivered_ml < UNDER * r.prescribed_ml).length,
+      });
       legend.push(["c-under", t("chart_under")]);
       tableHtml = table(
         [t("chart_col_date"), t("chart_delivered"), t("chart_prescribed"), t("chart_under"), t("chart_col_alarms")],
         daily.rows.map((r) => [fmtDay(r.date), ml(r.delivered_ml), ml(r.prescribed_ml),
-          r.delivered_ml < UNDER * r.prescribed_ml ? t("chart_yes") : "", String(r.alarm_count)]));
+          r.delivered_ml < UNDER * r.prescribed_ml ? t("chart_yes") : t("chart_no"), String(r.alarm_count)]));
     }
     const simulated = range !== "24h" && daily.rows?.some((r) => r.simulated);
     el.innerHTML = svg;
     $("chart-legend").innerHTML = legend.map(([cls, label]) => `<li>${swatch(cls)}<span>${escapeHtml(label)}</span></li>`).join("") +
       (simulated ? `<li class="sim-note">${escapeHtml(t("simulated_data"))}</li>` : "");
     $("chart-note").textContent = note;
+    $("chart-summary").textContent = summary;
+    $("chart-summary").hidden = !summary;
     $("chart-table").innerHTML = tableHtml;
     $("chart-details").hidden = !tableHtml;
   }

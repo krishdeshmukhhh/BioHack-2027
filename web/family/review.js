@@ -5,7 +5,7 @@
 import { chipHtml, escapeHtml, icon, ml, mlHr, t, tList, userName } from "/shared/core.js";
 import { activePrescription, api, errorText, pendingProposal } from "/shared/data.js";
 import { canListenOffline, listenOnce, voiceVerdict } from "/shared/speech.js";
-import { setHtml } from "/shared/ui.js";
+import { setHtml, setText } from "/shared/ui.js";
 import { caregiver, onSettingsChange } from "./settings.js";
 
 const $ = (id) => document.getElementById(id);
@@ -114,8 +114,7 @@ export function initReview(store) {
     const current = activePrescription(state);
 
     $("review-intro").textContent = t("review_intro", { clinician: userName(rx.proposed_by) });
-    $("review-who").textContent =
-      `${t("review_confirming_as", { who: userName(caregiver()) })} ${t("review_change_who")}`;
+    setText($("review-who"), t("review_confirming_as", { who: userName(caregiver()) }));
     // One block per field: label (+ Changed), then Now and New side by side.
     const rows = FIELDS.map(({ key, label, fmt }) => {
       const now = current ? fmt(current[key]) : t("clin_none");

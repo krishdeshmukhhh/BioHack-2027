@@ -1,7 +1,7 @@
 // Portal: audit trail with caregiver roles (FR-23, FR-29). Read-only: the hub's
 // audit log is append-only (S7). Refetched whenever a prescription changes.
 
-import { escapeHtml, fmtTime, t, userName } from "/shared/core.js";
+import { escapeHtml, fmtDateTime, t, userName } from "/shared/core.js";
 import { api, isNotAvailable } from "/shared/data.js";
 import { setHtml } from "/shared/ui.js";
 
@@ -21,7 +21,7 @@ export function initAudit(store) {
   const pumpId = store.state.pumpId;
   let rows = null;
   let error = null;
-  let signature = "";
+  let signature = null;
   let timer = null;
 
   function render() {
@@ -41,7 +41,7 @@ export function initAudit(store) {
       const role = ROLE_KEYS[r.actor_role] ? t(ROLE_KEYS[r.actor_role]) : r.actor_role;
       const who = t("audit_who", { name: userName(r.actor), role });
       const version = String(r.entity_id || "").split("/").pop();
-      return `<tr><th scope="row"><time datetime="${escapeHtml(r.at)}">${escapeHtml(fmtTime(r.at))}</time></th>` +
+      return `<tr><th scope="row"><time datetime="${escapeHtml(r.at)}">${escapeHtml(fmtDateTime(r.at))}</time></th>` +
         `<td>${escapeHtml(who)}</td><td>${escapeHtml(label("action_", r.action, r.action))}</td>` +
         `<td>${escapeHtml(version)}</td></tr>`;
     }).join("");

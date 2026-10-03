@@ -2,7 +2,7 @@
 // Renders only from the shared store in web/shared/data.js.
 
 import {
-  escapeHtml, fmtTime, icon, loadLanguage, ml, mlHr, renderFooter, simLabelHtml, t,
+  escapeHtml, fmtNumber, fmtTime, icon, loadLanguage, ml, mlHr, renderFooter, simLabelHtml, t,
 } from "/shared/core.js";
 import { createPumpStore, pumpIdFromUrl } from "/shared/data.js";
 import { savedLang } from "/shared/lang.js";
@@ -54,6 +54,8 @@ function renderStatus(state) {
   meter.setAttribute("aria-valuenow", String(pct));
   meter.setAttribute("aria-valuetext", text);
   $("meter-fill").style.width = `${pct}%`;
+  $("feed-ring").style.setProperty("--progress", `${pct}%`);
+  setText($("feed-percent"), `${fmtNumber(pct)}%`);
 
   setText($("rate"), s ? mlHr(s.rate_ml_hr) : "–");
   setText($("version"), s?.prescription_version
