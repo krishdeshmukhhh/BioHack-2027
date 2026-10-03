@@ -105,10 +105,21 @@ void setup() {
   Serial.setTxBufferSize(2048);
   Serial.begin(115200);
   Serial.println("Smart pump prototype: ESP32 with simulated delivery; no person connected.");
+#ifdef LOCAL_DEMO
+  Serial.println("Mode: offline bench; local demo enabled; simulated=true");
   Serial.println("For an offline test, enter demo then start (newline after each command).");
+#else
+  Serial.println("Mode: hub; local demo disabled; simulated=true");
+  Serial.println("Confirm a prescription through the hub, then enter start to simulate delivery.");
+#endif
   actuator.begin();
   occlusion.begin(); bagEmpty.begin(); pauseButton.begin();
+#ifdef LOCAL_DEMO
+  // Bench-created versions must never be restored by the hub-connected build.
+  storageReady = preferences.begin("pump-bench", false);
+#else
   storageReady = preferences.begin("pump", false);
+#endif
   if (storageReady) {
     const String saved = preferences.getString("current", "");
     if (!saved.isEmpty() && !controller.restorePrescription(saved.c_str(), saved.length())) {
