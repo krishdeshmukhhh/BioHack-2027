@@ -93,7 +93,10 @@ export async function canListenOffline() {
   }
 }
 
-/** Listen once. Resolves with the lower-cased transcript, or "" if nothing heard. */
+const LISTEN_TIMEOUT_MS = 8000;
+
+/** Listen once. Resolves with the recogniser's alternatives, best first, or [] if
+ * nothing was heard. Gives up after LISTEN_TIMEOUT_MS. */
 export function listenOnce() {
   return new Promise((resolve) => {
     const r = new Recognition();
@@ -101,12 +104,45 @@ export function listenOnce() {
     r.processLocally = true;
     r.interimResults = false;
     r.maxAlternatives = 3;
-    let heard = "";
+    let heard = [];
+    const timer = setTimeout(() => r.abort(), LISTEN_TIMEOUT_MS);
     r.onresult = (ev) => {
-      heard = [...ev.results[0]].map((a) => a.transcript).join(" ").toLowerCase();
+      heard = [...ev.results[0]].map((a) => a.transcript);
     };
-    r.onend = () => resolve(heard);
-    r.onerror = () => resolve("");
+    r.onend = () => {
+      clearTimeout(timer);
+      resolve(heard);
+    };
+    r.onerror = () => {
+      clearTimeout(timer);
+      resolve([]);
+    };
     r.start();
   });
+}
+
+const normalise = (text) =>
+  text
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // "sí" and "si" compare equal
+    .toLowerCase()
+    .replace(/[^\p{L}\p{N} ]+/gu, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+
+/** Decide a spoken answer, or null. Safety (S2): the whole utterance must be exactly
+ * one yes-word or one no-word, so "don't confirm" or "sin cambios" never confirm,
+ * and nothing happens if any alternative points the other way. */
+export function voiceVerdict(alternatives, yesWords, noWords) {
+  const yes = new Set(yesWords.map(normalise));
+  const no = new Set(noWords.map(normalise));
+  const kinds = alternatives.map((a) => {
+    const said = normalise(a);
+    if (yes.has(said)) return "confirm";
+    if (no.has(said)) return "decline";
+    return null;
+  });
+  const best = kinds[0] ?? null;
+  if (best === null) return null;
+  return kinds.every((k) => k === null || k === best) ? best : null;
 }

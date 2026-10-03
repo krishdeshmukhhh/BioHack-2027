@@ -221,6 +221,7 @@ export default {
   voice_yes_words: ["yes", "confirm"],
   voice_no_words: ["no", "decline"],
   voice_unheard: "Did not catch that. Use the buttons.",
+  voice_changed: "The change on screen was updated while listening. Check it and answer again.",
 
   // Portal: patient list (FR-19)
   clin_patients_title: "Patients",

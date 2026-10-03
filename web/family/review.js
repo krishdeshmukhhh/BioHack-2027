@@ -4,7 +4,7 @@
 
 import { chipHtml, escapeHtml, icon, ml, mlHr, t, tList, userName } from "/shared/core.js";
 import { activePrescription, api, errorText, pendingProposal } from "/shared/data.js";
-import { canListenOffline, listenOnce } from "/shared/speech.js";
+import { canListenOffline, listenOnce, voiceVerdict } from "/shared/speech.js";
 import { setHtml } from "/shared/ui.js";
 import { caregiver, onSettingsChange } from "./settings.js";
 
@@ -33,19 +33,29 @@ export function initReview(store) {
   // device. The buttons above always do the same thing.
   canListenOffline().then((ok) => ($("voice-btn").hidden = !ok));
   $("voice-btn").addEventListener("click", async () => {
+    if (busy || shownVersion == null || $("voice-btn").disabled) return;
+    const version = shownVersion; // answer only the change that was on screen
     const yes = tList("voice_yes_words");
     const no = tList("voice_no_words");
+    $("voice-btn").disabled = true;
     $("voice-status").textContent = t("voice_listening", { yes: yes[0], no: no[0] });
-    const heard = await listenOnce();
-    const has = (words) => words.some((w) => heard.includes(w));
-    if (has(yes) && !has(no)) answer("confirm");
-    else if (has(no) && !has(yes)) answer("decline");
+    let heard;
+    try {
+      heard = await listenOnce();
+    } finally {
+      $("voice-btn").disabled = false;
+    }
+    if (version !== shownVersion) {
+      $("voice-status").textContent = t("voice_changed");
+      return;
+    }
+    const verdict = voiceVerdict(heard, yes, no);
+    if (verdict) answer(verdict, version);
     else $("voice-status").textContent = t("voice_unheard");
   });
 
-  async function answer(action) {
-    if (busy || shownVersion == null) return;
-    const version = shownVersion;
+  async function answer(action, version = shownVersion) {
+    if (busy || version == null || version !== shownVersion) return;
     busy = true;
     setButtons(true, action);
     $("review-error").hidden = true;

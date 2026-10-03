@@ -221,6 +221,7 @@ export default {
   voice_yes_words: ["sí", "si", "confirmar"],
   voice_no_words: ["no", "rechazar"],
   voice_unheard: "No le entendí. Use los botones.",
+  voice_changed: "La propuesta cambió mientras escuchaba. Revísela y responda de nuevo.",
 
   // Portal: patient list
   clin_patients_title: "Pacientes",
