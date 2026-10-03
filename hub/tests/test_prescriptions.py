@@ -337,3 +337,49 @@ def test_status_passes_optional_fields_through(client, hub):
     body = client.get(f"/api/pumps/{PUMP}/status").json()
     assert body["last_reject_reason"] == "rate_out_of_range"
     assert "uptime_ms" not in body
+
+
+# --- H1 (Sync 1 and 2 safety reviews): never publish below a version already sent ---
+
+
+def _sent_then_pump_rejected(client, hub) -> int:
+    v = propose(client, rate=500)["version"]
+    confirm(client, v)
+    send(hub, "event", example("event.rejected", version=v, reason="rate_out_of_range"))
+    assert state(hub, v) == "rejected"
+    return v
+
+
+def test_republish_never_goes_back_below_a_pump_rejected_version(client, hub, publisher):
+    send(hub, "availability", "offline")
+    v1 = propose(client)["version"]
+    confirm(client, v1)  # sent, but the offline pump never saw it
+    v2 = _sent_then_pump_rejected(client, hub)  # the retained message is now v2
+    before = list(publisher.sent)
+    hub.handle_message(CONNECTED, b"")  # hub or broker reconnect
+    send(hub, "availability", "online")  # pump back online
+    assert publisher.sent == before, "re-published a version older than one already sent"
+    actions = [r["action"] for r in client.get(f"/api/pumps/{PUMP}/audit").json()]
+    assert "publish_failed" not in actions  # skipped quietly, not retried
+    assert [m["version"] for _, m, _, _ in publisher.sent] == [v1, v2]
+
+
+def test_confirm_refuses_an_older_proposal_after_a_newer_was_sent(client, hub, publisher):
+    v1 = propose(client)["version"]  # left waiting on the family "Change to review" card
+    _sent_then_pump_rejected(client, hub)
+    before = list(publisher.sent)
+    response = confirm(client, v1)
+    assert response.status_code == 409
+    assert response.json()["error"] == "stale_version"
+    assert publisher.sent == before
+    assert state(hub, v1) == "proposed"
+
+
+def test_a_declined_newer_version_does_not_block_an_older_one(client, hub, publisher):
+    v1 = propose(client)["version"]
+    v2 = propose(client)["version"]
+    response = client.post(
+        f"/api/pumps/{PUMP}/prescriptions/{v2}/decline", json={"declined_by": "care-01"}
+    )
+    assert response.status_code == 200
+    assert confirm(client, v1).json()["state"] == "sent"  # v2 was never published

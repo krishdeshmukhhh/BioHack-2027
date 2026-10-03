@@ -157,10 +157,14 @@ def _require_proposed(conn: sqlite3.Connection, pump_id: str, version: int) -> N
 
 
 def _newer_version_exists(conn: sqlite3.Connection, pump_id: str, version: int) -> int | None:
-    """S3: the highest version above `version` that is confirmed, sent, or active, if any."""
+    """S3: the highest version above `version` that is confirmed, sent, or active, or
+    that was ever published (sent_at set), if any. A newer version the pump rejected
+    still counts: re-publishing an older one would make the pump apply a prescription
+    the clinician had replaced. Declined versions were never published, so they don't.
+    """
     row = conn.execute(
         "SELECT MAX(version) FROM prescriptions WHERE pump_id = ? AND version > ?"
-        " AND state IN ('confirmed', 'sent', 'active')",
+        " AND (state IN ('confirmed', 'sent', 'active') OR sent_at IS NOT NULL)",
         (pump_id, version),
     ).fetchone()
     return row[0]
@@ -195,7 +199,7 @@ def confirm(
     newer = _newer_version_exists(conn, pump_id, version)
     if newer is not None:
         # Publishing this would replace the retained v{newer} with an older version.
-        raise LifecycleError("stale_version", f"version {newer} is already confirmed or newer")
+        raise LifecycleError("stale_version", f"version {newer} was already confirmed or sent")
     changed = [
         _set_state(
             conn, pump_id, version, "confirmed",
@@ -293,8 +297,12 @@ def republish_latest(
 
     Duplicates are harmless because the pump ignores versions it already has (S3).
     """
+    # Skip a version that a newer, already published one has overtaken: the gate would
+    # refuse it anyway (S3), and retrying it on every reconnect only adds audit noise.
     row = conn.execute(
-        "SELECT version FROM prescriptions WHERE pump_id = ? AND state IN ('confirmed', 'sent')"
+        "SELECT version FROM prescriptions p WHERE pump_id = ? AND state IN ('confirmed', 'sent')"
+        " AND NOT EXISTS (SELECT 1 FROM prescriptions n WHERE n.pump_id = p.pump_id"
+        " AND n.version > p.version AND n.sent_at IS NOT NULL)"
         " ORDER BY version DESC LIMIT 1",
         (pump_id,),
     ).fetchone()

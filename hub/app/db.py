@@ -48,11 +48,12 @@ def transaction(conn: sqlite3.Connection) -> Iterator[None]:
 
 
 def seed(conn: sqlite3.Connection, demo_pump_id: str) -> None:
-    """Fictional patients. The first one uses the pump id this hub is configured for."""
+    """Fictional patients, as in sim/generate_history.py. The first one uses the pump id
+    this hub is configured for. Goals are demo values."""
     patients = [
-        ("pat-01", "Sam (fictional)", demo_pump_id, 1000.0),
-        ("pat-02", "Robin (fictional)", "pump-002", 900.0),
-        ("pat-03", "Kai (fictional)", "pump-003", 1100.0),
+        ("pat-01", "Demo Child Aster", demo_pump_id, 900.0),
+        ("pat-02", "Demo Child Bramble", "pump-002", 750.0),
+        ("pat-03", "Demo Child Cobalt", "pump-003", 600.0),
     ]
     conn.executemany(
         "INSERT OR IGNORE INTO patients (id, display_name, pump_id, daily_goal_ml, simulated)"
