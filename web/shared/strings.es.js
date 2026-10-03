@@ -286,6 +286,22 @@ export default {
   profile_school: "Día de escuela",
   profile_applied: "Formulario rellenado con «{name}». Revíselo y luego propóngalo.",
 
+  // Sync 2 contract additions
+  error_stale_version: "Ya se envió a la bomba un cambio más nuevo, así que este no se puede confirmar.",
+  exc_alarm_active: "Alarma ahora",
+  summary_title: "Resumen semanal",
+  summary_range: "Del {from} al {to}",
+  summary_delivered: "Se administró el {pct} % de lo prescrito en {days} días.",
+  summary_prior: "Semana anterior: {pct} %.",
+  trend_improving: "Tendencia: mejora",
+  trend_steady: "Tendencia: estable",
+  trend_declining: "Tendencia: empeora",
+  summary_under: "Días por debajo del 90 % de lo prescrito: {count}.",
+  summary_alarms: "Alarmas: {count} ({list}).",
+  summary_no_alarms: "Sin alarmas esta semana.",
+  summary_none: "Aún no hay historial.",
+  profiles_none: "No hay perfiles de alimentación para este paciente.",
+
   users: {
     "clin-01": "Dr. Demo",
     "care-01": "Madre o padre (demo)",

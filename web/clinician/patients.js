@@ -1,42 +1,35 @@
 // Portal: patient list, exceptions first (FR-19). Exception codes come from the
-// hub (docs/API.md). A live alarm on a patient's pump also flags them (FR-15);
-// that flag comes from the pump's own SSE stream, so it clears when the hub says so.
+// hub (docs/API.md), including `alarm_active` for a live alarm (FR-15). The list
+// is refreshed every few seconds instead of opening a live stream per patient:
+// browsers allow only 6 connections per host, and each SSE stream holds one.
+// The selected pump's own stream (already open) names its alarm without delay.
 
 import { escapeHtml, icon, t } from "/shared/core.js";
-import { api, createPumpStore, currentAlarm, isNotAvailable } from "/shared/data.js";
+import { api, currentAlarm, isNotAvailable } from "/shared/data.js";
 import { setHtml } from "/shared/ui.js";
 
 const $ = (id) => document.getElementById(id);
-const REFRESH_MS = 30000;
+const REFRESH_MS = 5000;
 
-const EXC_ICON = { offline: "wifiOff", under_target: "drop", night_alarms: "clock", alarm: "alert" };
-
-function liveAlarm(store) {
-  return store ? currentAlarm(store.state)?.alarm || null : null;
-}
+const EXC_ICON = {
+  offline: "wifiOff", under_target: "drop", night_alarms: "clock", alarm: "alert", alarm_active: "alert",
+};
 
 /**
- * @param currentStore the selected pump's store (reused, not opened twice)
+ * @param currentStore the selected pump's store
  * @param onPatients   called with the patient rows whenever they load
  */
 export function initPatients(currentStore, onPatients) {
   const currentPump = currentStore.state.pumpId;
-  const stores = new Map([[currentPump, currentStore]]);
   let patients = [];
   let unavailable = false;
 
-  function storeFor(pumpId) {
-    if (!stores.has(pumpId)) {
-      const store = createPumpStore(pumpId).start();
-      store.subscribe(render);
-      stores.set(pumpId, store);
-    }
-    return stores.get(pumpId);
-  }
-
+  // For the selected pump, the live stream is newer than the last list refresh:
+  // show its alarm by name, or drop a stale `alarm_active` once it has cleared.
   function exceptionsOf(p) {
-    const list = [...p.exceptions];
-    const alarm = liveAlarm(stores.get(p.pump_id));
+    if (p.pump_id !== currentPump || !currentStore.state.status) return [...p.exceptions];
+    const list = p.exceptions.filter((e) => e !== "alarm_active");
+    const alarm = currentAlarm(currentStore.state)?.alarm;
     if (alarm) list.unshift(`alarm:${alarm}`);
     return list;
   }
@@ -46,7 +39,7 @@ export function initPatients(currentStore, onPatients) {
     const label = kind === "alarm"
       ? t("exc_alarm", { alarm: t(`alarm_${alarm}`) })
       : t(`exc_${kind}`);
-    const tone = kind === "alarm" ? "danger" : "warn";
+    const tone = kind.startsWith("alarm") ? "danger" : "warn";
     return `<span class="chip tone-${tone}">${icon(EXC_ICON[kind] || "alert")}<span>${escapeHtml(label)}</span></span>`;
   }
 
@@ -56,7 +49,7 @@ export function initPatients(currentStore, onPatients) {
       return;
     }
     // A live alarm first, then other exceptions, then the rest (stable otherwise).
-    const rank = (exc) => (exc.some((e) => e.startsWith("alarm:")) ? 2 : exc.length ? 1 : 0);
+    const rank = (exc) => (exc.some((e) => e.startsWith("alarm")) ? 2 : exc.length ? 1 : 0);
     const rows = patients
       .map((p, i) => ({ p, i, exc: exceptionsOf(p) }))
       .sort((a, b) => rank(b.exc) - rank(a.exc) || a.i - b.i);
@@ -81,11 +74,11 @@ export function initPatients(currentStore, onPatients) {
     try {
       patients = await api.patients();
       unavailable = false;
-      for (const p of patients) storeFor(p.pump_id);
       onPatients?.(patients);
     } catch (err) {
       unavailable = isNotAvailable(err);
-      if (!unavailable) console.warn("patients", err);
+      if (unavailable) onPatients?.([]); // dependent sections show "not available"
+      else console.warn("patients", err);
     }
     render();
   }

@@ -149,7 +149,7 @@ def test_patients_and_daily(base):
     flagged = [bool(r["exceptions"]) for r in rows]
     assert flagged == sorted(flagged, reverse=True)  # exceptions first
     codes = {c for r in rows for c in r["exceptions"]}
-    assert codes <= {"offline", "under_target", "night_alarms"}
+    assert codes <= {"offline", "under_target", "night_alarms", "alarm_active"}
     _, daily = get(base, f"/api/patients/{rows[0]['id']}/daily?days=7")
     assert len(daily) == 7 and all(d["simulated"] for d in daily)
 
@@ -174,3 +174,23 @@ def test_pages_are_served(base):
         assert "javascript" in res.headers["Content-Type"]
     with pytest.raises(urllib.error.HTTPError):
         urllib.request.urlopen(base + "/_mock/mock_api.py", timeout=5)
+
+
+def test_summary_and_profiles(base):
+    status, summary = get(base, "/api/patients/pat-02/summary")
+    assert status == 200 and summary["days"] == 7 and summary["simulated"] is True
+    assert summary["trend"] in ("improving", "steady", "declining")
+    assert summary["days_under_target"] >= 3  # pat-02 drifts under target
+    status, profiles = get(base, "/api/patients/pat-01/profiles")
+    assert status == 200 and len(profiles) == 2 and all(p["simulated"] for p in profiles)
+    assert get(base, "/api/patients/nobody/summary")[0] == 404
+
+
+def test_confirm_below_a_sent_version_is_stale(base):
+    older = propose(base, "pump-003", 60)
+    newer = propose(base, "pump-003", 70)
+    post(base, f"/api/pumps/pump-003/prescriptions/{newer['version']}/confirm",
+         {"confirmed_by": "care-01"})
+    status, err = post(base, f"/api/pumps/pump-003/prescriptions/{older['version']}/confirm",
+                       {"confirmed_by": "care-01"})
+    assert status == 409 and err["error"] == "stale_version"
