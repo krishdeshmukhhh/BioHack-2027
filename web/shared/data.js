@@ -11,9 +11,10 @@ import { t } from "./core.js";
 
 // ---------------------------------------------------------------------------
 // SWITCH TO THE REAL HUB HERE.
-// true:  talk to web/_mock/mock_api.py on port 8003 (Sync 1, before the hub exists).
-// false: talk to whoever served this page (the hub on the Pi, Sync 2 onwards).
-// When the page is itself served by the mock (port 8003), both give the same origin.
+// false (Sync 2 onwards): talk to whoever served this page. Served by the hub on
+//        the Pi, that is the real hub; opened from the mock on :8003, the mock.
+// true:  always talk to web/_mock/mock_api.py on port 8003, even when the page
+//        was served from somewhere else (the mock allows cross-origin calls).
 export const USE_MOCK = false;
 const MOCK_PORT = 8003;
 // ---------------------------------------------------------------------------

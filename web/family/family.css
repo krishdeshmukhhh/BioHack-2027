@@ -1,11 +1,5 @@
 /* Family app. Mobile first: one column, large type, one clear thing per card. */
 
-.topbar-right { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
-.btn-small { padding: 8px 14px; font-size: var(--text-small); }
-
-.conn { margin-top: 0; }
-.conn strong { color: var(--text); }
-.conn-body { display: block; color: var(--text); font-weight: 400; }
 
 .state {
   display: flex; align-items: center; gap: 12px;
@@ -13,11 +7,6 @@
   margin: 0 0 12px;
 }
 .state svg { width: 44px; height: 44px; flex: none; }
-.tone-text-ok      { color: var(--ok); }
-.tone-text-info    { color: var(--info); }
-.tone-text-warn    { color: var(--warn); }
-.tone-text-danger  { color: var(--danger); }
-.tone-text-neutral { color: var(--text); }
 
 .alarm-line {
   display: flex; gap: 10px; align-items: flex-start;
@@ -49,11 +38,30 @@
 
 .updated { color: var(--text-muted); margin: 0; }
 
-/* Motion: short fades only, removed by prefers-reduced-motion in tokens.css. */
-.fade { animation: fade-in 160ms ease-out; }
-@keyframes fade-in { from { opacity: 0.4; } to { opacity: 1; } }
 
 @media (max-width: 360px) {
   .facts { grid-template-columns: 1fr; }
   .state { font-size: 1.9rem; }
 }
+
+/* ---- Change to review ---- */
+.review { border: 3px solid var(--primary); }
+.compare { margin: 8px 0 16px; }
+.cmp { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 12px; padding: 10px 0; border-bottom: 1px solid var(--surface-2); }
+.cmp h3 { grid-column: 1 / -1; margin: 0; font-size: var(--text-body); display: flex; flex-wrap: wrap; align-items: center; gap: 4px 10px; }
+.cmp p { margin: 0; padding: 6px 10px; border-radius: 8px; background: var(--surface-2); overflow-wrap: anywhere; }
+.cmp.is-changed .cmp-new { background: var(--info-bg); outline: 2px solid var(--info); }
+.cmp-tag { display: block; color: var(--text-muted); font-size: var(--text-small); }
+.changed { display: inline-flex; align-items: center; gap: 4px; color: var(--info); font-weight: 700; font-size: var(--text-small); }
+.changed svg { width: 18px; height: 18px; }
+.same { color: var(--text-muted); font-size: var(--text-small); font-weight: 400; }
+
+.review-note { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; margin-bottom: 12px; }
+.review-note h3 { font-size: var(--text-small); color: var(--text-muted); margin: 0 0 4px; }
+.review-note p { margin: 0; overflow-wrap: anywhere; }
+
+/* Confirm and Decline: same size, same weight, neither nudged (FR-3). */
+.answer-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.btn-answer { min-height: 64px; font-size: 1.2rem; border-width: 3px; width: 100%; }
+
+.outcome p { margin: 0 0 12px; }

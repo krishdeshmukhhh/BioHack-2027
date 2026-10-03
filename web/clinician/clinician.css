@@ -1,0 +1,28 @@
+/* Clinician portal. Laptop first, but cards stack down to 320 px. */
+
+main.wide { max-width: 72rem; }
+.columns { display: grid; grid-template-columns: 1fr; gap: 0 var(--gap); align-items: start; }
+@media (min-width: 900px) {
+  .columns { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+}
+
+.muted { color: var(--text-muted); font-weight: 500; font-size: var(--text-small); }
+
+.facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; margin: 0; }
+.facts div { background: var(--surface-2); border-radius: 8px; padding: 10px 12px; }
+.facts dt { color: var(--text-muted); font-size: var(--text-small); }
+.facts dd { margin: 0; font-weight: 700; }
+
+#form-errors ul { margin: 6px 0 0; padding-left: 1.2em; }
+#form-errors a { color: var(--danger); font-weight: 600; }
+
+.history { list-style: none; margin: 0; padding: 0; }
+.rx { border-top: 1px solid var(--surface-2); padding: 12px 0; }
+.rx:first-child { border-top: 0; padding-top: 0; }
+.rx-head { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; margin-bottom: 4px; }
+.rx-head h3 { margin: 0; font-size: 1.1rem; }
+.rx-summary { font-weight: 600; margin: 0 0 4px; }
+.rx-detail, .rx-times { color: var(--text-muted); font-size: var(--text-small); margin: 0 0 4px; }
+.rx-note { margin: 0 0 4px; padding: 6px 10px; background: var(--surface-2); border-radius: 6px; overflow-wrap: anywhere; }
+.rx-superseded .rx-summary { font-weight: 500; color: var(--text-muted); }
+.empty { color: var(--text-muted); }

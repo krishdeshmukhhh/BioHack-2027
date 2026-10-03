@@ -1,11 +1,13 @@
-// Family app: live page (PLAN phase 1). Renders only from the shared store in
-// web/shared/data.js. Change review and alerts are added in later groups.
+// Family app entry: live page (PLAN phase 1) plus change review (phase 2).
+// Renders only from the shared store in web/shared/data.js.
 
 import {
   applyStrings, escapeHtml, fmtTime, icon, ml, mlHr, renderFooter, simLabelHtml, t,
 } from "/shared/core.js";
 import { createPumpStore, pumpIdFromUrl } from "/shared/data.js";
 import { initNightToggle } from "/shared/theme.js";
+import { hasStatus, renderConnection, setHtml, setText } from "/shared/ui.js";
+import { initReview } from "./review.js";
 
 const $ = (id) => document.getElementById(id);
 
@@ -18,62 +20,15 @@ const STATE_TONE = {
   alarm: "danger", complete: "ok",
 };
 
-/** Set innerHTML only when it changes, so aria-live does not re-announce every tick. */
-function setHtml(el, html) {
-  if (el.dataset.html === html) return false;
-  el.dataset.html = html;
-  el.innerHTML = html;
-  el.classList.remove("fade");
-  void el.offsetWidth; // restart the short fade
-  el.classList.add("fade");
-  return true;
-}
-
-function setText(el, text) {
-  if (el.textContent !== text) el.textContent = text;
-}
-
-function renderConnection(state) {
-  const el = $("conn");
-  const time = fmtTime(state.lastUpdateAt);
-  let tone, ic, title, body = "";
-  if (state.stream === "connecting") {
-    tone = "neutral"; ic = "clock"; title = t("connecting");
-  } else if (state.stream === "lost") {
-    // The stream to the hub dropped. EventSource keeps retrying in the background.
-    tone = "warn"; ic = "wifiOff";
-    title = time ? t("offline_last_update", { time }) : t("offline_no_update");
-    body = t("hub_lost");
-  } else if (!state.availability.online) {
-    tone = "warn"; ic = "wifiOff";
-    const since = fmtTime(state.availability.last_seen_at);
-    title = since ? t("pump_offline_since", { time: since }) : t("pump_offline");
-    body = t("pump_offline_body");
-  } else {
-    tone = "ok"; ic = "wifi"; title = t("online_last_update", { time });
-  }
-  const kind = state.stream === "open" ? (state.availability.online ? "online" : "offline")
-    : state.stream;
-  const live = $("conn-live");
-  if (live.dataset.kind !== kind) {
-    live.dataset.kind = kind;
-    // Stay quiet on first load while connecting; speak every later change.
-    if (kind !== "connecting") live.textContent = body ? `${title}. ${body}` : title;
-  }
-  el.className = `banner conn tone-${tone}`;
-  setHtml(el, `${icon(ic)}<span><strong>${escapeHtml(title)}</strong>` +
-    (body ? `<span class="conn-body">${escapeHtml(body)}</span>` : "") + "</span>");
-}
-
 function renderStatus(state) {
-  const s = state.status;
-  const pumpState = s?.state || "idle";
+  const s = hasStatus(state) ? state.status : null;
+  const pumpState = s?.state;
   const tone = STATE_TONE[pumpState] || "neutral";
 
   $("state").className = `state tone-text-${tone}`;
   setHtml($("state"), s
     ? `${icon(STATE_ICON[pumpState] || "info")}<span>${escapeHtml(t(`state_${pumpState}`))}</span>`
-    : `<span>${escapeHtml(t("loading"))}</span>`);
+    : `${icon("clock")}<span>${escapeHtml(t("waiting_for_pump"))}</span>`);
 
   const alarmLine = $("alarm-line");
   if (s?.alarm) {
@@ -105,15 +60,16 @@ function renderStatus(state) {
     : t("never_updated"));
 
   // S8: label simulated data. Shown until a real, non-simulated status says otherwise.
-  setHtml($("sim-slot"), s?.simulated === false ? "" : simLabelHtml());
-}
-
-function render(state) {
-  renderConnection(state);
-  renderStatus(state);
+  setHtml($("sim-slot"), s?.simulated === false ? "" : simLabelHtml(), { fade: false });
 }
 
 applyStrings();
 renderFooter($("footer"));
 initNightToggle($("night-toggle"));
-createPumpStore(pumpIdFromUrl()).start().subscribe(render);
+
+const store = createPumpStore(pumpIdFromUrl()).start();
+store.subscribe((state) => {
+  renderConnection($("conn"), $("conn-live"), state);
+  renderStatus(state);
+});
+initReview(store);

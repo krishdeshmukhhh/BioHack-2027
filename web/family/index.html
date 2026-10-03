@@ -26,6 +26,40 @@
     <!-- Announces connection changes only (not the ticking update time). -->
     <div id="conn-live" class="visually-hidden" role="status" aria-atomic="true"></div>
 
+    <!-- Change to review (FR-3). Shown only while the hub reports a proposal. -->
+    <section id="review" class="card review" aria-labelledby="review-title" hidden>
+      <h2 id="review-title" data-i18n="review_title">Change to review</h2>
+      <p id="review-intro"></p>
+      <div id="review-rows" class="compare"></div>
+      <div id="review-note" class="review-note" hidden>
+        <h3 data-i18n="review_note">Note from the clinician</h3>
+        <p id="review-note-text"></p>
+      </div>
+      <p class="hint" data-i18n="review_queued_hint"></p>
+      <div class="field">
+        <label for="caregiver" data-i18n="review_who">Confirming as</label>
+        <select id="caregiver">
+          <option value="care-01" data-i18n="role_parent">Parent (demo)</option>
+          <option value="care-02" data-i18n="role_school_nurse">School nurse (demo)</option>
+        </select>
+      </div>
+      <div class="answer-row">
+        <button id="confirm-btn" class="btn btn-answer" type="button"></button>
+        <button id="decline-btn" class="btn btn-answer" type="button"></button>
+      </div>
+      <p id="review-error" class="notice tone-text-danger" role="alert" hidden></p>
+    </section>
+
+    <!-- What happened to the change this phone answered. Driven only by the hub. -->
+    <section id="outcome" class="card outcome" aria-labelledby="outcome-title" hidden>
+      <h2 id="outcome-title" tabindex="-1" data-i18n="review_outcome_title">Your last answer</h2>
+      <div id="outcome-body" role="status" aria-atomic="true"></div>
+      <button id="outcome-ok" class="btn" type="button" data-i18n="review_ok">OK</button>
+    </section>
+
+    <!-- Announces that a new change is waiting. -->
+    <div id="review-live" class="visually-hidden" role="status" aria-atomic="true"></div>
+
     <section class="card today" aria-labelledby="today-title">
       <h2 id="today-title" data-i18n="family_today">Today</h2>
 
