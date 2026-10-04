@@ -13,12 +13,16 @@
 :root {
   color-scheme: dark;
   --canvas: #080f16; --panel: #101d27; --ink: #e8f2f5; --muted: #91a9b7; --line: #253944;
-  --accent: #26dac7; --tint: #133a3d; --track: #203943; --danger: #ff9c98; --warm: #f0bc77; --good: #26dac7;
+  --accent: #26dac7; --tint: #133a3d; --track: #203943; --danger: #ff9c98; --warm: #f0bc77; --good: #26dac7; --on-accent: #062724;
+  --shell: #0c151e; --details: #0d1821; --map-glow: #102631; --map-base: #09141e;
+  --map-grid: #253944; --map-room: #18232c; --map-corridor: #202c35; --map-wall: #52606a; --map-door: #758793;
 }
-:root[data-theme="night"] {
-  color-scheme: dark;
-  --canvas: #080f16; --panel: #101d27; --ink: #e8f2f5; --muted: #91a9b7; --line: #253944;
-  --accent: #26dac7; --tint: #133a3d; --track: #203943; --danger: #ff9c98; --warm: #f0bc77; --good: #26dac7;
+:root[data-theme="day"] {
+  color-scheme: light;
+  --canvas: #eff5f6; --panel: #ffffff; --ink: #15333b; --muted: #506974; --line: #cbdcde;
+  --accent: #087e73; --tint: #d9f1ed; --track: #cddfe0; --danger: #b83c37; --warm: #8d591e; --good: #087e73; --on-accent: #ffffff;
+  --shell: #f7fafb; --details: #f4f9f9; --map-glow: #e1eeee; --map-base: #f3f7f7;
+  --map-grid: #d0dddd; --map-room: #e3eaea; --map-corridor: #f3f6f6; --map-wall: #a1b2b7; --map-door: #799197;
 }
 * { box-sizing: border-box; }
 html, body { height: 100%; width: 100%; overflow: hidden; overscroll-behavior: none; }
@@ -33,7 +37,7 @@ button:disabled { opacity: .4; cursor: not-allowed; }
 button, select, input:not([type="checkbox"]), a.control { min-height: 40px; }
 .button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; padding: 11px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); font-size: 16px; font-weight: 600; text-decoration: none; }
 .button:hover { border-color: var(--accent); background: var(--tint); }
-.button-primary { background: var(--accent); color: #062724; border-color: var(--accent); }
+.button-primary { background: var(--accent); color: var(--on-accent); border-color: var(--accent); }
 .button-primary:hover { background: var(--accent); filter: brightness(.95); }
 .input { width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 10px 12px; color: var(--ink); }
 .input:focus { border-color: var(--accent); }
@@ -50,19 +54,31 @@ thead { color: var(--muted); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 
 .command-shell { height: 100dvh; }
-.nav-rail, .shell-header { background: #0c151e; }
-.brand-mark { background: #123333; border: 1px solid #275854; }
+.nav-rail, .shell-header { background: var(--shell); }
+.brand-mark { background: var(--tint); border: 1px solid var(--line); }
 .rail-button { min-height: 66px; }
 .rail-button:hover { color: var(--accent); }
 .language-select { min-height: 32px; }
 .split-grid { grid-template-columns: minmax(0, 1fr) 380px; }
 .split-grid[data-open="false"] { grid-template-columns: minmax(0, 1fr); }
 .split-grid[data-open="false"] .details-pane { position: absolute; inset: 0 0 0 auto; width: 380px; }
-.details-pane { background: #0d1821; }
-.ward-stage { background: radial-gradient(ellipse at 45% 42%, #102631 0%, #09141e 72%); }
-.floor-plan { inset: 48px 32px 200px; }
+.details-pane { background: var(--details); }
+.patient-header { background: var(--details); }
+.local-scroll.patient-scroll { scrollbar-width: none; }
+.local-scroll.patient-scroll::-webkit-scrollbar { display: none; }
+.ward-stage { background: radial-gradient(ellipse at 45% 42%, var(--map-glow) 0%, var(--map-base) 72%); }
+.floor-plan { inset: 48px 32px 64px; }
 .bed-marker { width: 110px; padding: 12px 8px; }
-.bed-marker:hover { background: #15343e; color: var(--accent); }
+.bed-marker { border: 1px solid var(--map-wall); background: var(--map-room); color: var(--muted); }
+.bed-marker[data-state="selected"] { border-color: var(--accent); background: var(--tint); color: var(--accent); }
+.bed-marker[data-state="attention"] { border-color: var(--warm); }
+.bed-marker[data-state="critical"] { border-color: var(--danger); color: var(--danger); }
+.bed-marker:hover { box-shadow: 0 0 24px color-mix(in srgb, var(--accent) 20%, transparent); }
+.map-viewport { touch-action: none; user-select: none; cursor: grab; border-radius: 8px; }
+.map-viewport.is-dragging, .map-viewport.is-dragging * { cursor: grabbing; }
+.map-camera-tools { top: 50px; right: 44px; }
+.node-pulse { border-color: currentColor; }
+.node-tag { box-shadow: 0 4px 12px #0002; }
 .status-dot { display: inline-block; width: 5px; height: 5px; border-radius: 100%; flex-shrink: 0; }
 .icon-button, .small-icon { display: grid; place-items: center; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); background: var(--panel); }
 .icon-button { min-height: 36px; width: 36px; }
@@ -71,7 +87,7 @@ thead { color: var(--muted); }
 .local-scroll { scrollbar-width: thin; scrollbar-color: #35515e transparent; overscroll-behavior: contain; scroll-padding: 16px; }
 .local-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
 .local-scroll::-webkit-scrollbar-thumb { border-radius: 10px; background: #35515e; }
-.patient-row:hover { background: #102d35; }
+.patient-row:hover { background: var(--tint); }
 .skip-link { position: absolute; z-index: 100; transform: translateY(-200%); background: var(--panel); padding: 12px; }
 .skip-link:focus { transform: translateY(0); }
 .monitor-gauge .font-display { font-size: 46px; letter-spacing: -.04em; }
@@ -108,13 +124,20 @@ thead { color: var(--muted); }
   .rail-button { min-height: 58px; }
   .brand-mark { width: 36px; height: 36px; }
   .shell-header { padding-inline: 12px; }
+  .header-controls { gap: 8px; }
+  .header-controls .connection { display: none; }
+  .map-camera-tools { top: 36px; right: 12px; }
   .shell-header .uppercase { font-size: 8px; letter-spacing: .04em; }
   .pane-heading { padding: 16px 12px 12px; }
   .pane-heading h1 { font-size: 16px; }
   .ward-metrics > div { padding: 10px 8px; }
   .ward-metrics p:first-child { font-size: 9px; }
   .ward-metrics p:last-child { font-size: 20px; }
-  .floor-plan { inset: 44px 8px 138px; }
+  .floor-plan { inset: 44px 8px 64px; }
+  .patient-telemetry { padding-inline: 14px; }
+  .patient-telemetry > div { gap: 8px; }
+  .semi-gauge h3 { font-size: 9px; }
+  .semi-gauge h3 svg { width: 11px; }
   .bed-marker { width: 65px; padding: 6px 3px; }
   .bed-marker > svg { width: 27px; height: 27px; }
   .bed-marker span { font-size: 8px; }
@@ -135,7 +158,15 @@ thead { color: var(--muted); }
   .rail-button { min-height: 52px; gap: 3px; padding-block: 8px; }
   .pane-heading { padding-top: 12px; padding-bottom: 10px; }
   .ward-metrics > div { padding-block: 6px; }
-  .floor-plan { top: 35px; bottom: 114px; }
+  .floor-plan { top: 35px; bottom: 54px; }
+  .patient-header { padding-block: 8px; }
+  .patient-header .kicker { display: none; }
+  .patient-header h2 { font-size: 14px; }
+  .patient-header [data-patient-status] { margin-top: 4px; }
+  .patient-telemetry { padding-block: 6px; }
+  .patient-telemetry .semi-chart { height: 74px; }
+  .semi-gauge { padding-top: 5px; }
+  .gauge-value .text-\[30px\] { font-size: 22px; }
   .bed-marker { padding-block: 4px; }
   .bed-marker > svg { height: 25px; }
   .telemetry-overlay { bottom: 55px; }
@@ -145,7 +176,20 @@ thead { color: var(--muted); }
   .vital-widget > div:last-child svg { display: none; }
 }
 @media (max-height: 600px) and (min-width: 501px) {
-  .floor-plan { inset: 30px 240px 56px 16px; }
+  .patient-header { padding-block: 6px; }
+  .patient-header > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; flex: 1; align-items: center; }
+  .patient-header h2 { grid-column: 1; grid-row: 1; }
+  .patient-header > div > p:not(.kicker) { grid-column: 1; grid-row: 2; }
+  .patient-header [data-patient-status] { grid-column: 2; grid-row: 1 / span 2; margin-top: 0; }
+  .patient-telemetry { padding-block: 4px; }
+  .patient-telemetry .semi-chart { height: 52px; }
+  .patient-telemetry .semi-gauge { padding-top: 3px; padding-bottom: 0; }
+  .patient-telemetry .gauge-value { bottom: 6px; }
+  .patient-telemetry .gauge-value .text-\[30px\] { font-size: 16px; }
+  .patient-telemetry .gauge-value .text-\[9px\] { font-size: 8px; line-height: 1; }
+  .details-pane > .tab-bar button { min-height: 36px; padding-block: 8px; }
+  .map-camera-tools { top: 4px; right: 244px; }
+  .floor-plan { inset: 35px 16px 56px; }
   .bed-marker { width: 72px; padding: 4px; }
   .bed-marker span { font-size: 8px; }
   .station-label { font-size: 8px; padding: 4px; }
@@ -157,3 +201,14 @@ thead { color: var(--muted); }
   .vital-widget > div:last-child { display: none; }
   .vital-widget .text-xl { font-size: 16px; }
 }
+/* The demo changes perspective while keeping the selected home device. */
+.shell-header { padding-bottom: 36px; }
+.demo-role-switch { position: absolute; bottom: 7px; left: 20px; display: flex; align-items: center; gap: 4px; font-size: 11px; }
+.demo-role-switch > span { color: var(--muted); margin-right: 8px; }
+.demo-role-switch a { position: relative; padding: 5px 12px; border-radius: 6px; color: var(--muted); }
+.demo-role-switch a.active { color: var(--accent); }
+.role-highlight { position: absolute; inset: 0; background: var(--tint); border: 1px solid var(--line); border-radius: 6px; }
+.home-feed { grid-template-columns: minmax(0, 1fr) minmax(150px, .75fr); }
+.home-progress { max-width: 280px; width: 100%; justify-self: center; }
+.home-action:hover { background: var(--tint); }
+@media (max-width: 650px) { .home-feed { grid-template-columns: minmax(0, 1fr); padding: 16px; } .home-progress { max-width: 160px; } .home-progress .font-display { font-size: 48px; } .demo-role-switch { left: 12px; } .family-home { padding-inline: 12px; } }

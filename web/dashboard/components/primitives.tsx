@@ -5,17 +5,18 @@ import { ChevronDown, Check, CircleAlert, FlaskConical } from "lucide-react";
 import { PolarAngleAxis, RadialBar, RadialBarChart, ResponsiveContainer } from "recharts";
 import { useLocale } from "@/lib/locale";
 import type { Prescription } from "@/lib/pump";
+import { motionTokens } from "@/lib/motion";
 
 export function Accordion({ title, subtitle, icon, children, defaultOpen = false }: { title: string; subtitle?: string; icon: ReactNode; children: ReactNode; defaultOpen?: boolean }) {
   const [open, setOpen] = useState(defaultOpen);
   const id = useId();
   const reduced = useReducedMotion();
-  return <motion.section layout={!reduced} className="accordion">
+  return <motion.section layout={reduced ? false : "position"} className="accordion" transition={{ duration: reduced ? 0 : motionTokens.duration.normal, ease: motionTokens.easing.smooth }}>
     <h2><button type="button" aria-expanded={open} aria-controls={id} id={`${id}-heading`} onClick={() => setOpen(!open)} className="flex w-full items-center gap-4 py-6 text-left">
-      <span className="text-accent shrink-0">{icon}</span><span className="flex-1 min-w-0"><span className="block text-lg font-semibold tracking-tight">{title}</span>{subtitle && <span className="mt-1 block text-sm font-normal text-muted">{subtitle}</span>}</span>
-      <motion.span animate={{ rotate: open ? 180 : 0 }} transition={{ duration: reduced ? 0 : .2 }}><ChevronDown size={18} aria-hidden="true" /></motion.span>
+      <span aria-hidden="true" className="text-accent shrink-0">{icon}</span><span className="flex-1 min-w-0"><span className="block text-lg font-semibold tracking-tight">{title}</span>{subtitle && <span className="mt-1 block text-sm font-normal text-muted">{subtitle}</span>}</span>
+      <motion.span animate={{ rotate: reduced ? 0 : open ? 180 : 0 }} transition={{ duration: reduced ? 0 : motionTokens.duration.fast }}><ChevronDown size={18} aria-hidden="true" /></motion.span>
     </button></h2>
-    <AnimatePresence initial={false}>{open && <motion.div id={id} role="region" aria-labelledby={`${id}-heading`} key="content" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: reduced ? 0 : .25, ease: [.22, 1, .36, 1] }} className="overflow-hidden"><div className="pb-6">{children}</div></motion.div>}</AnimatePresence>
+    <div id={id} role="region" aria-labelledby={`${id}-heading`} aria-hidden={!open} inert={!open}><AnimatePresence initial={false}>{open && <motion.div key="content" initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} transition={{ duration: reduced ? 0 : motionTokens.duration.normal, ease: motionTokens.easing.smooth }} className="overflow-hidden"><div className="pb-5">{children}</div></motion.div>}</AnimatePresence></div>
   </motion.section>;
 }
 
