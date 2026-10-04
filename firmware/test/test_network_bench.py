@@ -2,6 +2,7 @@
 
 import json
 from datetime import datetime, timedelta, timezone
+from unittest.mock import Mock
 
 import pytest
 
@@ -264,6 +265,33 @@ def test_connected_workflow_uses_hub_confirmation_and_exact_replay():
     assert pump.value["state"] == "idle"
     assert pump.value["rate_ml_hr"] == 75
     assert report["queued_version"] > report["rejected_version"] > report["valid_version"]
+
+
+def test_mqtt_replay_preserves_payload_qos_without_retention():
+    observer = network.MqttObserver("localhost", 1883, "pump-001")
+    observer.client = Mock()
+    payload = b'{ "version": 7, "note": "exact captured bytes" }'
+    observer.replay(payload, timeout=5)
+    observer.client.publish.assert_called_once_with(
+        "pump/pump-001/prescription", payload, qos=1, retain=False
+    )
+    observer.client.publish.return_value.wait_for_publish.assert_called_once_with(timeout=5)
+    observer.client.publish.return_value.is_published.assert_called_once_with()
+
+
+@pytest.mark.parametrize("wifi_check", [False, True])
+def test_cli_requires_scratch_hub_acknowledgement_before_io(monkeypatch, tmp_path, wifi_check):
+    from firmware.tools import wifi_bench
+
+    def forbidden(*args, **kwargs):
+        pytest.fail("No hub or serial access without scratch-hub acknowledgement")
+
+    monkeypatch.setattr(network, "HttpApi", forbidden)
+    monkeypatch.setattr(network.bench, "open_serial", forbidden)
+    tool = wifi_bench if wifi_check else network
+    with pytest.raises(SystemExit) as error:
+        tool.main(["--port", "unused", "--output", str(tmp_path / "report.json")])
+    assert error.value.code == 2
 
 
 def test_total_deadline_blocks_commands():

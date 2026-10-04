@@ -70,7 +70,9 @@ PrescriptionValidation PumpController::receivePrescription(const char* payload,
   }
   snapshot_.pending = result.prescription;
   snapshot_.hasPending = true;
-  if (snapshot_.state != PumpState::IDLE || !applyPending(now)) {
+  if (snapshot_.state == PumpState::IDLE) {
+    applyPending(now);
+  } else {
     event.type = "prescription_queued";
     emit(event, now);
   }

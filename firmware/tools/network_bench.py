@@ -4,6 +4,7 @@
 Join the agreed private demo network before running. This helper never changes
 WiFi, stops the broker, or intentionally resets the device when opening serial.
 Press ESP32 reset after it begins listening to expose the hub startup marker.
+Use only a scratch/test hub database: bench users clin-01/care-01 are intentional.
 """
 
 from __future__ import annotations
@@ -159,7 +160,7 @@ class MqttObserver:
             ]
 
     def replay(self, payload, timeout):
-        result = self.client.publish(self.prefix + "prescription", payload, qos=1, retain=True)
+        result = self.client.publish(self.prefix + "prescription", payload, qos=1, retain=False)
         result.wait_for_publish(timeout=timeout)
         if not result.is_published():
             raise bench.BenchError("Broker did not acknowledge exact confirmed prescription replay")
@@ -409,7 +410,7 @@ class NetworkBench(bench.Bench):
                     "Duplicate accepted prescription emitted a prescription event"
                 )
         self.passed(
-            "Exact caregiver-confirmed MQTT payload replayed retained; pump ignored duplicate"
+            "Exact caregiver-confirmed MQTT payload replayed non-retained; pump ignored duplicate"
         )
 
         self.check("device_limit_rejection")
@@ -535,6 +536,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", required=True)
     parser.add_argument("--hub", default="http://127.0.0.1:8000")
+    parser.add_argument("--scratch-hub", action="store_true", required=True,
+                        help="Confirm --hub uses a scratch/test database, not the real demo DB")
     parser.add_argument("--broker", default="127.0.0.1")
     parser.add_argument("--broker-port", type=int, default=1883)
     parser.add_argument("--pump-id", default="pump-001")
@@ -556,6 +559,7 @@ def main(argv=None):
     helper = port = observer = None
     result = 1
     print(
+        "WARNING: use only a scratch/test hub database; bench users are clin-01/care-01.\n"
         "Listening for hub mode. Press ESP32 reset; WiFi must already be configured/joined.",
         flush=True,
     )

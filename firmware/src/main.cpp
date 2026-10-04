@@ -91,7 +91,11 @@ void handleCommand(const std::string& command, uint32_t now) {
   } else if (command == "reboot" && controller.snapshot().state == PumpState::IDLE) {
     restarting = true;
     mqtt_link::requestShutdown(true);
-  } else logLine("commands: demo start pause resume stop occlusion bag_empty clear status reboot (idle)");
+  } else logLine("commands: demo start pause resume stop occlusion bag_empty clear status reboot (idle)"
+#ifdef NETWORK_BENCH
+                 " wifi_off wifi_on"
+#endif
+                );
   if (!accepted) logLine("Command unavailable in current state. Load demo while idle before start; clear alarm before resume.");
 }
 
@@ -168,5 +172,12 @@ void loop() {
     const std::string json = statusJson(s, PUMP_ID, now, true);
     mqtt_link::publishStatus(json.c_str());
     logLine(json.c_str());
+#ifdef NETWORK_BENCH
+    // ESP-IDF reports the minimum unused task stack in bytes since boot.
+    char headroom[80];
+    snprintf(headroom, sizeof(headroom), "Stack headroom: loopTask=%u bytes",
+             static_cast<unsigned>(uxTaskGetStackHighWaterMark(nullptr)));
+    logLine(headroom);
+#endif
   }
 }

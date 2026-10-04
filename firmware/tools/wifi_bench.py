@@ -5,6 +5,7 @@ Requires the compile-gated network bench startup marker, a hub-confirmed idle
 prescription, and simulated delivery. Never changes Mac WiFi or stops a broker.
 Opening serial does not intentionally reset the board; press reset while this
 helper listens to expose the startup markers.
+Use only the scratch/test hub database prepared for network_bench.py.
 """
 
 from __future__ import annotations
@@ -299,6 +300,8 @@ def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--port", required=True)
     parser.add_argument("--hub", default="http://127.0.0.1:8000")
+    parser.add_argument("--scratch-hub", action="store_true", required=True,
+                        help="Confirm --hub uses a scratch/test database, not the real demo DB")
     parser.add_argument("--broker", default="127.0.0.1")
     parser.add_argument("--broker-port", type=int, default=1883)
     parser.add_argument("--pump-id", default="pump-001")

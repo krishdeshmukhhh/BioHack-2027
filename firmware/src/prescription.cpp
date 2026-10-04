@@ -1,9 +1,11 @@
 #include "prescription.h"
 
 #include <ArduinoJson.h>
+#include <algorithm>
 #include <cmath>
 #include <cstring>
 #include <limits>
+#include <vector>
 
 #include "limits.h"
 
@@ -21,7 +23,8 @@ class JsonSyntax {
     whitespace();
     return offset_ == length_;
   }
-  uint32_t readableVersion() const { return readableVersion_; }
+  uint32_t readableVersion() const { return ambiguousVersion_ ? 0 : readableVersion_; }
+  bool duplicateKeys() const { return duplicateKeys_; }
 
  private:
   char peek() const { return offset_ < length_ ? text_[offset_] : '\0'; }
@@ -107,20 +110,28 @@ class JsonSyntax {
       ++offset_;
       whitespace();
       if (consume('}')) return true;
+      std::vector<std::string> keys;
       do {
         whitespace();
         const size_t keyBegin = offset_;
         if (!string()) return false;
         const size_t keyEnd = offset_;
+        JsonDocument key;
+        if (deserializeJson(key, text_ + keyBegin, keyEnd - keyBegin)) return false;
+        const std::string name = key.as<std::string>();
+        // Compare decoded names so escaped aliases cannot overwrite a field.
+        if (std::find(keys.begin(), keys.end(), name) != keys.end()) {
+          duplicateKeys_ = true;
+          if (depth == 0 && name == "version") ambiguousVersion_ = true;
+        }
+        keys.push_back(name);
         whitespace();
         if (!consume(':')) return false;
         whitespace();
         const size_t valueBegin = offset_;
         if (!value(depth + 1)) return false;
         if (depth == 0) {
-          JsonDocument key;
-          if (!deserializeJson(key, text_ + keyBegin, keyEnd - keyBegin) &&
-              key.as<std::string>() == "version") {
+          if (name == "version") {
             readableVersion_ = 0;
             uint32_t candidate = 0;
             bool integer = valueBegin < offset_;
@@ -161,6 +172,8 @@ class JsonSyntax {
   size_t length_;
   size_t offset_ = 0;
   uint32_t readableVersion_ = 0;
+  bool duplicateKeys_ = false;
+  bool ambiguousVersion_ = false;
 };
 
 bool allowedKey(JsonString key) {
@@ -259,6 +272,7 @@ PrescriptionValidation parsePrescription(const char* payload, size_t length,
   JsonSyntax syntax(payload, length);
   if (!syntax.objectDocument()) return reject(result, "malformed");
   result.version = syntax.readableVersion();
+  if (syntax.duplicateKeys()) return reject(result, "malformed");
   JsonDocument document;
   if (deserializeJson(document, payload, length) || !document.is<JsonObject>())
     return reject(result, "malformed");

@@ -176,6 +176,7 @@ void runNetwork() {
 #ifdef NETWORK_BENCH
   bool benchWifiActive = true;
   bool benchDisconnectReported = false;
+  unsigned long lastStackReport = millis();
 #endif
   bool shutdownStarted = false;
   unsigned long shutdownAt = 0;
@@ -189,6 +190,14 @@ void runNetwork() {
       Serial.println(diagnostic.line);
     }
     const unsigned long now = millis();
+#ifdef NETWORK_BENCH
+    if (now - lastStackReport >= STATUS_INTERVAL_MS) {
+      lastStackReport = now;
+      // ESP-IDF high-water marks are minimum unused bytes, not words.
+      Serial.printf("Stack headroom: pump-network=%u bytes\n",
+                    static_cast<unsigned>(uxTaskGetStackHighWaterMark(nullptr)));
+    }
+#endif
     if (shutdownRequested.load()) {
       if (!shutdownStarted) {
         shutdownStarted = true;
