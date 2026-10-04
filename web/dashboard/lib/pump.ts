@@ -40,7 +40,10 @@ export function usePump(id: string) {
     const store = createPumpStore(id);
     const unsubscribe = store.subscribe((value: unknown) => {
       const state = value as Pump;
-      setSnapshot({ ...state, prescriptions: { ...state.prescriptions }, alerts: [...state.alerts], history: [...state.history] });
+      // A pump that has never reported gets {pump_id, online:false, received_at:null} from the
+      // hub (docs/API.md): that is "no telemetry yet", not a status with numbers in it.
+      const status = state.status && typeof (state.status as { state?: unknown }).state === "string" ? state.status : null;
+      setSnapshot({ ...state, status, prescriptions: { ...state.prescriptions }, alerts: [...state.alerts], history: [...state.history] });
     });
     store.start();
     return () => { unsubscribe(); store.stop(); };

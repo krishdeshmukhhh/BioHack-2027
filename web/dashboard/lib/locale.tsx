@@ -20,7 +20,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
     lang, setLang, t,
     list: (key) => Array.isArray(strings[key]) ? strings[key] as string[] : [],
     user: (id) => (strings.users as Record<string, string>)[id] || id,
-    number: (value) => value.toLocaleString(lang, { maximumFractionDigits: 1 }),
+    number: (value) => (Number.isFinite(value) ? value.toLocaleString(lang, { maximumFractionDigits: 1 }) : "—"),
     date: (value) => value ? new Date(value).toLocaleString(lang, { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" }) : t("never_updated"),
   };
   return <Context.Provider value={value}>{children}</Context.Provider>;
