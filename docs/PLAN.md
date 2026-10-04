@@ -137,24 +137,26 @@ Each phase ends with an acceptance check you can show to someone. Do not start t
 
 ### Phase 4: Feedback and reporting
 
-- [ ] Hub: map alarms to plain-language cause and steps (content in the strings file)
-- [ ] Family app: alert screen with picture, steps, and vibration; daily progress toward goal
+- [x] Hub: map alarms to plain-language cause and steps (content in the strings file)
+- [x] Family app: alert screen with picture, steps, and vibration; daily progress toward goal
 - [x] Sim: scripted scenarios with a time-speed factor; fault injection from the keyboard
 - [x] Sim: `generate_history.py`, 30 days for three fictional patients (on target, drifting under target, repeated night occlusions)
 - [x] Hub: daily totals, delivered versus prescribed, exception rules (under target for 3 days, more than N alarms per night, pump offline)
-- [ ] Clinician portal: patient list with exceptions first; patient detail with a delivered versus prescribed chart and alarm timeline
-- [ ] Clinician portal: weekly summary (rule-based text)
-- [ ] "Simulated data" label wherever generated history is shown (S8)
+- [x] Clinician portal: patient list with exceptions first; patient detail with a delivered versus prescribed chart and alarm timeline
+- [x] Clinician portal: weekly summary (rule-based text)
+- [x] "Simulated data" label wherever generated history is shown (S8)
 
 **Check:** press the occlusion button; within a few seconds the family app shows what happened and what to do, and the portal flags the patient. The dashboard shows the three fictional patients sorted by who needs attention.
 
+Rehearsed on the simulator, 2026-10-03 (`--scenario occlusion`): the SSE `alert` reached the hub stream and the dashboard proxy 49 ms after the pump's `alarm_raised`; the portal `alarm_active` flag appeared after 1.2 s and cleared 1.2 s after `alarm_cleared` (status every 2 s, so always under 3 s); the dashboard lists the three patients. Still to do by a person: the same on a phone with the ESP32.
+
 ### Phase 5: Accessibility and personalization
 
-- [ ] Strings file with English plus one more language; language switch
-- [ ] Night mode; `prefers-reduced-motion` respected
-- [ ] Spoken status with speech synthesis; optional voice confirm with a button fallback
+- [x] Strings file with English plus one more language; language switch (Spanish; needs a native-speaker check)
+- [x] Night mode; `prefers-reduced-motion` respected
+- [x] Spoken status with speech synthesis; optional voice confirm with a button fallback (voice confirm hardened 2026-10-03: exact yes/no only, version pinned)
 - [ ] Contrast, focus order, labels, and screen reader pass on every family screen
-- [ ] Feed profiles (for example overnight continuous, daytime bolus) that pre-fill a proposal
+- [x] Feed profiles (for example overnight continuous, daytime bolus) that pre-fill a proposal
 - [ ] Caregiver roles (parent, school nurse) recorded in the audit trail; alert preferences per caregiver
 
 **Check:** complete the confirm flow using only a screen reader, and again in the second language in night mode.
@@ -165,11 +167,27 @@ Each phase ends with an acceptance check you can show to someone. Do not start t
 - [ ] Run the whole demo with the internet off
 - [ ] Fallback 1: simulator in place of the ESP32. Fallback 2: a screen recording
 - [ ] Fixed IP for the hub laptop; phone and laptop pre-joined to the demo network
-- [ ] Reset script that returns the system to the starting state
+- [x] Reset script that returns the system to the starting state (`make reset-demo`, `make docker-reset`)
 - [ ] Slides: problem, what exists today, our loop, safety design, cost argument, limits of the prototype, next steps
 - [ ] Freeze code one hour before judging
 
 **Check:** two clean run-throughs in a row, one on hardware and one on the fallback.
+
+### Open review findings (owner, severity)
+
+Collected from the safety reviews so nothing is lost between chat threads. Tick when fixed.
+
+- [ ] C, medium (S5 display): `web/shared/data.js` `rank()` ties active, rejected and superseded with `>=`, so an older REST copy can show two "Active on pump" chips. Rank superseded above active and use `>`.
+- [ ] C, medium: audit view shows raw codes (`applied_by_pump`, `superseded_by_N`, `alarm_raised`, ...) and alert ids in the Version column (`web/clinician/audit.js`).
+- [ ] C, medium (web.md 18 px): family texts at 14 to 16 px: status and alarm lines, last-update time, Now/New tags, hints, sim label, footer.
+- [ ] C, low: a repeated identical alarm may not be re-announced to screen readers (`web/family/alert.js`).
+- [ ] C, low: the prototype footer is filled by JavaScript only; put the text in the HTML.
+- [ ] C, low: first rail link always `aria-current="page"`; one alarm can cue twice when its key gains `raised_at`.
+- [ ] C, high until reviewed: the React dashboard (`web/dashboard/`) safety and accessibility review (running 2026-10-03); fix what it finds.
+- [ ] B, low: a status that arrives after `alarm_cleared` can reopen the alert and count twice for `night_alarms`.
+- [ ] A, medium: measure stack headroom (`uxTaskGetStackHighWaterMark`) with a 2 KB prescription (S6 if it overflows).
+- [ ] A, low: reject duplicate JSON keys and add a shared case; `prescription_queued` while idle when NVS write fails (document or drop); `network_bench.py` replays a retained prescription (use retain off); bench tools must never target the demo hub database.
+- [ ] D: test the Docker stack (`compose.yaml`) end to end, including phones over the LAN.
 
 ## 6. Risks
 
