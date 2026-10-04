@@ -6,7 +6,7 @@ import { useLocale } from "@/lib/locale";
 import { usePump, useResource, type Patient } from "@/lib/pump";
 import { motionTokens, springs } from "@/lib/motion";
 import { WardMap } from "./ward-map";
-import { PatientDetails } from "./patient-details";
+import { PatientDetailsPane } from "./patient-details";
 
 type Section = "global" | "ward_map" | "patients_nav" | "alerts_nav";
 export function Dashboard({ view }: { view: "family" | "clinician" }) {
@@ -14,7 +14,7 @@ export function Dashboard({ view }: { view: "family" | "clinician" }) {
   const reduced = useReducedMotion();
   const [section, setSection] = useState<Section>("global");
   const [pumpId, setPumpId] = useState("pump-001");
-  const [open, setOpen] = useState(true);
+  const [open, setOpen] = useState(false);
   const [panelWidth, setPanelWidth] = useState(380);
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
@@ -101,11 +101,7 @@ export function Dashboard({ view }: { view: "family" | "clinician" }) {
             </AnimatePresence>
             {mapView && roster.error && <p role="status" className="shrink-0 px-6 py-2 text-xs text-warm">{t("roster_unavailable")}</p>}
           </section>
-          <AnimatePresence initial={false}>
-            {open && <motion.aside key="details" layoutId={reduced ? undefined : "patient-detail-pane"} className="details-pane flex min-h-0 min-w-0 flex-col overflow-hidden border-l border-line" aria-label={t("patient_details")} initial={{ opacity: 0, x: reduced ? 0 : motionTokens.distance.md }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: reduced ? 0 : motionTokens.distance.md }} transition={{ ...springs.snappy, duration: reduced ? 0 : undefined }}>
-              <PatientDetails key={pumpId} pump={pump} patient={selected} defaultTab={view === "clinician" ? "orders" : "monitor"} close={close} selectPump={choose} />
-            </motion.aside>}
-          </AnimatePresence>
+          <PatientDetailsPane active={open} pump={pump} patient={selected} defaultTab={view === "clinician" ? "orders" : "monitor"} close={close} selectPump={choose} telemetryEnabled={demoVitals} />
         </motion.main>
         <footer className="flex items-center justify-between gap-2 border-t border-line px-4 text-[9px] text-muted"><p className="truncate">{t("prototype_footer")} · {t("simulated_data")}</p><span className="shrink-0 font-mono">SMART PUMP / WEB</span></footer>
       </div>

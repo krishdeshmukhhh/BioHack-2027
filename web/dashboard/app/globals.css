@@ -63,8 +63,11 @@ thead { color: var(--muted); }
 .split-grid[data-open="false"] { grid-template-columns: minmax(0, 1fr); }
 .split-grid[data-open="false"] .details-pane { position: absolute; inset: 0 0 0 auto; width: 380px; }
 .details-pane { background: var(--details); }
+.patient-header { background: var(--details); }
+.local-scroll.patient-scroll { scrollbar-width: none; }
+.local-scroll.patient-scroll::-webkit-scrollbar { display: none; }
 .ward-stage { background: radial-gradient(ellipse at 45% 42%, var(--map-glow) 0%, var(--map-base) 72%); }
-.floor-plan { inset: 48px 32px 200px; }
+.floor-plan { inset: 48px 32px 64px; }
 .bed-marker { width: 110px; padding: 12px 8px; }
 .bed-marker { border: 1px solid var(--map-wall); background: var(--map-room); color: var(--muted); }
 .bed-marker[data-state="selected"] { border-color: var(--accent); background: var(--tint); color: var(--accent); }
@@ -130,7 +133,11 @@ thead { color: var(--muted); }
   .ward-metrics > div { padding: 10px 8px; }
   .ward-metrics p:first-child { font-size: 9px; }
   .ward-metrics p:last-child { font-size: 20px; }
-  .floor-plan { inset: 44px 8px 138px; }
+  .floor-plan { inset: 44px 8px 64px; }
+  .patient-telemetry { padding-inline: 14px; }
+  .patient-telemetry > div { gap: 8px; }
+  .semi-gauge h3 { font-size: 9px; }
+  .semi-gauge h3 svg { width: 11px; }
   .bed-marker { width: 65px; padding: 6px 3px; }
   .bed-marker > svg { width: 27px; height: 27px; }
   .bed-marker span { font-size: 8px; }
@@ -151,7 +158,15 @@ thead { color: var(--muted); }
   .rail-button { min-height: 52px; gap: 3px; padding-block: 8px; }
   .pane-heading { padding-top: 12px; padding-bottom: 10px; }
   .ward-metrics > div { padding-block: 6px; }
-  .floor-plan { top: 35px; bottom: 114px; }
+  .floor-plan { top: 35px; bottom: 54px; }
+  .patient-header { padding-block: 8px; }
+  .patient-header .kicker { display: none; }
+  .patient-header h2 { font-size: 14px; }
+  .patient-header [data-patient-status] { margin-top: 4px; }
+  .patient-telemetry { padding-block: 6px; }
+  .patient-telemetry .semi-chart { height: 74px; }
+  .semi-gauge { padding-top: 5px; }
+  .gauge-value .text-\[30px\] { font-size: 22px; }
   .bed-marker { padding-block: 4px; }
   .bed-marker > svg { height: 25px; }
   .telemetry-overlay { bottom: 55px; }
@@ -161,8 +176,20 @@ thead { color: var(--muted); }
   .vital-widget > div:last-child svg { display: none; }
 }
 @media (max-height: 600px) and (min-width: 501px) {
+  .patient-header { padding-block: 6px; }
+  .patient-header > div { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 12px; flex: 1; align-items: center; }
+  .patient-header h2 { grid-column: 1; grid-row: 1; }
+  .patient-header > div > p:not(.kicker) { grid-column: 1; grid-row: 2; }
+  .patient-header [data-patient-status] { grid-column: 2; grid-row: 1 / span 2; margin-top: 0; }
+  .patient-telemetry { padding-block: 4px; }
+  .patient-telemetry .semi-chart { height: 52px; }
+  .patient-telemetry .semi-gauge { padding-top: 3px; padding-bottom: 0; }
+  .patient-telemetry .gauge-value { bottom: 6px; }
+  .patient-telemetry .gauge-value .text-\[30px\] { font-size: 16px; }
+  .patient-telemetry .gauge-value .text-\[9px\] { font-size: 8px; line-height: 1; }
+  .details-pane > .tab-bar button { min-height: 36px; padding-block: 8px; }
   .map-camera-tools { top: 4px; right: 244px; }
-  .floor-plan { inset: 30px 240px 56px 16px; }
+  .floor-plan { inset: 35px 16px 56px; }
   .bed-marker { width: 72px; padding: 4px; }
   .bed-marker span { font-size: 8px; }
   .station-label { font-size: 8px; padding: 4px; }

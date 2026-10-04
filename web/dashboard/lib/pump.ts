@@ -6,7 +6,7 @@ import { api, createPumpStore } from "../../shared/data.js";
 export { api };
 export type Prescription = {
   version: number; state: string; mode: string; rate_ml_hr: number; volume_ml: number;
-  note?: string; reject_reason?: string; confirmed_by?: string; confirmed_role?: string;
+  note?: string; reject_reason?: string; confirmed_by?: string; confirmed_role?: string; proposed_by?: string;
   proposed_at?: string; resolved_at?: string;
 };
 export type Alert = { alarm: string; active: boolean; raised_at: string; cleared_at?: string; simulated?: boolean };

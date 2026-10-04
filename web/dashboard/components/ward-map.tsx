@@ -7,7 +7,6 @@ import type { Patient, Pump } from "@/lib/pump";
 import { motionTokens } from "@/lib/motion";
 import { useMapCamera } from "@/lib/use-map-camera";
 import { MIN_ZOOM, MAX_ZOOM } from "@/lib/map-camera";
-import { TelemetryOverlay } from "./telemetry";
 
 const slots = [{ x: .21, y: .28 }, { x: .5, y: .28 }, { x: .79, y: .28 }, { x: .21, y: .73 }, { x: .5, y: .73 }, { x: .79, y: .73 }];
 export function WardMap({ patients, selected, choose, pump, demoVitals, setDemoVitals }: {
@@ -76,7 +75,6 @@ export function WardMap({ patients, selected, choose, pump, demoVitals, setDemoV
       <button className="small-icon" onClick={() => camera.zoomBy(.8)} disabled={camera.zoom <= MIN_ZOOM} aria-label={t("zoom_out")}><Minus size={14} /></button><output className="w-10 text-center text-[10px] text-muted" aria-label={t("map_zoom")}>{Math.round(camera.zoom * 100)}%</output><button className="small-icon" onClick={() => camera.zoomBy(1.25)} disabled={camera.zoom >= MAX_ZOOM} aria-label={t("zoom_in")}><Plus size={14} /></button><button className="small-icon" onClick={camera.reset} aria-label={t("reset_map")}><Scan size={14} /></button>
     </div>
     {!patients.length && <p className="pointer-events-none absolute top-1/2 right-5 left-5 text-center text-sm text-muted">{t("select_patient")}</p>}
-    <TelemetryOverlay key={selected} patient={patient} pump={pump} enabled={demoVitals} />
     <div className="map-footer absolute right-5 bottom-3 left-5 flex items-center justify-between gap-2 border-t border-line pt-3"><button className="flex items-center gap-2 text-[10px] text-muted" aria-pressed={demoVitals} onClick={() => setDemoVitals(!demoVitals)}><Radio size={13} className={demoVitals ? "text-accent" : "text-muted"} aria-hidden="true" />{t("demo_vitals")}<span className={`h-1.5 w-1.5 rounded-full ${demoVitals ? "bg-accent" : "bg-muted"}`} /></button><div className="flex items-center gap-2"><button className="small-icon" aria-label={t("previous")} disabled={current === 0} onClick={() => turnPage(current - 1)}><ChevronLeft size={13} /></button><span className="text-[10px] text-muted">{current + 1} / {pages}</span><button className="small-icon" aria-label={t("next")} disabled={current + 1 === pages} onClick={() => turnPage(current + 1)}><ChevronRight size={13} /></button></div></div>
   </div>;
 }
