@@ -1,0 +1,66 @@
+{
+  "timestamp_utc": "2026-10-03T23:54:29.221395+00:00",
+  "port": "/dev/cu.usbserial-120",
+  "prototype": true,
+  "simulated": true,
+  "device_mode": "hub",
+  "probe_only": true,
+  "checks": {
+    "mode_gate": {
+      "result": "pass",
+      "detail": "Read-only probe observed hub build with simulated=true"
+    },
+    "initial_idle": {
+      "result": "not_run"
+    },
+    "demo_applied_idle": {
+      "result": "not_run"
+    },
+    "start_progression": {
+      "result": "not_run"
+    },
+    "pause_freezes_volume": {
+      "result": "not_run"
+    },
+    "occlusion_stops_delivery": {
+      "result": "not_run"
+    },
+    "clear_remains_paused": {
+      "result": "not_run"
+    },
+    "resume_progression": {
+      "result": "not_run"
+    },
+    "stop_returns_idle": {
+      "result": "not_run"
+    },
+    "reboot_restores_prescription": {
+      "result": "not_run"
+    },
+    "final_idle_restored": {
+      "result": "pass",
+      "detail": "Normal firmware restored UI-confirmed v5 at 90 mL/hr, 5 mL, idle without alarm or pending update."
+    }
+  },
+  "network_checks": {
+    "result": "not_run",
+    "detail": "No MQTT, hub or WiFi-loss checks"
+  },
+  "last_status": {
+    "pump_id": "pump-001",
+    "uptime_ms": 2000,
+    "state": "idle",
+    "rate_ml_hr": 90,
+    "delivered_ml": 0,
+    "target_ml": 5,
+    "alarm": null,
+    "prescription_version": 5,
+    "pending_version": null,
+    "last_rejected_version": 6,
+    "last_reject_reason": "rate_out_of_range",
+    "simulated": true
+  },
+  "result": "pass",
+  "firmware_environment": "esp32dev",
+  "startup_reset": "Operator EN-only RTS reset after opening serial; IO0 remained high."
+}

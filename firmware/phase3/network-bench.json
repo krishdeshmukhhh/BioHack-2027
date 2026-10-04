@@ -1,0 +1,114 @@
+{
+  "timestamp_utc": "2026-10-03T23:36:25.399585+00:00",
+  "prototype": true,
+  "simulated": true,
+  "device_mode": "hub",
+  "port": "/dev/cu.usbserial-120",
+  "checks": {
+    "mode_gate": {
+      "result": "pass",
+      "detail": "Hub marker and simulated=true serial status observed"
+    },
+    "initial_idle": {
+      "result": "pass",
+      "detail": "Existing idle pump left untouched before integration setup"
+    },
+    "hub_live_status": {
+      "result": "pass",
+      "detail": "Real hub reports fresh online simulated status matching the USB device"
+    },
+    "proposal_confirmation_gate": {
+      "result": "pass",
+      "detail": "90 mL/hr proposal stayed proposed and did not change pump before confirmation"
+    },
+    "confirmed_long_note_applies": {
+      "result": "pass",
+      "detail": "Confirmed 90 mL/hr, 5 mL and 200-character note traversed MQTT; pump applied idle"
+    },
+    "retained_replay_ignored": {
+      "result": "pass",
+      "detail": "Exact caregiver-confirmed MQTT payload replayed retained; pump ignored duplicate"
+    },
+    "device_limit_rejection": {
+      "result": "pass",
+      "detail": "Hub sent caregiver-confirmed 500; ESP32 rejected and repeated reason in status"
+    },
+    "start_progression": {
+      "result": "pass",
+      "detail": "Real ESP32 advanced digital delivery at accepted 90 mL/hr"
+    },
+    "busy_prescription_queued": {
+      "result": "pass",
+      "detail": "New confirmed 75 mL/hr version remained pending during running at 90 mL/hr"
+    },
+    "pause_alarm_clear_resume": {
+      "result": "pass",
+      "detail": "Pause froze; occlusion stopped; clear remained paused; separate resume advanced"
+    },
+    "queued_applies_on_stop": {
+      "result": "pass",
+      "detail": "Stop returned idle and applied queued version; hub now reports it active"
+    },
+    "idle_reboot_restores_nvs": {
+      "result": "pass",
+      "detail": "Fresh boot and lower uptime; same queued version/rate/target restored idle"
+    },
+    "reboot_availability": {
+      "result": "pass",
+      "detail": "Broker observed offline followed by online across controlled idle restart"
+    }
+  },
+  "wifi_loss": {
+    "result": "not_run",
+    "detail": "No WiFi or broker shutdown performed"
+  },
+  "last_status": {
+    "pump_id": "pump-001",
+    "uptime_ms": 2000,
+    "state": "idle",
+    "rate_ml_hr": 75,
+    "delivered_ml": 0,
+    "target_ml": 5,
+    "alarm": null,
+    "prescription_version": 4,
+    "pending_version": null,
+    "last_rejected_version": null,
+    "last_reject_reason": null,
+    "simulated": true
+  },
+  "hub_status_before": {
+    "pump_id": "pump-001",
+    "state": "idle",
+    "rate_ml_hr": 60,
+    "delivered_ml": 0,
+    "target_ml": 5,
+    "alarm": null,
+    "prescription_version": 1,
+    "pending_version": null,
+    "last_rejected_version": null,
+    "last_reject_reason": null,
+    "simulated": true,
+    "online": true,
+    "received_at": "2026-10-03T23:36:28Z"
+  },
+  "mqtt_status_before": {
+    "pump_id": "pump-001",
+    "uptime_ms": 2000,
+    "state": "idle",
+    "rate_ml_hr": 60,
+    "delivered_ml": 0,
+    "target_ml": 5,
+    "alarm": null,
+    "prescription_version": 1,
+    "pending_version": null,
+    "last_rejected_version": null,
+    "last_reject_reason": null,
+    "simulated": true
+  },
+  "valid_version": 2,
+  "rejected_version": 3,
+  "queued_version": 4,
+  "result": "pass",
+  "firmware_environment": "esp32dev",
+  "startup_reset": "Operator EN-only RTS reset after opening serial; IO0 remained high."
+}

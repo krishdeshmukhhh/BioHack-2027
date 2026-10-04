@@ -1,0 +1,72 @@
+{
+  "timestamp_utc": "2026-10-03T22:53:43.017346+00:00",
+  "port": "/dev/cu.usbserial-120",
+  "prototype": true,
+  "simulated": true,
+  "device_mode": "offline",
+  "probe_only": false,
+  "checks": {
+    "mode_gate": {
+      "result": "pass",
+      "detail": "Offline marker and simulated=true telemetry observed; control permitted"
+    },
+    "initial_idle": {
+      "result": "pass",
+      "detail": "Idle, no alarm, no pending prescription"
+    },
+    "demo_applied_idle": {
+      "result": "pass",
+      "detail": "Fictional demo v1 applied idle at 60 mL/hr, 5 mL"
+    },
+    "start_progression": {
+      "result": "pass",
+      "detail": "Start reached running and digital delivered volume advanced"
+    },
+    "pause_freezes_volume": {
+      "result": "pass",
+      "detail": "Pause held delivered volume constant for at least 4 device seconds"
+    },
+    "occlusion_stops_delivery": {
+      "result": "pass",
+      "detail": "Occlusion alarm held rate zero and delivered volume constant"
+    },
+    "clear_remains_paused": {
+      "result": "pass",
+      "detail": "Clear removed alarm and remained paused without advancing volume"
+    },
+    "resume_progression": {
+      "result": "pass",
+      "detail": "Separate resume restored running and digital volume advanced"
+    },
+    "stop_returns_idle": {
+      "result": "pass",
+      "detail": "Stop returned controller to idle"
+    },
+    "reboot_restores_prescription": {
+      "result": "pass",
+      "detail": "New boot; uptime decreased; NVS restored same version/rate/target idle"
+    }
+  },
+  "network_checks": {
+    "result": "not_run",
+    "detail": "No MQTT, hub or WiFi-loss checks"
+  },
+  "last_status": {
+    "pump_id": "pump-001",
+    "uptime_ms": 2000,
+    "state": "idle",
+    "rate_ml_hr": 60,
+    "delivered_ml": 0,
+    "target_ml": 5,
+    "alarm": null,
+    "prescription_version": 1,
+    "pending_version": null,
+    "last_rejected_version": null,
+    "last_reject_reason": null,
+    "simulated": true
+  },
+  "result": "pass",
+  "firmware_environment": "esp32dev_offline",
+  "startup_reset": "Operator script used ESP32 EN-only RTS reset after opening serial; IO0 remained high.",
+  "storage_namespace": "pump-bench"
+}

@@ -8,12 +8,32 @@
 #include <freertos/FreeRTOS.h>
 #include <freertos/queue.h>
 #include <freertos/task.h>
+#ifdef BENCH_AP
+#include <esp_netif_sta_list.h>
+#include <esp_wifi.h>
+#endif
 
 #include "config.h"
 #if __has_include("secrets.h")
 #include "secrets.h"
 #else
 #include "secrets.example.h"
+#endif
+
+#if defined(BENCH_AP) && defined(LOCAL_DEMO)
+#error "BENCH_AP is hub-connected and must not enable LOCAL_DEMO"
+#endif
+#if defined(NETWORK_BENCH) && (defined(LOCAL_DEMO) || defined(BENCH_AP))
+#error "NETWORK_BENCH requires hub-connected station mode"
+#endif
+#ifdef BENCH_AP
+#if !defined(BENCH_AP_SSID) || !defined(BENCH_AP_PASSWORD)
+#error "BENCH_AP requires a private SSID and WPA2 password in secrets.h"
+#endif
+static_assert(sizeof(BENCH_AP_SSID) > 1 && sizeof(BENCH_AP_SSID) <= 33,
+              "BENCH_AP SSID must contain 1 to 32 bytes");
+static_assert(sizeof(BENCH_AP_PASSWORD) >= 9 && sizeof(BENCH_AP_PASSWORD) <= 64,
+              "BENCH_AP requires a WPA2 password of 8 to 63 bytes");
 #endif
 
 namespace {
@@ -38,8 +58,13 @@ std::atomic<bool> started{false};
 std::atomic<bool> isConnected{false};
 std::atomic<bool> shutdownRequested{false};
 std::atomic<bool> restartRequested{false};
+#ifdef NETWORK_BENCH
+std::atomic<bool> benchWifiEnabled{true};
+#endif
 // Used only on the network task, including its synchronous MQTT callback.
+#ifndef LOCAL_DEMO
 bool replayRequired = false;
+#endif
 
 bool copyJson(Message& message, const char* json) {
   if (json == nullptr) return false;
@@ -50,6 +75,7 @@ bool copyJson(Message& message, const char* json) {
   return true;
 }
 
+#ifndef LOCAL_DEMO
 void queueMalformed() {
   Message message{};
   message.length = 1;
@@ -74,15 +100,58 @@ void onPrescription(MQTTClient*, char topic[], char bytes[], int length) {
     Serial.println("MQTT prescription queue full; retained replay scheduled");
   }
 }
+#endif
+
+#ifdef BENCH_AP
+bool startBenchAccessPoint() {
+  // Only the broker Mac joins this private network. Limiting it to one peer
+  // makes DHCP station discovery unambiguous; never assume a DHCP address.
+  const IPAddress apAddress(192, 168, 4, 1);
+  if (!WiFi.mode(WIFI_AP) ||
+      !WiFi.softAPConfig(apAddress, apAddress, IPAddress(255, 255, 255, 0)) ||
+      !WiFi.softAP(BENCH_AP_SSID, BENCH_AP_PASSWORD, 1, 0, 1)) {
+    WiFi.softAPdisconnect(true);
+    return false;
+  }
+  Serial.println("ESP32 private test network ready");
+  return true;
+}
+
+bool benchBrokerAddress(IPAddress& address) {
+  wifi_sta_list_t stations{};
+  esp_netif_sta_list_t leases{};
+  if (esp_wifi_ap_get_sta_list(&stations) != ESP_OK || stations.num != 1 ||
+      esp_netif_get_sta_list(&stations, &leases) != ESP_OK || leases.num != 1 ||
+      leases.sta[0].ip.addr == 0) return false;
+  address = IPAddress(leases.sta[0].ip.addr);
+  return true;
+}
+#endif
 
 void runNetwork() {
+#ifdef LOCAL_DEMO
+  // Offline bench builds must never attach locally made versions to a hub.
+  // Keep the worker for serial diagnostics and reboot, with no WiFi/MQTT calls.
+  Message discarded{};
+  while (!shutdownRequested.load()) {
+    Diagnostic diagnostic{};
+    if (xQueueReceive(diagnostics, &diagnostic, 0) == pdTRUE) Serial.println(diagnostic.line);
+    xQueueReceive(events, &discarded, 0);
+    xQueueReceive(status, &discarded, 0);
+    vTaskDelay(pdMS_TO_TICKS(10));
+  }
+#else
   WiFiClient socket;
   // ESP32 WiFiClient's socket timeout uses seconds; MQTT's uses milliseconds.
   socket.setTimeout(1);
   // R2: allocate packet buffers before any connection. arduino-mqtt
   // configures buffers in its constructor instead of setBufferSize().
   MQTTClient mqtt(MQTT_BUFFER_SIZE);
+#ifdef BENCH_AP
+  mqtt.begin(socket);
+#else
   mqtt.begin(MQTT_HOST, MQTT_PORT, socket);
+#endif
   mqtt.onMessageAdvanced(onPrescription);
   mqtt.setOptions(15, true, NETWORK_COMMAND_TIMEOUT_MS);
   mqtt.setWill(kAvailabilityTopic, "offline", true, 1);
@@ -91,11 +160,23 @@ void runNetwork() {
   mqtt.dropOverflow(true);
   uint32_t droppedCount = 0;
 
+#ifdef BENCH_AP
+  bool apReady = startBenchAccessPoint();
+  IPAddress brokerAddress;
+  bool peerReady = false;
+  constexpr unsigned long kPeerCheckIntervalMs = 250;
+  unsigned long lastPeerCheck = millis() - kPeerCheckIntervalMs;
+#else
   WiFi.mode(WIFI_STA);
   WiFi.setAutoReconnect(true);
   WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+#endif
   unsigned long lastWifiAttempt = millis();
   unsigned long lastBrokerAttempt = millis() - NETWORK_RETRY_INTERVAL_MS;
+#ifdef NETWORK_BENCH
+  bool benchWifiActive = true;
+  bool benchDisconnectReported = false;
+#endif
   bool shutdownStarted = false;
   unsigned long shutdownAt = 0;
   Message message{};
@@ -130,6 +211,65 @@ void runNetwork() {
       continue;
     }
 
+#ifdef NETWORK_BENCH
+    const bool wifiEnabled = benchWifiEnabled.load();
+    if (wifiEnabled != benchWifiActive) {
+      benchWifiActive = wifiEnabled;
+      if (!wifiEnabled) {
+        // A real station disconnect tests S6 without altering the Mac network.
+        // Close TCP without MQTT DISCONNECT so the broker publishes the LWT.
+        WiFi.setAutoReconnect(false);
+        socket.stop();
+        isConnected.store(false);
+        WiFi.disconnect(false, false);
+        benchDisconnectReported = false;
+      } else {
+        WiFi.setAutoReconnect(true);
+        WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+        lastWifiAttempt = now;
+        lastBrokerAttempt = now - NETWORK_RETRY_INTERVAL_MS;
+        Serial.println("Bench WiFi reconnect enabled");
+      }
+    }
+    if (!wifiEnabled) {
+      if (!benchDisconnectReported && WiFi.status() != WL_CONNECTED) {
+        Serial.println("Bench WiFi disconnected");
+        benchDisconnectReported = true;
+      }
+      // Diagnostics and shutdown still run above. Keep queued MQTT events
+      // for reconnect and let the one-item status mailbox retain the latest.
+      vTaskDelay(pdMS_TO_TICKS(10));
+      continue;
+    }
+#endif
+
+#ifdef BENCH_AP
+    if (!apReady && now - lastWifiAttempt >= NETWORK_RETRY_INTERVAL_MS) {
+      lastWifiAttempt = now;
+      apReady = startBenchAccessPoint();
+    }
+    if (now - lastPeerCheck >= kPeerCheckIntervalMs) {
+      lastPeerCheck = now;
+      IPAddress discovered;
+      const bool found = apReady && benchBrokerAddress(discovered);
+      if (!found || !peerReady || discovered != brokerAddress) {
+        // Closing TCP without MQTT DISCONNECT lets the broker send the Last
+        // Will on peer loss. This never calls or changes the feed controller.
+        socket.stop();
+        isConnected.store(false);
+        if (found) {
+          brokerAddress = discovered;
+          mqtt.setHost(brokerAddress, MQTT_PORT);
+          lastBrokerAttempt = now - NETWORK_RETRY_INTERVAL_MS;
+        }
+      }
+      peerReady = found;
+    }
+    if (!peerReady) {
+      vTaskDelay(pdMS_TO_TICKS(10));
+      continue;
+    }
+#else
     if (WiFi.status() != WL_CONNECTED) {
       isConnected.store(false);
       socket.stop();
@@ -140,6 +280,7 @@ void runNetwork() {
       vTaskDelay(pdMS_TO_TICKS(10));
       continue;
     }
+#endif
 
     if (!mqtt.connected()) {
       isConnected.store(false);
@@ -148,7 +289,12 @@ void runNetwork() {
         replayRequired = false;
         // These operations can wait for TCP/MQTT acknowledgements, but run
         // exclusively here on core 0, away from the actuator loop on core 1.
-        if (socket.connect(MQTT_HOST, MQTT_PORT, NETWORK_COMMAND_TIMEOUT_MS) &&
+#ifdef BENCH_AP
+        const bool tcpConnected = socket.connect(brokerAddress, MQTT_PORT, NETWORK_COMMAND_TIMEOUT_MS);
+#else
+        const bool tcpConnected = socket.connect(MQTT_HOST, MQTT_PORT, NETWORK_COMMAND_TIMEOUT_MS);
+#endif
+        if (tcpConnected &&
             mqtt.connect(PUMP_ID, true) && mqtt.subscribe(kPrescriptionTopic, 1) &&
             mqtt.publish(kAvailabilityTopic, "online", true, 1)) {
           isConnected.store(true);
@@ -190,7 +336,12 @@ void runNetwork() {
   }
 
   isConnected.store(false);
+#ifdef BENCH_AP
+  WiFi.softAPdisconnect(true);
+#else
   WiFi.disconnect();
+#endif
+#endif
 }
 
 void networkTask(void*) {
@@ -255,6 +406,10 @@ bool publishEvent(const char* json) {
 }
 
 bool connected() { return isConnected.load(); }
+
+#ifdef NETWORK_BENCH
+void setBenchWifiEnabled(bool enabled) { benchWifiEnabled.store(enabled); }
+#endif
 
 void requestShutdown(bool restart) {
   if (!started.load()) return;

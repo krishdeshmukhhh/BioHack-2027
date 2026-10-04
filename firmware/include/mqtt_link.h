@@ -23,6 +23,12 @@ bool publishStatus(const char* json);
 bool publishEvent(const char* json);
 bool connected();
 
+#ifdef NETWORK_BENCH
+// Station-only bench control. The caller only sets an atomic request; the
+// network worker disconnects/reconnects WiFi without touching the controller.
+void setBenchWifiEnabled(bool enabled);
+#endif
+
 // Stop the actuator before requesting a restart. Offline is published retained
 // at QoS 1 before disconnecting; failed delivery falls back to the Last Will.
 // This only queues the request; the calling task continues without waiting.

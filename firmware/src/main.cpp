@@ -76,6 +76,10 @@ void handleCommand(const std::string& command, uint32_t now) {
     accepted = false;
 #endif
   } else if (command == "start") accepted = controller.start(now);
+#ifdef NETWORK_BENCH
+  else if (command == "wifi_off") mqtt_link::setBenchWifiEnabled(false);
+  else if (command == "wifi_on") mqtt_link::setBenchWifiEnabled(true);
+#endif
   else if (command == "pause") accepted = controller.pause(now);
   else if (command == "resume") accepted = controller.resume(now);
   else if (command == "stop") accepted = controller.stop(now);
@@ -105,10 +109,24 @@ void setup() {
   Serial.setTxBufferSize(2048);
   Serial.begin(115200);
   Serial.println("Smart pump prototype: ESP32 with simulated delivery; no person connected.");
+#ifdef LOCAL_DEMO
+  Serial.println("Mode: offline bench; local demo enabled; simulated=true");
   Serial.println("For an offline test, enter demo then start (newline after each command).");
+#else
+  Serial.println("Mode: hub; local demo disabled; simulated=true");
+  Serial.println("Confirm a prescription through the hub, then enter start to simulate delivery.");
+#endif
+#ifdef NETWORK_BENCH
+  Serial.println("Network bench controls enabled; simulated=true");
+#endif
   actuator.begin();
   occlusion.begin(); bagEmpty.begin(); pauseButton.begin();
+#ifdef LOCAL_DEMO
+  // Bench-created versions must never be restored by the hub-connected build.
+  storageReady = preferences.begin("pump-bench", false);
+#else
   storageReady = preferences.begin("pump", false);
+#endif
   if (storageReady) {
     const String saved = preferences.getString("current", "");
     if (!saved.isEmpty() && !controller.restorePrescription(saved.c_str(), saved.length())) {

@@ -1,0 +1,56 @@
+{
+  "timestamp_utc": "2026-10-03T23:45:26.873997+00:00",
+  "method": "Installed headless Chrome in an isolated temporary profile; actual rendered DOM, read only",
+  "in_app_browser": "Unavailable; no configured browser backend",
+  "checks": {
+    "family_simulated_label": {
+      "result": "pass"
+    },
+    "family_connected": {
+      "result": "pass"
+    },
+    "family_active_version": {
+      "result": "pass"
+    },
+    "family_accepted_rate": {
+      "result": "pass"
+    },
+    "family_idle": {
+      "result": "pass"
+    },
+    "clinician_simulated_label": {
+      "result": "pass"
+    },
+    "clinician_connected": {
+      "result": "pass"
+    },
+    "clinician_active_version": {
+      "result": "pass"
+    },
+    "clinician_accepted_rate": {
+      "result": "pass"
+    },
+    "clinician_idle": {
+      "result": "pass"
+    },
+    "clinician_active_acknowledgement": {
+      "result": "pass"
+    },
+    "clinician_device_rejection": {
+      "result": "pass"
+    }
+  },
+  "pages": {
+    "family": {
+      "title": "Feeding pump (prototype)",
+      "url": "http://127.0.0.1:8000/",
+      "text": "Skip to main content\nFeeding pump\nSimulated data\nNight mode\nTurn on alerts\n\nTap once so this phone can vibrate, beep and speak when the pump needs you.\n\nTurn on alerts\n\nPump connected. Last update 07:42 PM\n\nPump connected. Last update 07:42 PM\nToday\n\nReady, not feeding\n\nDelivered\n0 mL of 5 mL\n\nRate now\n75 mL/hr\nActive version\nVersion 4\n\nLast update 07:42 PM\n\nRead status aloud\nSettings\nLanguage \nEnglish\nEspa\u00f1ol\nWho is using this phone? \nParent (demo)\nSchool nurse (demo)\nAlerts for Parent (demo)\nVibrate\nBeep\nSpeak alerts out loud\n\nPrototype, not for clinical use. Demo users and fictional data only. Never connect to a person."
+    },
+    "clinician": {
+      "title": "Clinician portal (prototype)",
+      "url": "http://127.0.0.1:8000/clinician/",
+      "text": "Skip to main content\nClinician portal\n\nSigned in as Dr. Demo (demo user, no real login)\n\nSimulated data\nLanguage\nEnglish\nEspa\u00f1ol\nNight mode\nPatients\n\nPatients who need attention are listed first.\n\nDemo Child Bramble\nPump pump-002\nPump offline\nOpen\nDemo Child Bramble\nDemo Child Cobalt\nPump pump-003\nPump offline\nOpen\nDemo Child Cobalt\nDemo Child Aster\nPump pump-001\nNo exceptions\nShowing now\n\nPump connected. Last update 07:42 PM\n\nPump connected. Last update 07:42 PM\nPump now Demo Child Aster \u00b7 Pump pump-001\nState\nReady, not feeding\nRate now\n75 mL/hr\nActive version\nVersion 4\nDelivered\n0 mL of 5 mL\nPropose a change\n\nThe caregiver must confirm it. The pump checks its own limits and may refuse it.\n\nFeed profiles\n\nFills in the form. Demo values only, not guidance.\n\nOvernight continuous\nDaytime bolus\n\nMode\nContinuous\nBolus\nRate \n\nMillilitres per hour\n\nFeed volume \n\nTotal for one feed, in millilitres\n\nNote \n\nOptional. Up to 200 characters. 200 left.\n\nPropose change\nPrescriptions\nVersion 4\nActive on pump\n\nContinuous, 75 mL/hr, 5 mL\n\nThe pump reported this version\n\nFictional queued bench update\n\nProposed 07:36 PM \u00b7 Confirmed by Parent (demo) \u00b7 Sent 07:36 PM \u00b7 Pump answered 07:37 PM\n\nVersion 3\nRejected: rate out of range\n\nContinuous, 500 mL/hr, 5 mL\n\nFictional out-of-range bench case\n\nProposed 07:36 PM \u00b7 Confirmed by Parent (demo) \u00b7 Sent 07:36 PM \u00b7 Pump answered 07:36 PM\n\nVersion 2\nReplaced\n\nContinuous, 90 mL/hr, 5 mL\n\nA newer version replaced this one\n\nFictional ESP32 bench prescription; xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx\n\nProposed 07:36 PM \u00b7 Confirmed by Parent (demo) \u00b7 Sent 07:36 PM\n\nVersion 3: Rejected: rate out of range\nDelivered vs prescribed\n24 h\n7 days\n30 days\n\nNo data yet.\n\nDelivered\nPrescribed\n\nWeekly summary\n\nNo history loaded yet.\n\nAlarm timeline\n07:37 PM\nTube blocked\nCleared 07:37 PM, after 1 min\nAudit trail\n\nPrototype, not for clinical use. Demo users and fictional data only. Never connect to a person."
+    }
+  },
+  "result": "pass"
+}

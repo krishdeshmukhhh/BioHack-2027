@@ -1,0 +1,38 @@
+{
+  "timestamp_utc": "2026-10-03T22:57:20.037220+00:00",
+  "firmware_environment": "esp32dev_ap",
+  "prototype": true,
+  "simulated": true,
+  "serial_commands_sent": 0,
+  "checks": {
+    "private_ap_started": {
+      "result": "pass"
+    },
+    "hub_mode_simulated": {
+      "result": "pass"
+    },
+    "idle_no_pending": {
+      "result": "pass"
+    }
+  },
+  "network_checks": {
+    "result": "not_run",
+    "detail": "Mac has not joined AP; no MQTT/hub or WiFi-loss check."
+  },
+  "device_mode": "hub",
+  "last_status": {
+    "pump_id": "pump-001",
+    "uptime_ms": 2000,
+    "state": "idle",
+    "rate_ml_hr": 60,
+    "delivered_ml": 0,
+    "target_ml": 5,
+    "alarm": null,
+    "prescription_version": 1,
+    "pending_version": null,
+    "last_rejected_version": null,
+    "last_reject_reason": null,
+    "simulated": true
+  },
+  "result": "pass"
+}
