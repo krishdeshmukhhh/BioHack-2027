@@ -1088,6 +1088,24 @@
      "last_reject_reason": null
     }
    }
+  },
+  {
+   "name": "dropped: zero-byte message (demo reset clears the retained prescription)",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "",
+   "expect": {
+    "outcome": "dropped",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
   }
  ]
 }
