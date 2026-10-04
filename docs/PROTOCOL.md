@@ -44,7 +44,7 @@ Edge cases for check 1, the same in the firmware and the sim:
 
 - A number too large to represent (for example a 400-digit integer) is malformed, never an error that stops the pump's MQTT handling.
 - A boolean is never a number. `version` must be a JSON integer: `3.0` is malformed.
-- A payload that is not valid JSON (including `NaN` or `Infinity`) has no readable version, so it is dropped with a log line.
+- A payload that is not valid JSON (including `NaN` or `Infinity`) has no readable version, so it is dropped with a log line. This includes the zero-byte message the demo reset publishes to clear the retained prescription (`topics.md`, "Demo reset").
 - The limits in checks 5 and 6 are inclusive at both ends.
 - Duplicate keys are malformed, compared after decoding escapes (`"rate_ml_\u0068r"` is the same key as `"rate_ml_hr"`). If the duplicated key is the top-level `version`, the version is unreadable, so the payload is dropped with a log line only (no event, status reject fields unchanged). Any other duplicate with a readable `version` is rejected as `malformed`.
 

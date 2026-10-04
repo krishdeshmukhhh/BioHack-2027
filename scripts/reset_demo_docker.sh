@@ -12,6 +12,16 @@ set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 PUMP_ID="${PUMP_ID:-pump-001}"
 
+# make docker-sim uses `docker compose run`, and `docker compose stop` leaves those
+# one-off containers running. A simulator left running keeps its last version, so
+# insist it is quit first (q in its terminal), as reset_demo.sh does.
+sim_filter="--filter label=com.docker.compose.project=smartpump --filter label=com.docker.compose.service=sim"
+# shellcheck disable=SC2086
+if [[ -n "$(docker ps -q $sim_filter)" ]]; then
+  echo "reset_demo_docker: a simulator is running. Quit it first (q in its terminal)." >&2
+  exit 1
+fi
+
 docker compose --profile sim stop hub sim >/dev/null
 docker compose up -d broker >/dev/null
 

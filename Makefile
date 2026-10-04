@@ -61,8 +61,15 @@ docker-logs:
 docker-down:
 	docker compose down
 
+# On Windows, make from PowerShell has no sh, and the bash on PATH there is WSL's: use Git Bash.
+ifeq ($(OS),Windows_NT)
+RESET_BASH := "$(ProgramW6432)/Git/bin/bash.exe"
+else
+RESET_BASH := bash
+endif
+
 docker-reset:
-	scripts/reset_demo_docker.sh
+	$(RESET_BASH) scripts/reset_demo_docker.sh
 
 # Firmware native tests (incl. the 55 shared prescription cases) and the digital demo
 # tests. Needs PlatformIO; not part of make test because not every laptop has it.
