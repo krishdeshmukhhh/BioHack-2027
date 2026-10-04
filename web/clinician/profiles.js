@@ -3,7 +3,7 @@
 // fill the form: the clinician still proposes, the caregiver confirms, and the
 // pump checks its own limits.
 
-import { escapeHtml, t } from "/shared/core.js";
+import { escapeHtml, ml, mlHr, simLabelHtml, t } from "/shared/core.js";
 import { api, isNotAvailable } from "/shared/data.js";
 
 const $ = (id) => document.getElementById(id);
@@ -19,12 +19,23 @@ const nameOf = (p) => (KNOWN_NAMES[p.name] ? t(KNOWN_NAMES[p.name]) : p.name);
 export function initProfiles() {
   let profiles = [];
   let message = "loading";
+  let selected = null;
+  let modified = false;
+
+  function paintStatus() {
+    $("profile-status").textContent = modified ? t("profile_modified")
+      : selected ? t("profile_applied", { name: nameOf(selected) }) : "";
+  }
 
   function paint() {
     $("profile-buttons").innerHTML = profiles.length
       ? profiles.map((p, i) =>
-        `<button type="button" class="btn btn-small" data-profile="${i}">${escapeHtml(nameOf(p))}</button>`).join("")
+        `<button type="button" class="btn btn-small profile-choice" data-profile="${i}">` +
+        `<strong>${escapeHtml(nameOf(p))}</strong><span>${escapeHtml(t("profile_values", {
+          mode: t(`mode_${p.mode}`), rate: mlHr(p.rate_ml_hr), volume: ml(p.volume_ml),
+        }))}</span>${p.simulated ? simLabelHtml() : ""}</button>`).join("")
       : `<p class="empty">${escapeHtml(t(message))}</p>`;
+    paintStatus();
   }
 
   $("profile-buttons").addEventListener("click", (ev) => {
@@ -34,8 +45,19 @@ export function initProfiles() {
     $("propose-form").elements.mode.value = p.mode;
     $("rate").value = String(p.rate_ml_hr);
     $("volume").value = String(p.volume_ml);
-    $("profile-status").textContent = t("profile_applied", { name: nameOf(p) });
+    selected = p;
+    modified = false;
+    paintStatus();
     $("rate").focus();
+  });
+
+  $("propose-form").addEventListener("input", () => {
+    if (selected) { modified = true; paintStatus(); }
+  });
+  $("propose-form").addEventListener("reset", () => {
+    selected = null;
+    modified = false;
+    paintStatus();
   });
 
   paint();

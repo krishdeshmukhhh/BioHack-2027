@@ -10,7 +10,9 @@ import sys
 import threading
 import time
 import urllib.error
+import urllib.parse
 import urllib.request
+from html.parser import HTMLParser
 from pathlib import Path
 
 import pytest
@@ -90,6 +92,31 @@ def test_status_is_pump_status_plus_hub_fields(base):
     pump_part = {k: v for k, v in s.items() if k not in HUB_ADDED}
     pump_part["uptime_ms"] = 0  # the hub drops uptime; the schema requires it
     Draft202012Validator(STATUS_SCHEMA).validate(pump_part)
+
+
+@pytest.mark.parametrize("page_path", ["/", "/family/"])
+def test_family_entry_loads_its_styles_and_script(base, page_path):
+    class Assets(HTMLParser):
+        def __init__(self):
+            super().__init__()
+            self.urls = []
+
+        def handle_starttag(self, tag, attrs):
+            attrs = dict(attrs)
+            if tag == "link" and attrs.get("rel") == "stylesheet":
+                self.urls.append(attrs["href"])
+            elif tag == "script" and "src" in attrs:
+                self.urls.append(attrs["src"])
+
+    with urllib.request.urlopen(base + page_path, timeout=5) as response:
+        parser = Assets()
+        parser.feed(response.read().decode("utf-8"))
+    assert len(parser.urls) == 3
+    for url in parser.urls:
+        absolute = urllib.parse.urljoin(base + page_path, url)
+        with urllib.request.urlopen(absolute, timeout=5) as response:
+            assert response.status == 200
+            assert "json" not in response.headers["Content-Type"]
 
 
 def test_unknown_pump_is_404(base):

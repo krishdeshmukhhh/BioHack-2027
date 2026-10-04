@@ -8,12 +8,14 @@ import { saveCaregiver, savedCaregiver } from "/shared/ui.js";
 const $ = (id) => document.getElementById(id);
 const PREFS = ["vibrate", "sound", "speak"];
 const listeners = new Set();
+const sessionPrefs = new Map();
 
 export function caregiver() {
   return savedCaregiver();
 }
 
 export function prefsFor(id = caregiver()) {
+  if (sessionPrefs.has(id)) return { ...sessionPrefs.get(id) };
   const prefs = { vibrate: true, sound: true, speak: true };
   try {
     Object.assign(prefs, JSON.parse(localStorage.getItem(`sp-prefs-${id}`) || "{}"));
@@ -24,6 +26,7 @@ export function prefsFor(id = caregiver()) {
 }
 
 function savePrefs(id, prefs) {
+  sessionPrefs.set(id, { ...prefs });
   try {
     localStorage.setItem(`sp-prefs-${id}`, JSON.stringify(prefs));
   } catch {

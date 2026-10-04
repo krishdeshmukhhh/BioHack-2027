@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title data-i18n="family_page_title">Feeding pump (prototype)</title>
   <link rel="stylesheet" href="/shared/tokens.css">
-  <link rel="stylesheet" href="family.css">
+  <link rel="stylesheet" href="/family/family.css">
   <script>
     try { if (localStorage.getItem("sp-theme") === "night") document.documentElement.dataset.theme = "night"; } catch (e) {}
   </script>
@@ -14,24 +14,23 @@
   <a class="skip-link" href="#main" data-i18n="skip_to_content">Skip to main content</a>
 
   <header class="topbar">
-    <h1 data-i18n="family_title">Feeding pump</h1>
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 44 44" fill="none" aria-hidden="true"><rect width="44" height="44" rx="14" fill="currentColor" fill-opacity=".12"/><path d="M22 8s-10 11-10 18a10 10 0 0 0 20 0C32 19 22 8 22 8Z" stroke="currentColor" stroke-width="2"/><path d="M17 27h10M22 22v10" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      <div><p class="brand-label" data-i18n="brand_name">Smart Pump</p><h1 data-i18n="family_title">Feeding pump</h1></div>
+    </div>
     <div class="topbar-right">
       <span id="sim-slot"></span>
       <button id="night-toggle" class="btn btn-small" type="button" aria-pressed="false"></button>
     </div>
   </header>
 
+<div class="app-shell">
+  <aside class="app-sidebar"><div class="rail-inner"><p class="rail-caption" data-i18n="family_space"></p><nav class="rail-nav" data-i18n-attr="aria-label:page_sections"><a href="#today" aria-current="page"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m3 10 9-7 9 7v10H3z"/><path d="M9 20v-7h6v7"/></svg><span data-i18n="family_today"></span></a><a href="#settings"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 6h16M4 12h16M4 18h16"/><circle cx="8" cy="6" r="2"/><circle cx="16" cy="12" r="2"/><circle cx="10" cy="18" r="2"/></svg><span data-i18n="settings_title"></span></a></nav><p class="rail-note" data-i18n="prototype_footer"></p></div></aside>
   <main id="main" tabindex="-1">
-    <!-- One tap unlocks vibration, sound and speech (NFR-A6). -->
-    <section id="enable-alerts" class="banner tone-info enable" aria-labelledby="enable-title">
-      <div>
-        <h2 id="enable-title" data-i18n="alerts_enable_title">Turn on alerts</h2>
-        <p data-i18n="alerts_enable_body"></p>
-        <button id="enable-btn" class="btn btn-primary" type="button" data-i18n="alerts_enable_btn">Turn on alerts</button>
-      </div>
-    </section>
-    <p id="enabled-note" class="notice tone-text-ok" role="status" hidden></p>
+    <div class="page-heading">
+      <div><p class="eyebrow" data-i18n="family_space">Family space</p><h2 data-i18n="feed_overview">Feed overview</h2><p class="page-intro" data-i18n="family_dashboard_intro"></p></div>
 
+    </div>
     <!-- Alert (FR-14): picture, cause, numbered steps, Done. -->
     <section id="alert" class="card alert-card" aria-labelledby="alert-head" hidden>
       <div role="alert">
@@ -47,7 +46,8 @@
       </div>
       <h3 data-i18n="alert_steps">What to do</h3>
       <ol id="alert-steps" class="steps"></ol>
-      <button id="alert-done" class="btn btn-primary btn-wide" type="button" data-i18n="alert_done">Done, I have checked</button>
+      <p id="alert-ack-hint" class="hint" data-i18n="alert_ack_hint"></p>
+      <button id="alert-done" class="btn btn-primary btn-wide" type="button" aria-describedby="alert-ack-hint" data-i18n="alert_done">Done, I have checked</button>
       <p id="alert-waiting" class="notice" tabindex="-1" hidden></p>
     </section>
     <p id="alert-cleared" class="banner tone-ok" role="status" hidden></p>
@@ -65,10 +65,11 @@
         <p id="review-note-text"></p>
       </div>
       <p class="hint" data-i18n="review_queued_hint"></p>
-      <p id="review-who" class="hint"></p>
+      <p id="review-who" class="notice" role="status"></p>
+      <a class="btn caregiver-link" href="#caregiver" data-i18n="review_change_caregiver"></a>
       <div class="answer-row">
-        <button id="confirm-btn" class="btn btn-answer" type="button"></button>
-        <button id="decline-btn" class="btn btn-answer" type="button"></button>
+        <button id="confirm-btn" class="btn btn-answer" type="button" aria-describedby="review-who"></button>
+        <button id="decline-btn" class="btn btn-answer" type="button" aria-describedby="review-who"></button>
       </div>
       <button id="voice-btn" class="btn btn-wide voice-btn" type="button" hidden></button>
       <p id="voice-status" class="hint" role="status"></p>
@@ -85,15 +86,19 @@
     <!-- Announces that a new change is waiting. -->
     <div id="review-live" class="visually-hidden" role="status" aria-atomic="true"></div>
 
-    <section class="card today" aria-labelledby="today-title">
-      <h2 id="today-title" data-i18n="family_today">Today</h2>
+    <div class="family-dashboard">
+    <section id="today" class="card today" aria-labelledby="today-title">
+      <div class="panel-head"><h2 id="today-title" data-i18n="family_today">Today</h2>
 
       <div id="status-live" aria-live="polite" aria-atomic="true">
         <p id="state" class="state"></p>
         <p id="alarm-line" class="alarm-line tone-danger" hidden></p>
       </div>
 
-      <div class="progress-block">
+      </div>
+      <div class="feed-layout">
+        <div id="feed-ring" class="progress-ring" aria-hidden="true"><div class="ring-center"><strong id="feed-percent">0%</strong><span data-i18n="feed_complete"></span></div></div>
+        <div class="feed-readings"><div class="progress-block">
         <p class="delivered">
           <span id="progress-label" data-i18n="family_delivered">Delivered</span>
           <strong id="delivered-text"></strong>
@@ -108,11 +113,24 @@
         <div><dt data-i18n="family_rate_now">Rate now</dt><dd id="rate"></dd></div>
         <div><dt data-i18n="clin_active_version">Active version</dt><dd id="version"></dd></div>
       </dl>
-      <p id="updated" class="updated"></p>
-      <button id="speak-btn" class="btn btn-wide" type="button"></button>
+        </div>
+      </div>
+      <div class="today-footer"><p id="updated" class="updated"></p>
+      <button id="speak-btn" class="btn" type="button"></button></div>
     </section>
 
-    <section class="card settings" aria-labelledby="settings-title">
+      <div class="family-side">
+    <!-- One tap unlocks vibration, sound and speech (NFR-A6). -->
+    <section id="enable-alerts" class="banner tone-info enable" aria-labelledby="enable-title">
+      <div>
+        <h2 id="enable-title" data-i18n="alerts_enable_title">Turn on alerts</h2>
+        <p data-i18n="alerts_enable_body"></p>
+        <button id="enable-btn" class="btn btn-primary" type="button" data-i18n="alerts_enable_btn">Turn on alerts</button>
+      </div>
+    </section>
+    <p id="enabled-note" class="notice tone-text-ok" role="status" hidden></p>
+
+    <section id="settings" class="card settings" aria-labelledby="settings-title">
       <h2 id="settings-title" data-i18n="settings_title">Settings</h2>
       <div class="field">
         <label for="language" data-i18n="language_label">Language</label>
@@ -134,10 +152,13 @@
         </div>
       </fieldset>
     </section>
+      </div>
+    </div>
   </main>
+</div>
 
   <footer id="footer" class="site-footer"></footer>
 
-  <script type="module" src="family.js"></script>
+  <script type="module" src="/family/family.js"></script>
 </body>
 </html>

@@ -129,6 +129,7 @@ export function createPumpStore(pumpId) {
   const listeners = new Set();
   let queued = false;
   let es = null;
+  let stopped = false;
   let retryMs = RETRY_MIN_MS;
 
   function notify() {
@@ -204,6 +205,7 @@ export function createPumpStore(pumpId) {
   }
 
   function connect() {
+    if (stopped) return;
     if (es) es.close();
     const me = (es = new EventSource(`${BASE_URL}${pumpPath(pumpId)}/stream`));
     const current = () => me === es; // ignore anything from a replaced connection
@@ -244,8 +246,16 @@ export function createPumpStore(pumpId) {
   return {
     state,
     start() {
+      stopped = false;
       if (!es) connect();
       return this;
+    },
+    stop() {
+      stopped = true;
+      const connection = es;
+      es = null;
+      connection?.close();
+      listeners.clear();
     },
     subscribe(fn) {
       listeners.add(fn);

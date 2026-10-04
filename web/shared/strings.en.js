@@ -4,6 +4,27 @@
 
 export default {
   lang: "en",
+  feed_complete: "delivered",
+  family_dashboard_intro: "Your pump, your feed, and the changes waiting for you.",
+  clinical_dashboard_intro: "Patient delivery and activity, at a glance.",
+  brand_name: "Smart Pump",
+  family_space: "Family space",
+  clinical_space: "Clinical workspace",
+  feed_overview: "Feed overview",
+  care_overview: "Care overview",
+  page_sections: "Page sections",
+  reports_nav: "Reports",
+  alert_ack_hint: "Done silences reminders on this phone. It does not clear the alarm or restart the pump.",
+  review_change_caregiver: "Change caregiver",
+  patients_count: "{count} patients · {attention} need attention",
+  patients_empty: "No patients available yet.",
+  patients_stale: "Could not refresh patients. Showing the last received list.",
+  chart_totals: "{delivered} delivered of {prescribed} prescribed across {days} days. {under} days below 90%.",
+  chart_no: "No",
+  profile_modified: "Profile values edited. Review the form before proposing.",
+  profile_values: "{mode} · {rate} · {volume}",
+  timeline_intro: "Most recent alarms first. Dates and times use this device's time zone.",
+  audit_intro: "Who changed each prescription and when. Dates and times use this device's time zone.",
   language_name: "English",
 
   // Shared

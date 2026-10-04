@@ -62,7 +62,10 @@ export function renderConnection(bannerEl, liveEl, state) {
 }
 
 /** Read the caregiver id this phone confirms as. */
+let sessionCaregiver = null;
+
 export function savedCaregiver() {
+  if (sessionCaregiver) return sessionCaregiver;
   try {
     const id = localStorage.getItem("sp-caregiver");
     if (id === "care-01" || id === "care-02") return id;
@@ -73,6 +76,8 @@ export function savedCaregiver() {
 }
 
 export function saveCaregiver(id) {
+  if (id !== "care-01" && id !== "care-02") return;
+  sessionCaregiver = id;
   try {
     localStorage.setItem("sp-caregiver", id);
   } catch {

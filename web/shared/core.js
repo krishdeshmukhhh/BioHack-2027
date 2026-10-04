@@ -69,6 +69,13 @@ export function fmtNumber(n) {
   return value.toLocaleString(strings.lang, { maximumFractionDigits: 1 });
 }
 
+export function fmtDateTime(iso) {
+  if (!iso) return "";
+  return new Date(iso).toLocaleString(strings.lang, {
+    year: "numeric", month: "short", day: "numeric", hour: "2-digit", minute: "2-digit",
+  });
+}
+
 export const ml = (n) => t("unit_ml", { value: fmtNumber(n) });
 export const mlHr = (n) => t("unit_ml_hr", { value: fmtNumber(n) });
 

@@ -4,6 +4,27 @@
 
 export default {
   lang: "es",
+  feed_complete: "administrado",
+  family_dashboard_intro: "Su bomba, su alimentación y los cambios pendientes.",
+  clinical_dashboard_intro: "Alimentación y actividad de los pacientes de un vistazo.",
+  brand_name: "Smart Pump",
+  family_space: "Espacio familiar",
+  clinical_space: "Espacio clínico",
+  feed_overview: "Resumen de alimentación",
+  care_overview: "Resumen de cuidados",
+  page_sections: "Secciones de la página",
+  reports_nav: "Informes",
+  alert_ack_hint: "Listo silencia los recordatorios en este teléfono. No borra la alarma ni reinicia la bomba.",
+  review_change_caregiver: "Cambiar cuidador",
+  patients_count: "{count} pacientes · {attention} necesitan atención",
+  patients_empty: "Todavía no hay pacientes disponibles.",
+  patients_stale: "No se pudo actualizar la lista. Se muestra la última lista recibida.",
+  chart_totals: "{delivered} administrados de {prescribed} prescritos en {days} días. {under} días por debajo del 90%.",
+  chart_no: "No",
+  profile_modified: "Se editaron los valores del perfil. Revise el formulario antes de proponer.",
+  profile_values: "{mode} · {rate} · {volume}",
+  timeline_intro: "Las alarmas más recientes aparecen primero. Las fechas y horas usan la zona horaria de este dispositivo.",
+  audit_intro: "Quién cambió cada prescripción y cuándo. Las fechas y horas usan la zona horaria de este dispositivo.",
   language_name: "Español",
 
   // Shared
