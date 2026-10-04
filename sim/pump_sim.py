@@ -280,13 +280,30 @@ class PumpCore:
         (replay), dropped (malformed with no readable version), or the reason.
         """
         with self._lock:
+            duplicate_keys = False
+
+            def prescription_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+                nonlocal duplicate_keys
+                rx: dict[str, Any] = {}
+                duplicate_version = False
+                for key, value in pairs:
+                    if key in rx:
+                        duplicate_keys = True
+                        duplicate_version |= key == "version"
+                    rx[key] = value
+                # An ambiguous version cannot identify a rejection event.
+                if duplicate_version:
+                    del rx["version"]
+                return rx
+
             try:
-                rx = json.loads(payload, parse_constant=_reject_constant)
+                rx = json.loads(payload, parse_constant=_reject_constant,
+                                object_pairs_hook=prescription_object)
             except (ValueError, UnicodeDecodeError):
                 rx = None
 
             # 1. shape (fixed field list)
-            if not is_well_formed(rx):
+            if duplicate_keys or not is_well_formed(rx):
                 version = rx.get("version") if isinstance(rx, dict) else None
                 if _is_version(version):
                     self._reject(version, "malformed")

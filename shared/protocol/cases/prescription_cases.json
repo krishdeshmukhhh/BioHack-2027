@@ -1030,6 +1030,26 @@
      "last_reject_reason": null
     }
    }
+  },
+  {
+   "name": "malformed: duplicate decoded top-level rate key",
+   "beyond_schema": "JSON Schema sees decoded objects after duplicate keys have been collapsed; the pump rejects duplicates in the raw JSON.",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"rate_ml_\\u0068r\":120,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "rejected",
+    "reason": "malformed",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": 8,
+     "last_reject_reason": "malformed"
+    }
+   }
   }
  ]
 }

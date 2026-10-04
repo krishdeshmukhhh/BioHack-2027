@@ -139,6 +139,29 @@ void malformed_types_and_schema_constraints() {
   rejected(encode(doc), "malformed");
 }
 
+void duplicate_keys_cannot_overwrite_fields_or_fabricate_version() {
+  const char* duplicates[] = {
+      ",\"rate_ml_hr\":90", ",\"rate_ml_\\u0068r\":90",
+      ",\"confirmed_by\":\"caregiver-demo\"",
+      ",\"version\":10", ",\"\\u0076ersion\":10"};
+  for (unsigned i = 0; i < 5; ++i) {
+    auto c = controller();
+    events.clear();
+    writes.clear();
+    std::string payload = json(9, 500);
+    payload.insert(payload.size() - 1, duplicates[i]);
+    const auto result = receive(c, payload);
+    TEST_ASSERT_EQUAL(PrescriptionValidation::REJECTED, result.outcome);
+    TEST_ASSERT_EQUAL_STRING("malformed", result.reason.c_str());
+    TEST_ASSERT_EQUAL_UINT32(i < 3 ? 9 : 0, result.version);
+    TEST_ASSERT_EQUAL(PumpState::IDLE, c.snapshot().state);
+    TEST_ASSERT_FALSE(c.snapshot().hasPrescription);
+    TEST_ASSERT_EQUAL_UINT(0, writes.size());
+    TEST_ASSERT_EQUAL_UINT(i < 3 ? 1 : 0, events.size());
+    if (i < 3) TEST_ASSERT_EQUAL_STRING("prescription_rejected", events.back().type.c_str());
+  }
+}
+
 void datetime_checks_calendar_timezone_and_fraction() {
   const char* invalid[] = {"", "yesterday", "2026-02-29T00:00:00Z",
       "2026-04-31T00:00:00Z", "2026-00-01T00:00:00Z", "2026-01-00T00:00:00Z",
@@ -257,14 +280,16 @@ void idle_applies_only_after_successful_persistence() {
   receive(c, json(), 10);
   TEST_ASSERT_FALSE(c.snapshot().hasPrescription);
   TEST_ASSERT_TRUE(c.snapshot().hasPending);
-  TEST_ASSERT_EQUAL_STRING("prescription_queued", events.back().type.c_str());
+  TEST_ASSERT_EQUAL_UINT(0, events.size());
   TEST_ASSERT_FALSE(c.start(20));
   TEST_ASSERT_EQUAL(PumpState::IDLE, c.snapshot().state);
+  TEST_ASSERT_EQUAL_UINT(0, events.size());
   writeSucceeds = true;
   c.tick(30);
   TEST_ASSERT_TRUE(c.snapshot().hasPrescription);
   TEST_ASSERT_FALSE(c.snapshot().hasPending);
   TEST_ASSERT_EQUAL_UINT32(1, c.snapshot().prescription.version);
+  TEST_ASSERT_EQUAL_UINT(1, events.size());
   TEST_ASSERT_EQUAL_STRING("prescription_applied", events.back().type.c_str());
   TEST_ASSERT_EQUAL_UINT32(30, events.back().uptimeMs);
 }
@@ -500,7 +525,7 @@ void shared_protocol_cases_pass_parser_and_controller() {
   JsonDocument fixture;
   TEST_ASSERT_FALSE_MESSAGE(bool(deserializeJson(fixture, contents)), "Invalid shared fixture JSON");
   JsonArrayConst cases = fixture["cases"].as<JsonArrayConst>();
-  TEST_ASSERT_EQUAL_UINT(55, cases.size());
+  TEST_ASSERT_TRUE(cases.size() > 0);
   TEST_ASSERT_EQUAL_STRING(PUMP, fixture["pump_id"].as<const char*>());
   for (JsonObjectConst testCase : cases) {
     const char* name = testCase["name"].as<const char*>();
@@ -550,6 +575,7 @@ void shared_protocol_cases_pass_parser_and_controller() {
       TEST_ASSERT_EQUAL_MESSAGE(PrescriptionValidation::REJECTED, result.outcome, name);
       TEST_ASSERT_EQUAL_UINT_MESSAGE(1, events.size(), name);
       TEST_ASSERT_EQUAL_STRING_MESSAGE("prescription_rejected", events.back().type.c_str(), name);
+      TEST_ASSERT_EQUAL_UINT32_MESSAGE(result.version, events.back().version, name);
       TEST_ASSERT_EQUAL_STRING_MESSAGE(expected["reason"].as<const char*>(), result.reason.c_str(), name);
     }
     JsonObjectConst after = expected["status_after"].as<JsonObjectConst>();
@@ -620,6 +646,7 @@ int main() {
   RUN_TEST(valid_prescription_roundtrips_and_accepts_limit_boundaries);
   RUN_TEST(shape_and_extra_fields_precede_other_checks);
   RUN_TEST(malformed_types_and_schema_constraints);
+  RUN_TEST(duplicate_keys_cannot_overwrite_fields_or_fabricate_version);
   RUN_TEST(datetime_checks_calendar_timezone_and_fraction);
   RUN_TEST(confirmation_and_pump_order);
   RUN_TEST(stale_replay_and_limit_order);

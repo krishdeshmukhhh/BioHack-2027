@@ -72,11 +72,13 @@ Run `pio run -e native` **after** `pio test`: PlatformIO uses the same native ex
 
 The native executable accepts JSON lines with `command`: `start`, `pause`, `resume`, `stop`, `occlusion`, `bag_empty`, `clear`, `status`, `tick` with `elapsed_ms`, or `prescription` with a JSON `payload`. Time advances explicitly through `tick`; this is a deterministic test harness, not the separate MQTT simulator in `sim/`. Output is `{topic,payload}` envelopes matching the shared protocol. Pass a file path as the first argument to persist prescriptions between desktop runs; omit it for an ephemeral test.
 
-The native harness also accepts `demo`, using the same fixture helper as the ESP32 serial command. Native Unity tests consume all 55 current cases directly from `shared/protocol/cases/prescription_cases.json`, checking parser, events, and status. They also check rejection telemetry survives later replay, queue, apply, and dropped malformed input. For an isolated build outside this repo, set `FIRMWARE_PROTOCOL_CASES` to that file's absolute path.
+The native harness also accepts `demo`, using the same fixture helper as the ESP32 serial command. Native Unity tests consume the shared cases directly from `shared/protocol/cases/prescription_cases.json`, checking parser, events, and status. They also check rejection telemetry survives later replay, queue, apply, and dropped malformed input. For an isolated build outside this repo, set `FIRMWARE_PROTOCOL_CASES` to that file's absolute path.
 
 ## Run on your ESP32
 
 Copy `include/secrets.example.h` to `include/secrets.h` and enter your network/broker details locally. Confirm the ESP32 board and pins in `config.h` before uploading. Credentials are ignored by git; a missing secrets file permits compilation with nonfunctional example credentials.
+
+For the hub demo, set the private `MQTT_HOST` to the laptop's LAN IPv4 (`/usr/sbin/ipconfig getifaddr en0` on this Mac; currently `192.168.1.23`) and use only `esp32dev`. Keep `esp32dev_network_test` for interruption/stack tests and restore `esp32dev` afterward; never use `esp32dev_offline` for the hub demo.
 
 ```bash
 make fw-upload
@@ -95,11 +97,39 @@ For standalone bench tests with **no hub running**, start the broker with `make 
 
 Use a version newer than both current and pending. This helper is a test fixture injector that bypasses the hub's publish gate (S2), so it is bench only; run `make reset-demo` before the hub is used again. The hub remains responsible for the clinician/caregiver workflow. Broker acknowledgement means sent, and only pump telemetry proves applied or rejected. Use serial `start` after an idle apply; remote prescription updates do not start feeding.
 
+## Return the ESP32 to the scripted v7 start
+
+Send serial `stop`, then `status`; require idle, no alarm, and no pending prescription. Close the serial monitor and stop the hub/simulator (Ctrl+C), leaving the laptop broker running. The commands below reset the existing scratch demo database, archive its audit history, retain the existing fictional `DEMO_SEED` while the hub is stopped, and erase **all ESP32 flash including NVS** before uploading normal firmware. The fixed seed is rehearsal setup only, not a remote-programming path; live proposals still use clinician/caregiver confirmation through the hub. Do not run a simulator with `pump-001` alongside the ESP32.
+
+From the repository root:
+
+```bash
+export PATH="$PWD/.venv/bin:$PATH"
+export PLATFORMIO_CORE_DIR="$PWD/firmware/.pio/core"
+export HUB_DB_PATH=/tmp/biohack-phase3/hub.sqlite3
+export MQTT_HOST=127.0.0.1 MQTT_PORT=1883 PUMP_ID=pump-001
+scripts/reset_demo.sh
+.venv/bin/python -c 'import json; from sim.pump_sim import DEMO_SEED; print(json.dumps(dict(DEMO_SEED, pump_id="pump-001")))' \
+  | mosquitto_pub -h 127.0.0.1 -p 1883 -t pump/pump-001/prescription -q 1 -r -s
+pio run -d firmware -e esp32dev -t erase --upload-port /dev/cu.usbserial-120
+pio run -d firmware -e esp32dev -t upload --upload-port /dev/cu.usbserial-120
+.venv/bin/python -m uvicorn hub.app.main:app --host 0.0.0.0 --port 8000
+```
+
+In another terminal, verify fresh telemetry (v7, idle, no alarm/pending):
+
+```bash
+mosquitto_sub -h 127.0.0.1 -p 1883 -t pump/pump-001/status -C 1 -W 30 \
+  | .venv/bin/python -c 'import json,sys; s=json.load(sys.stdin); assert (s["pump_id"],s["prescription_version"],s["state"],s["alarm"],s["pending_version"]) == ("pump-001",7,"idle",None,None); print(s)'
+```
+
+Expected demo settings are 60 mL/hr and 500 mL; flashing never starts a feed. This erase/reflash procedure was verified on the real ESP32; no reset command was added.
+
 ## Phase 3 results and team handoff
 
 Person A's Phase 3 acceptance passed on a real ESP32 on 2026-10-03 with digitally simulated delivery and serial fault injection. Actual reports and their scope are indexed in [phase3/README.md](phase3/README.md): ten offline controller checks, thirteen hub/MQTT checks, eleven WiFi-loss checks, seven normal-firmware bag-empty checks, rendered app checks, and the clinician-form/family-confirmation click-through.
 
-The confirmed 200-character note reached the ESP32; excessive rates rejected; pending updates waited for idle; replay was silent; alarms stopped delivery and cleared to paused; NVS survived reboot; and availability went offline/online correctly. During an actual 30-second ESP32 WiFi disconnection, v4 continued at 75 mL/hr and modelled volume increased by 0.625 mL. The Mac's network was unchanged. The normal `esp32dev` profile is restored, and the final UI-confirmed v5 prescription is 90 mL/hr with a 5 mL target, idle. The UI-confirmed v6 at 500 mL/hr was rejected. These are fictional test values.
+The confirmed 200-character note reached the ESP32; excessive rates rejected; pending updates waited for idle; replay was silent; alarms stopped delivery and cleared to paused; NVS survived reboot; and availability went offline/online correctly. During an actual 30-second ESP32 WiFi disconnection, v4 continued at 75 mL/hr and modelled volume increased by 0.625 mL. The Mac's network was unchanged. At the end of that acceptance run, normal `esp32dev` was restored with the UI-confirmed v5 at 90 mL/hr and a 5 mL target, idle; the UI-confirmed v6 at 500 mL/hr was rejected. The later reset procedure above restores the scripted v7 demo start instead. These are fictional test values.
 
 Physical button wiring, OLED, sensors, measured fluid delivery, and pump calibration were not tested; the user selected digital simulation. Person D can use the evidence to update the shared Phase 3 checklist and decide the hardware-loop tag. Shared documents and other lanes were not edited.
 
@@ -126,13 +156,15 @@ HUB_DB_PATH=/tmp/biohack-phase3/hub.sqlite3 MQTT_HOST=127.0.0.1 MQTT_PORT=1883 \
   --host 0.0.0.0 --port 8000
 ```
 
-If those services are already running, use the existing instances. Open `http://localhost:8000` for the apps. Wait for fresh ESP32 telemetry before proposing a prescription: older firmware may have stored a version under `pump`, and the hub's allocator uses the reported version to choose the next one.
+Connected bench tools must use a scratch/test hub database, as configured above. They intentionally use `clin-01`/`care-01`; never run them against the real demo database or change demo users. Reuse existing services only after verifying their hub uses a scratch/test database. Open `http://localhost:8000` for the apps. Wait for fresh ESP32 telemetry before proposing a prescription: older firmware may have stored a version under `pump`, and the hub's allocator uses the reported version to choose the next one.
+
+Both connected helpers require `--scratch-hub` as an explicit acknowledgement of that database check before opening serial or contacting the hub; they cannot determine a remote server's database path.
 
 After joining the network, run the connected helper, then press the ESP32 reset button when it starts listening:
 
 ```bash
 .venv/bin/python firmware/tools/network_bench.py --port /dev/cu.usbserial-120 \
-  --hub http://127.0.0.1:8000 --broker 127.0.0.1 \
+  --scratch-hub --hub http://127.0.0.1:8000 --broker 127.0.0.1 \
   --output /tmp/esp32-network-bench.json
 ```
 
@@ -148,12 +180,16 @@ The connected helper does not disconnect WiFi or stop the broker; `wifi_loss` is
 
 The `esp32dev_network_test` profile joins the configured router using the private `WIFI_SSID`, `WIFI_PASSWORD`, `MQTT_HOST`, and `MQTT_PORT` in `include/secrets.h`. It adds only the bench commands `wifi_off` and `wifi_on`. Those commands queue atomic requests; the network worker changes the ESP32 station connection, while the delivery loop continues. This profile cannot be combined with offline or AP mode. It does not change the Mac's WiFi or stop the broker.
 
+This profile also prints `Stack headroom` for `loopTask` and `pump-network` every two seconds, including during WiFi loss. Values are minimum unused stack bytes since boot (ESP-IDF high-water marks); record them after exercising prescriptions, alarms, and reconnects. These diagnostics stay on USB and do not change protocol telemetry. Normal firmware omits them.
+
+N2 near-2 KB measurement on the real ESP32 (2026-10-03): non-retained **1,984-byte** prescriptions with a 200-character Unicode note exercised idle apply/NVS persistence, busy queue, limit rejection, and stop/apply. Initial minimum free stack was 3,212 bytes for `loopTask` and only 348 bytes for `pump-network`, both allocated 8,192 bytes. Only the existing network stack was increased by 2,048 bytes to 10,240; repeating the same checks produced minimum free stack of **3,228 bytes for `loopTask`** (8,192 allocated) and **2,480 bytes for `pump-network`** (10,240 allocated), across 20 samples. These are observed workload minima, not a worst-case bound; normal `esp32dev` was restored afterward.
+
 First run the connected helper successfully so there is an active caregiver-confirmed prescription in the hub and NVS. Then upload this profile and run its helper, pressing ESP32 reset when the helper starts listening:
 
 ```bash
 pio run -d firmware -e esp32dev_network_test -t upload --upload-port /dev/cu.usbserial-120
 .venv/bin/python firmware/tools/wifi_bench.py --port /dev/cu.usbserial-120 \
-  --hub http://127.0.0.1:8000 --broker 127.0.0.1 \
+  --scratch-hub --hub http://127.0.0.1:8000 --broker 127.0.0.1 \
   --output /tmp/esp32-wifi-bench.json
 ```
 
