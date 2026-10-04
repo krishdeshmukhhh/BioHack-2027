@@ -1,62 +1,107 @@
 "use client";
-import Link from "next/link";
-import { useEffect, useState } from "react";
-import { MotionConfig } from "framer-motion";
-import { Activity, ArrowUpRight, Droplets, House, Moon, Sun, Users, Wifi, WifiOff } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { AnimatePresence, LayoutGroup, MotionConfig, motion, useReducedMotion } from "framer-motion";
+import { Activity, Bell, ChevronLeft, ChevronRight, Globe2, Map, PanelRightOpen, Search, Users, Wifi, WifiOff } from "lucide-react";
 import { useLocale } from "@/lib/locale";
-import { usePump } from "@/lib/pump";
-import { SimLabel } from "./primitives";
-import { FamilyView } from "./family";
-import { ClinicianView } from "./clinician";
+import { usePump, useResource, type Patient } from "@/lib/pump";
+import { motionTokens, springs } from "@/lib/motion";
+import { WardMap } from "./ward-map";
+import { PatientDetails } from "./patient-details";
 
+type Section = "global" | "ward_map" | "patients_nav" | "alerts_nav";
 export function Dashboard({ view }: { view: "family" | "clinician" }) {
-  const { t, lang, setLang, date } = useLocale();
+  const { t, lang, setLang } = useLocale();
+  const reduced = useReducedMotion();
+  const [section, setSection] = useState<Section>("global");
   const [pumpId, setPumpId] = useState("pump-001");
-  const [night, setNight] = useState(false);
+  const [open, setOpen] = useState(true);
+  const [panelWidth, setPanelWidth] = useState(380);
+  const [search, setSearch] = useState("");
+  const [page, setPage] = useState(0);
+  const [demoVitals, setDemoVitals] = useState(true);
   const pump = usePump(pumpId);
+  const roster = useResource<Patient[]>("/api/patients", 5000);
+  const patients = roster.data || [];
+  const selected = patients.find((patient) => patient.pump_id === pumpId);
+  const main = useRef<HTMLElement>(null);
   useEffect(() => {
     const id = new URLSearchParams(location.search).get("pump");
     if (id && /^[\w-]{1,64}$/.test(id)) setPumpId(id);
-    setNight(document.documentElement.dataset.theme === "night");
+    if (window.matchMedia("(max-width: 900px)").matches) setOpen(false);
+    const compact = window.matchMedia("(max-width: 900px)");
+    const medium = window.matchMedia("(max-width: 1100px)");
+    const size = () => setPanelWidth(compact.matches ? 0 : medium.matches ? 340 : 380);
+    size(); compact.addEventListener("change", size); medium.addEventListener("change", size);
+    return () => { compact.removeEventListener("change", size); medium.removeEventListener("change", size); };
   }, []);
-  function theme() {
-    const value = !night;
-    setNight(value); document.documentElement.dataset.theme = value ? "night" : "day";
-    try { localStorage.setItem("sp-theme", value ? "night" : "day"); } catch { /* session only */ }
+  function choose(id: string) {
+    setPumpId(id); setOpen(true);
+    history.replaceState(null, "", `?pump=${encodeURIComponent(id)}`);
+    requestAnimationFrame(() => main.current?.querySelector<HTMLElement>("[data-patient-heading]")?.focus({ preventScroll: true }));
   }
-  function selectPump(id: string) {
-    setPumpId(id); history.replaceState(null, "", `?pump=${encodeURIComponent(id)}`);
-  }
-  const status = pump.stream === "connecting" ? t("connecting") : pump.online ? t("connected") : t("disconnected");
-  return <MotionConfig reducedMotion="user">
-    <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-panel focus:p-4">{t("skip_to_content")}</a>
-    <div className="grid min-h-screen grid-cols-1 lg:grid-cols-[88px_minmax(0,1fr)]">
-      <aside className="flex items-center justify-between border-b border-line px-4 py-3 lg:flex-col lg:justify-start lg:border-r lg:border-b-0 lg:px-3 lg:py-7">
-        <Link href="/" aria-label={t("brand_name")} className="control grid h-12 w-12 place-items-center rounded-2xl bg-accent text-panel"><Droplets size={25} aria-hidden="true" /></Link>
-        <nav aria-label={t("page_sections")} className="flex gap-2 lg:mt-12 lg:flex-col lg:gap-5">
-          {[{ href: "/", key: "family", Icon: House }, { href: "/clinician", key: "clinician", Icon: Users }].map(({ href, key, Icon }) => <Link key={key} href={`${href}?pump=${pumpId}`} aria-current={view === key ? "page" : undefined} className={`control flex flex-col items-center justify-center gap-1 rounded-xl px-3 py-2 text-[11px] ${view === key ? "bg-tint text-accent" : "text-muted hover:bg-tint"}`}><Icon size={21} aria-hidden="true" /><span>{t(key)}</span></Link>)}
+  function navigate(value: Section) { setSection(value); setPage(0); setSearch(""); if (window.matchMedia("(max-width: 900px)").matches) setOpen(false); }
+  function close() { setOpen(false); requestAnimationFrame(() => main.current?.focus()); }
+  const filtered = patients.filter((patient) => {
+    const flagged = patient.exceptions.length > 0 || (patient.pump_id === pumpId && pump.alerts.some((a) => a.active));
+    return (section !== "alerts_nav" || flagged) && `${patient.display_name} ${patient.pump_id}`.toLowerCase().includes(search.toLowerCase());
+  });
+  const total = Math.max(1, Math.ceil(filtered.length / 6));
+  const currentPage = Math.min(page, total - 1);
+  const visible = filtered.slice(currentPage * 6, currentPage * 6 + 6);
+  const connected = patients.filter((p) => p.online).length;
+  const flagged = patients.filter((p) => p.exceptions.length || (p.pump_id === pumpId && pump.alerts.some((a) => a.active))).length;
+  const status = pump.stream === "connecting" ? t("connecting") : t(pump.online ? "connected" : "disconnected");
+  const mapView = section === "global" || section === "ward_map";
+  return <MotionConfig reducedMotion="user" transition={springs.snappy}><LayoutGroup id="care-command">
+    <a href="#main" className="skip-link">{t("skip_to_content")}</a>
+    <div className="command-shell grid h-screen w-screen grid-cols-[72px_minmax(0,1fr)] overflow-hidden">
+      <aside className="nav-rail flex min-h-0 flex-col items-center border-r border-line py-5">
+        <div className="brand-mark grid h-11 w-11 shrink-0 place-items-center rounded-xl text-accent" aria-label={t("brand_name")}><Activity size={25} aria-hidden="true" /></div>
+        <nav aria-label={t("page_sections")} className="mt-8 flex w-full flex-col gap-3 px-2">
+          {([{ id: "global", Icon: Globe2 }, { id: "ward_map", Icon: Map }, { id: "patients_nav", Icon: Users }, { id: "alerts_nav", Icon: Bell }] as const).map(({ id, Icon }) => <button key={id} onClick={() => navigate(id)} aria-current={section === id ? "page" : undefined} className={`rail-button relative flex flex-col items-center gap-2 rounded-xl px-1 py-3 ${section === id ? "text-accent" : "text-muted"}`}>
+            {section === id && <motion.span layoutId={reduced ? undefined : "navigation-active"} className="absolute inset-0 rounded-xl bg-tint" />}
+            <Icon size={21} strokeWidth={1.6} className="relative" aria-hidden="true" /><span className="relative text-[10px] font-medium">{t(id)}</span>
+          </button>)}
         </nav>
-        <Activity size={20} className="mt-auto hidden text-muted lg:block" aria-hidden="true" />
+        <span className="mt-auto pt-3 text-[10px] text-muted">SP / 01</span>
       </aside>
-      <div className="min-w-0">
-        <header className="flex flex-wrap items-center justify-between gap-4 border-b border-line px-5 py-5 md:px-10">
-          <div><p className="kicker">{t("brand_name")}</p><p className="mt-1 text-sm font-medium">{t("workspace")}</p></div>
-          <div className="flex flex-wrap items-center gap-3">
-            {pump.status?.simulated !== false && <SimLabel />}
-            <label className="sr-only" htmlFor="language">{t("language_label")}</label><select id="language" value={lang} onChange={(event) => setLang(event.target.value as "en" | "es")} className="rounded-lg border border-line bg-panel px-3 text-sm"><option value="en">English</option><option value="es">Español</option></select>
-            <button className="button" aria-pressed={night} onClick={theme}>{night ? <Sun size={17} aria-hidden="true" /> : <Moon size={17} aria-hidden="true" />}{t(night ? "light" : "dark")}</button>
+      <div className="grid min-h-0 min-w-0 grid-rows-[64px_minmax(0,1fr)_26px]">
+        <header className="shell-header flex min-w-0 items-center justify-between gap-3 border-b border-line px-5">
+          <div className="min-w-0"><p className="text-sm font-semibold tracking-wide">{t("brand_name")}<span className="hidden text-muted sm:inline"> / {t("command_center")}</span></p><p className="mt-1 text-[10px] tracking-[.15em] text-muted uppercase">{t("ward")} · {t("ward_floor")}</p></div>
+          <div className="flex shrink-0 items-center gap-4"><p className={`connection flex items-center gap-2 text-xs ${pump.online ? "text-accent" : "text-warm"}`} role="status">{pump.online ? <Wifi size={14} aria-hidden="true" /> : <WifiOff size={14} aria-hidden="true" />}<span className="hidden sm:inline">{status}</span></p>
+            <label htmlFor="language" className="sr-only">{t("language_label")}</label><select id="language" className="language-select rounded-md border border-line bg-panel px-2 text-xs" value={lang} onChange={(e) => setLang(e.target.value as "en" | "es")}><option value="en">EN</option><option value="es">ES</option></select>
           </div>
         </header>
-        <main id="main" tabIndex={-1} className="mx-auto max-w-[1500px] px-5 py-8 md:px-10 md:py-10">
-          <div className="mb-9 flex flex-wrap items-end justify-between gap-5">
-            <div><p className="kicker mb-3">{t(view === "family" ? "family_space" : "clinical_space")} / {t("overview")}</p><h1 className="font-display text-4xl tracking-[-.045em] md:text-5xl">{t(view === "family" ? "feed_overview" : "care_overview")}</h1><p className="mt-3 text-base text-muted">{t(view === "family" ? "family_dashboard_intro" : "clinical_dashboard_intro")}</p></div>
-            <div className="text-sm text-muted"><p className="flex items-center gap-2" role="status">{pump.online ? <Wifi size={16} aria-hidden="true" /> : <WifiOff size={16} aria-hidden="true" />}{status}</p><p className="mt-1 text-xs">{date(pump.lastUpdateAt)}</p></div>
-          </div>
-          {!pump.online && pump.stream !== "connecting" && <div className="mb-6 rounded-xl border border-warm p-4 text-warm" role="status"><strong>{t("disconnected")}</strong><p className="mt-1 text-base">{t("data_stale")} {t(pump.stream === "lost" ? "hub_lost" : "pump_offline_body")}</p></div>}
-          {view === "family" ? <FamilyView pump={pump} /> : <ClinicianView pump={pump} selectPump={selectPump} />}
-        </main>
-        <footer className="flex flex-wrap justify-between gap-3 border-t border-line px-5 py-5 text-xs text-muted md:px-10"><p><strong>{t("prototype_footer")}</strong> {t("prototype_footer_detail")}</p><span className="inline-flex items-center gap-1">{t("brand_name")} <ArrowUpRight size={12} aria-hidden="true" /></span></footer>
+        <motion.main id="main" tabIndex={-1} ref={main} className="split-grid relative grid min-h-0 min-w-0 overflow-hidden" data-open={open} animate={{ gridTemplateColumns: panelWidth ? `minmax(0, 1fr) ${open ? panelWidth : 0}px` : "minmax(0, 1fr)" }} transition={{ duration: reduced ? 0 : motionTokens.duration.normal, ease: motionTokens.easing.smooth }} onKeyDown={(event) => { if (event.key === "Escape" && open) close(); }}>
+          <section className="visual-pane flex min-h-0 min-w-0 flex-col overflow-hidden" aria-label={t(section)}>
+            <div className="pane-heading flex shrink-0 items-center justify-between gap-3 px-6 pt-5 pb-4"><div className="min-w-0"><p className="kicker mb-1">{t("ward_unit")} / {t(section)}</p><h1 className="text-xl font-semibold tracking-tight">{t(mapView ? "ward" : section === "patients_nav" ? "all_patients" : "review_flags")}</h1></div>{!open && <button className="icon-button" onClick={() => setOpen(true)} aria-label={t("open_details")}><PanelRightOpen size={20} /></button>}</div>
+            <div className="ward-metrics grid shrink-0 grid-cols-3 border-y border-line">
+              {[{ label: "monitored", value: patients.length, suffix: "" }, { label: "connected_pumps", value: connected, suffix: ` / ${patients.length}` }, { label: "needs_review", value: flagged, suffix: "" }].map(({ label, value, suffix }) => <div key={label} className="px-6 py-3"><p className="text-[10px] text-muted">{t(label)}</p><p className={`mt-1 text-2xl font-medium tabular-nums ${label === "needs_review" && value ? "text-warm" : "text-ink"}`}>{roster.data ? value : "—"}<span className="text-xs text-muted">{suffix}</span></p></div>)}
+            </div>
+            <AnimatePresence mode="wait" initial={false}>
+              <motion.div key={mapView ? "map" : section} className="relative flex min-h-0 flex-1 flex-col overflow-hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: motionTokens.duration.fast }}>
+                {mapView ? <WardMap patients={patients} selected={pumpId} choose={choose} pump={pump} demoVitals={demoVitals} setDemoVitals={setDemoVitals} /> : <>
+                  <div className="px-6 py-4"><label className="relative block"><Search size={16} className="absolute top-3.5 left-3 text-muted" aria-hidden="true" /><span className="sr-only">{t("patient_search")}</span><input value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="input pl-10! text-sm!" placeholder={t("patient_search")} /></label></div>
+                  <div className="local-scroll min-h-0 flex-1 overflow-y-auto px-6" aria-label={t(section)} tabIndex={0}>
+                    {roster.error && <p role="status" className="py-4 text-sm text-warm">{t("roster_unavailable")}</p>}
+                    {!roster.data ? <p className="py-4 text-muted">{t("loading")}</p> : !visible.length ? <p className="py-8 text-muted">{t(section === "alerts_nav" && !search ? "no_attention" : "no_matches")}</p> : visible.map((patient) => <motion.button key={patient.id} onClick={() => choose(patient.pump_id)} aria-pressed={patient.pump_id === pumpId && open} className={`patient-row flex w-full items-center justify-between gap-4 border-b border-line py-5 text-left ${patient.pump_id === pumpId ? "text-accent" : "text-ink"}`} whileTap={reduced ? undefined : { scale: motionTokens.scale.press }}>
+                      <span className="min-w-0"><span className="block text-sm font-semibold">{patient.display_name}</span><span className="mt-1 block text-xs text-muted">{patient.pump_id}</span><span className="mt-2 block text-xs text-warm">{patient.exceptions.map((code) => t(`exc_${code}`)).join(" · ") || t("exc_none")}</span></span><ChevronRight size={18} className="shrink-0" aria-hidden="true" />
+                    </motion.button>)}
+                  </div>
+                  <div className="flex shrink-0 items-center justify-between gap-3 border-t border-line px-6 py-3"><button className="icon-button" aria-label={t("previous")} disabled={currentPage === 0} onClick={() => setPage(currentPage - 1)}><ChevronLeft size={17} /></button><span className="text-xs text-muted">{t("page_count", { page: currentPage + 1, total })}</span><button className="icon-button" aria-label={t("next")} disabled={currentPage + 1 === total} onClick={() => setPage(currentPage + 1)}><ChevronRight size={17} /></button></div>
+                </>}
+              </motion.div>
+            </AnimatePresence>
+            {mapView && roster.error && <p role="status" className="shrink-0 px-6 py-2 text-xs text-warm">{t("roster_unavailable")}</p>}
+          </section>
+          <AnimatePresence initial={false}>
+            {open && <motion.aside key="details" layoutId={reduced ? undefined : "patient-detail-pane"} className="details-pane flex min-h-0 min-w-0 flex-col overflow-hidden border-l border-line" aria-label={t("patient_details")} initial={{ opacity: 0, x: reduced ? 0 : motionTokens.distance.md }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: reduced ? 0 : motionTokens.distance.md }} transition={{ ...springs.snappy, duration: reduced ? 0 : undefined }}>
+              <PatientDetails key={pumpId} pump={pump} patient={selected} defaultTab={view === "clinician" ? "orders" : "monitor"} close={close} selectPump={choose} />
+            </motion.aside>}
+          </AnimatePresence>
+        </motion.main>
+        <footer className="flex items-center justify-between gap-2 border-t border-line px-4 text-[9px] text-muted"><p className="truncate">{t("prototype_footer")} · {t("simulated_data")}</p><span className="shrink-0 font-mono">SMART PUMP / WEB</span></footer>
       </div>
     </div>
-  </MotionConfig>;
+  </LayoutGroup></MotionConfig>;
 }

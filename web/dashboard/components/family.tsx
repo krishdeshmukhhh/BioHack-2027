@@ -5,7 +5,7 @@ import { useLocale } from "@/lib/locale";
 import { api, errorKey, type Pump } from "@/lib/pump";
 import { Accordion, FeedGauge, RxChip } from "./primitives";
 
-export function FamilyView({ pump }: { pump: Pump }) {
+export function FamilyView({ pump, compact = false }: { pump: Pump; compact?: boolean }) {
   const { t, list, user, number, lang } = useLocale();
   const s = pump.status;
   const delivered = s?.delivered_ml || 0, target = s?.target_ml || 0;
@@ -69,8 +69,8 @@ export function FamilyView({ pump }: { pump: Pump }) {
     try { audio.current ||= new AudioContext(); audio.current.resume(); } catch { /* visual and speech remain */ }
     setEnabled(true);
   }
-  return <div className="grid items-start gap-8 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,1fr)] xl:gap-12">
-    <section aria-labelledby="feed-title" className="min-w-0">
+  return <div className={compact ? "min-w-0" : "grid items-start gap-8 xl:grid-cols-[minmax(0,1.35fr)_minmax(340px,1fr)] xl:gap-12"}>
+    {!compact && <section aria-labelledby="feed-title" className="min-w-0">
       <div className="flex items-center justify-between gap-4 border-y border-line py-5"><h2 id="feed-title" className="text-lg font-semibold">{t("feed_session")}</h2><p className="flex items-center gap-2 text-sm font-medium" aria-live="polite">{s?.state === "running" && <span className="live-dot" />}{s ? t(`state_${s.state}`) : t("unknown")}</p></div>
       <div className="py-6 md:py-10"><FeedGauge delivered={delivered} target={target} /></div>
       <p className="text-center text-2xl font-medium tracking-tight tabular-nums">{target > 0 ? t("family_of_target", { delivered: `${number(delivered)} mL`, target: `${number(target)} mL` }) : t("family_no_feed")}</p>
@@ -78,7 +78,7 @@ export function FamilyView({ pump }: { pump: Pump }) {
         {[{ label: t("family_rate_now"), value: s ? `${number(s.rate_ml_hr)} mL/hr` : "—" }, { label: t("remaining"), value: s ? `${number(Math.max(0, target - delivered))} mL` : "—" }, { label: t("clin_active_version"), value: s ? `v${s.prescription_version}` : "—" }].map((item) => <div key={item.label}><dt className="text-sm text-muted">{item.label}</dt><dd className="mt-2 text-xl font-semibold tracking-tight tabular-nums">{item.value}</dd></div>)}
       </dl>
       <button className="button mt-8" onClick={() => speak(t("family_status_spoken", { state: s ? t(`state_${s.state}`) : t("unknown"), delivered: `${number(delivered)} mL`, target: `${number(target)} mL` }))}><Volume2 size={17} aria-hidden="true" />{t("read")}</button>
-    </section>
+    </section>}
     <div className="min-w-0">
       {alarm && <section className="mb-6 rounded-2xl border-2 border-danger bg-panel p-6" role="alert"><h2 className="flex items-center gap-2 text-xl font-semibold text-danger"><CircleAlert size={22} aria-hidden="true" />{t(`alarm_${alarm}`)}</h2><p className="mt-3">{t(`cause_${alarm}`)}</p><ol className="mt-4 list-decimal space-y-3 pl-5">{list(`steps_${alarm}`).map((step) => <li key={step}>{step}</li>)}</ol><p className="mt-5 text-sm text-muted">{t("alert_ack_hint")}</p>{ack === alarmKey ? <p className="mt-4 font-medium">{t("alert_waiting")}</p> : <button className="button mt-4 w-full" onClick={() => setAck(alarmKey)}>{t("alert_done")}</button>}</section>}
       <Accordion icon={<FileCheck size={22} />} title={proposal ? t("review_title") : t("nothing_waiting")} subtitle={proposal ? t("review_version", { version: proposal.version }) : t("review_hint")} defaultOpen>
