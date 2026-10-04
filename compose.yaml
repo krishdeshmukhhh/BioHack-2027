@@ -1,11 +1,12 @@
 # The hub stack in Docker, replacing the Raspberry Pi. See docs/DEMO.md.
 #
-#   make docker-up      build and start broker + hub (needs internet the first time)
+#   make docker-up      build and start broker + hub + dashboard (needs internet the first time)
 #   make docker-sim     simulated pump with keyboard (only when the ESP32 is NOT on)
 #   make docker-reset   back to the DEMO.md starting state
 #   make docker-down    stop
 #
-# Ports: 1883 for the ESP32 (MQTT), 8000 for the phone and laptop browsers.
+# Ports: 1883 for the ESP32 (MQTT), 3000 for the dashboard (phone and laptop),
+# 8000 for the hub API and the static fallback apps.
 # PUMP_ID comes from .env (default pump-001).
 name: smartpump
 
@@ -35,6 +36,20 @@ services:
       - hub-data:/data
     depends_on:
       - broker
+    restart: unless-stopped
+
+  # Care dashboard (Next.js), the main UI. Proxies /api to the hub; no internet at runtime.
+  dashboard:
+    build:
+      context: .
+      dockerfile: docker/dashboard.Dockerfile
+    image: smartpump-dashboard
+    ports:
+      - "3000:3000"
+    environment:
+      HUB_URL: http://hub:8000
+    depends_on:
+      - hub
     restart: unless-stopped
 
   # Off by default: a simulator with the same PUMP_ID as the ESP32 makes both flap.

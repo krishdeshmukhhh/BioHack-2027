@@ -3,29 +3,27 @@
 Next.js App Router, React, Tailwind CSS, Recharts, Framer Motion, and Lucide icons.
 All assets are bundled locally; the running dashboard needs no CDN or internet.
 
-From the repository root, start the simulated backend in one terminal:
+**For the demo** it runs in Docker with the hub: `make docker-up` from the repository
+root, then open **http://<hub-laptop-ip>:3000** (family) or **/clinician** on any device
+on the demo network.
 
-```powershell
-python web/_mock/mock_api.py
-```
+**Without Docker**, against the real hub (`make broker`, `make hub`, then a pump):
 
-Start the dashboard in a second terminal:
-
-```powershell
+```bash
 cd web/dashboard
-npm ci
-npm run dev
+npm ci                      # once, while online
+HUB_URL=http://127.0.0.1:8000 npm run dev
 ```
 
-Open **http://localhost:3000** for family care or **http://localhost:3000/clinician**
-for the clinician workspace. Mock pump controls remain at http://localhost:8003/_mock/.
-The older static pages run on port 8003; the React dashboard runs on port 3000.
+`HUB_URL` is required. There is no default, so the dashboard never shows mock data as if
+it were the real pump. For UI work against the mock (`python web/_mock/mock_api.py`),
+set `HUB_URL=http://127.0.0.1:8003` explicitly; mock pump controls are at
+http://localhost:8003/_mock/. The dev and production servers listen on `0.0.0.0`, so
+phones on the same network can reach port 3000 (allow it in the firewall).
 
-The Next.js API route forwards HTTP and SSE to `HUB_URL`, defaulting to
-`http://127.0.0.1:8003`. To connect to the real hub, copy `.env.example` to
-`.env.local`, change `HUB_URL`, and restart Next.js. This requires a Node.js
-process alongside the Python hub; it is not served by the hub's static-file mount.
-Use Node.js 22 LTS or newer.
+The API route forwards HTTP and SSE for `/api/pumps/*` and `/api/patients/*` only.
+Use Node.js 22 LTS or newer. The hub-served static pages (port 8000) remain the
+fallback UI.
 
 Production and verification:
 

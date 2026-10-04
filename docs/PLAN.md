@@ -30,6 +30,11 @@ Four parts, one loop. Details in `ARCHITECTURE.md`.
 - **Clinician portal** and **family app** (static web pages).
 - **Simulator**: a software pump identical on the wire, plus generated history. Unblocks software work and is our fallback on demo day.
 
+## Decisions log
+
+- 2026-10-03: the Raspberry Pi broke. The hub runs on one laptop in Docker (`compose.yaml`); `hub/deploy/laptop.ps1` is the native fallback.
+- 2026-10-03: the Next.js dashboard in `web/dashboard/` is adopted as the main UI (port 3000). The hub-served static apps stay as the fallback. Rules updated in `CLAUDE.md` and `.claude/rules/web.md`; it needs a safety and accessibility review before the demo.
+
 ## 3. Scope
 
 **Must have (the demo fails without these)**

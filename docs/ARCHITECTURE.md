@@ -76,5 +76,5 @@ The hub marks a prescription active only when the pump says so. If the pump is o
 
 - **MQTT:** small, well supported on the ESP32, and retained messages plus Last Will give us "latest prescription on reconnect" and "pump offline" for free.
 - **Hub on one laptop in Docker, no cloud** (a Pi was planned but broke; a real product would use a small dedicated computer): the demo works without internet, and it speaks to the connectivity and cost goals.
-- **Static web pages:** no build step to break during a hackathon; works on any phone.
+- **Web UI:** the Next.js dashboard (`web/dashboard/`, port 3000) is the main UI, proxying to the hub; the static hub-served pages (`web/family/`, `web/clinician/`) have no build step and remain the fallback if the dashboard breaks.
 - **SQLite:** one file, no server.

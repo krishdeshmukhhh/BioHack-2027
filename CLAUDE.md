@@ -30,7 +30,8 @@ web/family     ─┘        Docker, SQLite       └─ sim (software pump)
 
 - `firmware/` ESP32, PlatformIO, Arduino framework, C++
 - `hub/` Python 3.11, FastAPI, paho-mqtt, SQLite
-- `web/clinician/`, `web/family/` static HTML, CSS, vanilla JS, served by the hub. No build step.
+- `web/dashboard/` the main UI (decided 2026-10-03): Next.js care dashboard on port 3000, proxying `/api` to the hub (`HUB_URL`, required). Built while online; runs offline. Reuses `web/shared/` (data store, strings).
+- `web/clinician/`, `web/family/` static HTML, CSS, vanilla JS, served by the hub with no build step. Kept as the fallback UI.
 - `sim/` Python pump simulator and 30-day history generator
 - `shared/protocol/` JSON Schemas and example messages. This is the contract.
 - `fpga/` stretch: hardware watchdog
@@ -74,7 +75,7 @@ If a task seems to require breaking one of these, stop and ask.
 - **Protocol first.** Any change to a message starts in `shared/protocol/`, with an updated example, then firmware, sim, and hub follow. See `docs/PROTOCOL.md`.
 - **Firmware and sim stay in step.** A behaviour change in one needs the same change in the other in the same piece of work.
 - **Small, demoable steps.** Follow the phases in `docs/PLAN.md`. Finish a phase's acceptance check before starting the next.
-- **Keep it simple.** No frameworks, build tools, ORMs, or cloud services unless the plan says so. The demo must run on the hub laptop (Docker, `compose.yaml`) with no internet.
+- **Keep it simple.** No frameworks, build tools, ORMs, or cloud services unless the plan says so (the plan allows Next.js for `web/dashboard/` only). The demo must run on the hub laptop (Docker, `compose.yaml`) with no internet.
 - **Accessibility is a deliverable, not polish.** Family app rules are in `.claude/rules/web.md`.
 - **Secrets** go in `.env` and `firmware/include/secrets.h`. Both are gitignored. Never print or commit them.
 

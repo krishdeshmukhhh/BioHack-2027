@@ -7,8 +7,11 @@ paths:
 
 ## Stack
 
-- Static HTML, CSS, and vanilla JavaScript. No framework, no bundler, no CDN. Everything is served by the hub and must work offline.
-- Talk to the hub over HTTP only (plus server-sent events for live updates). Never connect to MQTT from the browser.
+- `web/dashboard/` (main UI, adopted 2026-10-03): Next.js, React, Tailwind. It may use npm and a build step, but: every package is installed and built while online and nothing is fetched at runtime (no CDN, no remote fonts, no analytics); it talks only to the hub, through its `/api` proxy and the required `HUB_URL` (never a silent fallback to the mock); it listens on `0.0.0.0` so phones can reach it; and it reuses `web/shared/` for the data store and strings. Every rule below still applies to it.
+- `web/family/` and `web/clinician/` stay as the hub-served fallback, under the rules below.
+
+- Fallback apps (`web/family/`, `web/clinician/`): static HTML, CSS, and vanilla JavaScript. No framework, no bundler, no CDN. Served by the hub and must work offline.
+- Both UIs talk to the hub over HTTP only (plus server-sent events for live updates). Never connect to MQTT from the browser.
 
 ## Accessibility (family app especially)
 

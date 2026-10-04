@@ -10,3 +10,5 @@ firmware
 fpga
 hub/data
 sim/data
+web/dashboard/node_modules
+web/dashboard/.next

@@ -50,7 +50,7 @@ lanes-status:
 
 # Docker hub stack (replaces the Raspberry Pi). Build once while online.
 docker-up:
-	docker compose up -d --build broker hub
+	docker compose up -d --build broker hub dashboard
 
 docker-sim:
 	docker compose --profile sim run --rm sim

@@ -8,7 +8,15 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
   if (!["pumps", "patients"].includes(path[0])) {
     return Response.json({ error: "not_found" }, { status: 404 });
   }
-  const origin = (process.env.HUB_URL || "http://127.0.0.1:8003").replace(/\/$/, "");
+  // No default: a forgotten HUB_URL must fail loudly, never fall back to the mock and
+  // show fake pump data as if it were the real pump (S5, S8).
+  if (!process.env.HUB_URL) {
+    return Response.json(
+      { error: "hub_url_not_set", detail: "Set HUB_URL to the hub, e.g. http://127.0.0.1:8000" },
+      { status: 503 },
+    );
+  }
+  const origin = process.env.HUB_URL.replace(/\/$/, "");
   const url = `${origin}/api/${path.map(encodeURIComponent).join("/")}${request.nextUrl.search}`;
   try {
     const upstream = await fetch(url, {
