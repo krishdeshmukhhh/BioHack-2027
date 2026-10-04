@@ -1,5 +1,6 @@
 export const wardCopy = {
   en: {
+    map_navigation: "Ward map navigation", map_zoom: "Map zoom", zoom_in: "Zoom in", zoom_out: "Zoom out", reset_map: "Fit entire ward", demo_short: "Demo", active_alarm: "Active alarm", switch_light: "Switch to light mode", switch_dark: "Switch to dark mode",
     global: "Global", ward_map: "Ward map", patients_nav: "Patients", alerts_nav: "Alerts",
     command_center: "Care command", ward: "Pediatric ward", ward_subtitle: "Spatial overview / schematic demo layout",
     ward_floor: "Level 01", ward_unit: "Unit A", bed: "Bed", station: "Care station", corridor: "Central corridor",
@@ -18,6 +19,7 @@ export const wardCopy = {
     pump_connection: "Pump connection", alerts_count: "{count} patients flagged",
   },
   es: {
+    map_navigation: "Navegación del mapa", map_zoom: "Zoom del mapa", zoom_in: "Acercar", zoom_out: "Alejar", reset_map: "Ver toda la sala", demo_short: "Demo", active_alarm: "Alarma activa", switch_light: "Activar modo claro", switch_dark: "Activar modo oscuro",
     global: "Global", ward_map: "Mapa", patients_nav: "Pacientes", alerts_nav: "Alertas",
     command_center: "Centro de cuidados", ward: "Sala pediátrica", ward_subtitle: "Vista espacial / plano de demostración",
     ward_floor: "Nivel 01", ward_unit: "Unidad A", bed: "Cama", station: "Puesto de cuidados", corridor: "Pasillo central",

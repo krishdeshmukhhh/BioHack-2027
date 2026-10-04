@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, LayoutGroup, MotionConfig, motion, useReducedMotion } from "framer-motion";
-import { Activity, Bell, ChevronLeft, ChevronRight, Globe2, Map, PanelRightOpen, Search, Users, Wifi, WifiOff } from "lucide-react";
+import { Activity, Bell, ChevronLeft, ChevronRight, Globe2, Map, Moon, Sun, PanelRightOpen, Search, Users, Wifi, WifiOff } from "lucide-react";
 import { useLocale } from "@/lib/locale";
 import { usePump, useResource, type Patient } from "@/lib/pump";
 import { motionTokens, springs } from "@/lib/motion";
@@ -19,12 +19,14 @@ export function Dashboard({ view }: { view: "family" | "clinician" }) {
   const [search, setSearch] = useState("");
   const [page, setPage] = useState(0);
   const [demoVitals, setDemoVitals] = useState(true);
+  const [light, setLight] = useState(false);
   const pump = usePump(pumpId);
   const roster = useResource<Patient[]>("/api/patients", 5000);
   const patients = roster.data || [];
   const selected = patients.find((patient) => patient.pump_id === pumpId);
   const main = useRef<HTMLElement>(null);
   useEffect(() => {
+    setLight(document.documentElement.dataset.theme === "day");
     const id = new URLSearchParams(location.search).get("pump");
     if (id && /^[\w-]{1,64}$/.test(id)) setPumpId(id);
     if (window.matchMedia("(max-width: 900px)").matches) setOpen(false);
@@ -34,6 +36,11 @@ export function Dashboard({ view }: { view: "family" | "clinician" }) {
     size(); compact.addEventListener("change", size); medium.addEventListener("change", size);
     return () => { compact.removeEventListener("change", size); medium.removeEventListener("change", size); };
   }, []);
+  function toggleTheme() {
+    const next = !light; setLight(next);
+    document.documentElement.dataset.theme = next ? "day" : "night";
+    try { localStorage.setItem("sp-theme", next ? "day" : "night"); } catch { /* session-only setting */ }
+  }
   function choose(id: string) {
     setPumpId(id); setOpen(true);
     history.replaceState(null, "", `?pump=${encodeURIComponent(id)}`);
@@ -68,7 +75,7 @@ export function Dashboard({ view }: { view: "family" | "clinician" }) {
       <div className="grid min-h-0 min-w-0 grid-rows-[64px_minmax(0,1fr)_26px]">
         <header className="shell-header flex min-w-0 items-center justify-between gap-3 border-b border-line px-5">
           <div className="min-w-0"><p className="text-sm font-semibold tracking-wide">{t("brand_name")}<span className="hidden text-muted sm:inline"> / {t("command_center")}</span></p><p className="mt-1 text-[10px] tracking-[.15em] text-muted uppercase">{t("ward")} · {t("ward_floor")}</p></div>
-          <div className="flex shrink-0 items-center gap-4"><p className={`connection flex items-center gap-2 text-xs ${pump.online ? "text-accent" : "text-warm"}`} role="status">{pump.online ? <Wifi size={14} aria-hidden="true" /> : <WifiOff size={14} aria-hidden="true" />}<span className="hidden sm:inline">{status}</span></p>
+          <div className="header-controls flex shrink-0 items-center gap-4"><button className="icon-button" aria-label={t(light ? "switch_dark" : "switch_light")} aria-pressed={light} onClick={toggleTheme}>{light ? <Moon size={15} aria-hidden="true" /> : <Sun size={15} aria-hidden="true" />}</button><p className={`connection flex items-center gap-2 text-xs ${pump.online ? "text-accent" : "text-warm"}`} role="status">{pump.online ? <Wifi size={14} aria-hidden="true" /> : <WifiOff size={14} aria-hidden="true" />}<span className="hidden sm:inline">{status}</span></p>
             <label htmlFor="language" className="sr-only">{t("language_label")}</label><select id="language" className="language-select rounded-md border border-line bg-panel px-2 text-xs" value={lang} onChange={(e) => setLang(e.target.value as "en" | "es")}><option value="en">EN</option><option value="es">ES</option></select>
           </div>
         </header>

@@ -32,6 +32,7 @@ Production and verification:
 
 ```powershell
 npm run typecheck
+npm test
 npm run build
 npm start
 ```
@@ -66,3 +67,26 @@ only when both the selected patient and pump telemetry explicitly report
 `simulated: true`; the Demo vitals button toggles them. Real pump sources never
 receive fabricated vital signs. Feed progress and prescription state always
 come from the existing hub REST/SSE connection.
+
+## Spatial map and themes
+
+Drag within the ward to pan. Use the mouse wheel, a two-finger pinch, or the
+plus/minus controls to zoom between 100% and 350%. Zoom follows the cursor or
+pinch midpoint; camera bounds prevent panning beyond the ward. The fit button
+restores the full map. When the map region has keyboard focus, `+`, `-`, and `0`
+zoom in, zoom out, and fit the ward.
+
+Click a bed (or press Enter/Space on its button) to select its pump, center the
+camera, and open the parent details pane. Pointer movement beyond the drag
+threshold suppresses selection, so a drag or pinch cannot accidentally choose
+a patient. Bed tags appear on hover/focus or at 180% zoom: the selected pump's
+feed rate is hub-backed; synthetic HR tags are explicitly labelled Demo.
+
+Teal indicates selection, red an active alarm, and amber a patient review flag.
+Pulse and hover animations respect reduced-motion preferences. The header's
+sun/moon button switches between light and dark themes and remembers the choice
+on this device. Map walls, telemetry charts, controls, and details share theme
+tokens; dark is the default when no preference is stored.
+
+Camera bounds, zoom anchors, and fit behavior have dependency-free tests under
+`tests/map-camera.test.mjs`; run them with `npm test` (Node.js 22.6 or newer).
