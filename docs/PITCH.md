@@ -2,6 +2,8 @@
 
 Started at Sync 2, as `TEAM.md` asks. Owner: Person D (presenter). The live demo runs from `DEMO.md`; this page is the talk around it.
 
+**Draft deck (10 slides, speaker notes included):** https://claude.ai/artifact/W7QxjRokxQCKhbf7uX9hFb (private until shared from its Share menu). Placeholders in [brackets]: team names, prices, Person C's screenshot, and the Kangaroo Connect manual check.
+
 Rules for every slide (from `.claude/rules/safety.md`): say "prototype" and "demo", never imply clinical readiness, and give no clinical guidance. Every number on a slide has a source in `research/REFERENCES.md`. Claims marked ⚠ are unverified; check them or drop them before the final deck.
 
 ## Timing (draft, for a 5-minute slot; adjust when the slot is known)
