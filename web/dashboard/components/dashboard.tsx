@@ -94,7 +94,7 @@ export function Dashboard({ view }: { view: "family" | "clinician" }) {
             </div>}
             <AnimatePresence mode="wait" initial={false}>
               <motion.div key={mapView ? "map" : section} className="relative flex min-h-0 flex-1 flex-col overflow-hidden" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: motionTokens.duration.fast }}>
-                {family ? <FamilyHome pump={pump} patient={selected} patients={patients} choose={(id) => { setPumpId(id); history.replaceState(null, "", `?pump=${encodeURIComponent(id)}`); }} inspect={() => setOpen(true)} /> : mapView ? <WardMap resetSignal={mapReset} patients={patients} selected={pumpId} choose={choose} pump={pump} demoVitals={demoVitals} setDemoVitals={setDemoVitals} /> : <>
+                {family ? <FamilyHome pump={pump} patient={selected} patients={patients} choose={(id) => { setPumpId(id); history.replaceState(null, "", `?pump=${encodeURIComponent(id)}`); }} inspect={() => { setOpen(true); requestAnimationFrame(() => main.current?.querySelector<HTMLElement>("[data-patient-heading]")?.focus({ preventScroll: true })); }} /> : mapView ? <WardMap resetSignal={mapReset} patients={patients} selected={pumpId} choose={choose} pump={pump} demoVitals={demoVitals} setDemoVitals={setDemoVitals} /> : <>
                   <div className="px-6 py-4"><label className="relative block"><Search size={16} className="absolute top-3.5 left-3 text-muted" aria-hidden="true" /><span className="sr-only">{t("patient_search")}</span><input value={search} onChange={(e) => { setSearch(e.target.value); setPage(0); }} className="input pl-10! text-sm!" placeholder={t("patient_search")} /></label></div>
                   <div className="local-scroll min-h-0 flex-1 overflow-y-auto px-6" aria-label={t(section)} tabIndex={0}>
                     {roster.error && <p role="status" className="py-4 text-sm text-warm">{t("roster_unavailable")}</p>}
@@ -110,7 +110,7 @@ export function Dashboard({ view }: { view: "family" | "clinician" }) {
           </section>
           <PatientDetailsPane key={`${view}-${pumpId}`} role={view} active={open} pump={pump} patient={selected} defaultTab={view === "clinician" ? "orders" : "care"} close={close} selectPump={choose} telemetryEnabled={demoVitals} />
         </motion.main>
-        <footer className="flex items-center justify-between gap-2 border-t border-line px-4 text-[9px] text-muted"><p className="truncate">{t("prototype_footer")} · {t("simulated_data")}</p><span className="shrink-0 font-mono">SMART PUMP / WEB</span></footer>
+        <footer className="flex items-center justify-between gap-2 border-t border-line px-4 text-[9px] text-muted"><p>{t("simulated_data")} · {t("prototype_footer")}</p><span className="shrink-0 font-mono">SMART PUMP / WEB</span></footer>
       </div>
     </div>
   </LayoutGroup></MotionConfig>;

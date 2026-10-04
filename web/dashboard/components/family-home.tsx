@@ -1,5 +1,5 @@
 "use client";
-import { Bell, ChevronRight, Home, ClipboardCheck } from "lucide-react";
+import { Bell, ChevronRight, Home, ClipboardCheck, FlaskConical } from "lucide-react";
 import { motion } from "framer-motion";
 import { useLocale } from "@/lib/locale";
 import type { Patient, Pump } from "@/lib/pump";
@@ -13,6 +13,8 @@ export function FamilyHome({ pump, patient, patients, choose, inspect }: {
   const alarms = pump.alerts.filter((alert) => alert.active).length;
   const status = pump.status;
   return <div className="family-home local-scroll min-h-0 flex-1 overflow-y-auto px-6 pb-6">
+    {/* S8: every screen with simulated data says so, readable on a phone. */}
+    <p className="mb-4 inline-flex items-center gap-2 rounded-full border border-line px-4 py-2 text-lg font-semibold text-ink"><FlaskConical size={18} aria-hidden="true" />{t("simulated_data")}</p>
     <label className="mb-5 block text-xs text-muted">{t("demo_child")}
       <select className="input mt-2 text-sm!" value={pump.pumpId} onChange={(event) => choose(event.target.value)}>
         {!patients.length && <option value={pump.pumpId}>{pump.pumpId}</option>}
