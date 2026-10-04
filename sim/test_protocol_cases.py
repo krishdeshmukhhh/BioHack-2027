@@ -15,11 +15,10 @@ from sim.pump_sim import PumpCore
 from sim.test_pump_sim import FakeClock, FakePublisher
 
 PROTOCOL = Path(__file__).resolve().parents[1] / "shared" / "protocol"
-DOC = json.loads((PROTOCOL / "cases" / "prescription_cases.json").read_text())
+DOC = json.loads((PROTOCOL / "cases" / "prescription_cases.json").read_text(encoding="utf-8"))
 CASES = DOC["cases"]
-REASONS = set(
-    json.loads((PROTOCOL / "event.schema.json").read_text())["properties"]["reason"]["enum"]
-)
+EVENT_SCHEMA = json.loads((PROTOCOL / "event.schema.json").read_text(encoding="utf-8"))
+REASONS = set(EVENT_SCHEMA["properties"]["reason"]["enum"])
 OUTCOME_EVENT = {
     "applied": ("prescription_applied", "prescription_version"),
     "queued": ("prescription_queued", "pending_version"),
@@ -40,7 +39,7 @@ def pump_in(setup: dict) -> tuple[PumpCore, FakePublisher]:
             core.tick()
         assert core.state == "running"
     if setup["pending_version"] is not None:
-        rx = json.loads((PROTOCOL / "examples" / "prescription.json").read_text())
+        rx = json.loads((PROTOCOL / "examples" / "prescription.json").read_text(encoding="utf-8"))
         rx["version"] = setup["pending_version"]
         assert core.handle_prescription(json.dumps(rx)) == "queued"
     if setup["state"] == "paused":

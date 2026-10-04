@@ -80,9 +80,9 @@ Testing notes:
 - Unit tests need no broker: MQTT is exercised with fake paho clients (see `sim/test_pump_sim_mqtt.py`). Only `make sim`/`make hub` against a real pump need Mosquitto running.
 - `sim/test_limits_match_firmware.py` parses `firmware/include/limits.h` and asserts the simulator's `LIMIT_*` constants match. Changing a limit means changing both.
 - `shared/protocol/test_examples.py` validates every file in `shared/protocol/examples/` against its schema, matched by filename prefix (`status.running.json` → `status.schema.json`). New examples must follow that naming.
-- Windows: two protocol-case tests fail because `read_text()` without `encoding="utf-8"` decodes `shared/protocol/cases/prescription_cases.json` as cp1252. Set `PYTHONUTF8=1` until the fix (`encoding="utf-8"`) lands in `shared/protocol/test_examples.py` and `sim/test_protocol_cases.py`.
+- Read repo text files with `encoding="utf-8"` (the shared cases contain non-ASCII); Windows defaults to cp1252.
 
-Current status and next steps per person: checkboxes in `docs/TEAM.md` and `docs/PLAN.md`; the hub lane keeps a detailed hand-off in `hub/NEXT_STEPS.md` (on `lane/hub`).
+Current status and next steps per person: checkboxes in `docs/TEAM.md` and `docs/PLAN.md`; the hub lane keeps a detailed hand-off in `hub/NEXT_STEPS.md`.
 
 ## Safety invariants (never weaken these)
 

@@ -15,7 +15,7 @@ EXAMPLES = sorted((HERE / "examples").glob("*.json"))
 
 
 def load_schema(name: str) -> dict:
-    return json.loads((HERE / f"{name}.schema.json").read_text())
+    return json.loads((HERE / f"{name}.schema.json").read_text(encoding="utf-8"))
 
 
 def test_there_are_examples():
@@ -38,18 +38,19 @@ def validator_for(name: str) -> Draft202012Validator:
 def test_example_validates(path):
     schema_name = path.name.split(".")[0]
     validator = validator_for(schema_name)
-    errors = [e.message for e in validator.iter_errors(json.loads(path.read_text()))]
+    message = json.loads(path.read_text(encoding="utf-8"))
+    errors = [e.message for e in validator.iter_errors(message)]
     assert not errors, errors
 
 
 def test_format_checker_rejects_bad_timestamp():
-    example = json.loads((HERE / "examples" / "prescription.json").read_text())
+    example = json.loads((HERE / "examples" / "prescription.json").read_text(encoding="utf-8"))
     example["confirmed_at"] = "yesterday"
     assert list(validator_for("prescription").iter_errors(example))
 
 
 def test_status_reject_fields_are_optional_and_checked():
-    status = json.loads((HERE / "examples" / "status.running.json").read_text())
+    status = json.loads((HERE / "examples" / "status.running.json").read_text(encoding="utf-8"))
     assert not list(validator_for("status").iter_errors(status))
     status["last_rejected_version"] = 9
     status["last_reject_reason"] = "too_fast"
@@ -61,7 +62,7 @@ FIRMWARE_MQTT_BUFFER_BYTES = 1024
 
 
 def test_largest_prescription_fits_firmware_buffer():
-    example = json.loads((HERE / "examples" / "prescription.json").read_text())
+    example = json.loads((HERE / "examples" / "prescription.json").read_text(encoding="utf-8"))
     example["pump_id"] = "pump-" + "9" * 27
     example["version"] = 2**31 - 1
     example["proposed_by"] = example["confirmed_by"] = "x" * 32
@@ -87,14 +88,15 @@ def test_rejected_event_needs_reason():
 
 def test_prescription_needs_confirmation():
     validator = validator_for("prescription")
-    example = json.loads((HERE / "examples" / "prescription.json").read_text())
+    example = json.loads((HERE / "examples" / "prescription.json").read_text(encoding="utf-8"))
     del example["confirmed_by"]
     assert list(validator.iter_errors(example))
 
 
 # Shared prescription test cases (docs/PROTOCOL.md "Shared test cases"). Check 1 on the
 # pump is the schema shape, so the cases must agree with the schema itself.
-CASES = json.loads((HERE / "cases" / "prescription_cases.json").read_text())["cases"]
+CASES_FILE = HERE / "cases" / "prescription_cases.json"
+CASES = json.loads(CASES_FILE.read_text(encoding="utf-8"))["cases"]
 
 
 def _not_json(constant: str):
