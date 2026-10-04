@@ -6,7 +6,7 @@ import { useLocale } from "@/lib/locale";
 import { api, errorKey, useResource, type Audit, type Daily, type Patient, type Profile, type Pump, type Summary } from "@/lib/pump";
 import { Accordion, FeedGauge, RxChip, SimLabel } from "./primitives";
 
-export function ClinicianView({ pump, selectPump, compact = false }: { pump: Pump; selectPump: (id: string) => void; compact?: boolean }) {
+export function ClinicianView({ pump, selectPump }: { pump: Pump; selectPump: (id: string) => void }) {
   const { t, date, number, user } = useLocale();
   const [days, setDays] = useState(7);
   const patients = useResource<Patient[]>("/api/patients", 5000);
@@ -32,8 +32,8 @@ export function ClinicianView({ pump, selectPump, compact = false }: { pump: Pum
     finally { setBusy(false); }
   }
   const names: Record<string, string> = { "Overnight continuous": "profile_overnight", "Daytime bolus": "profile_day_bolus", "School day": "profile_school" };
-  return <div className={compact ? "min-w-0" : "grid items-start gap-8 xl:grid-cols-[240px_minmax(0,1fr)] xl:gap-10"}>
-    {!compact && <aside className="min-w-0" aria-labelledby="roster-title">
+  return <div className="grid items-start gap-8 xl:grid-cols-[240px_minmax(0,1fr)] xl:gap-10">
+    <aside className="min-w-0" aria-labelledby="roster-title">
       <h2 id="roster-title" className="kicker mb-4">{t("clin_patients_title")}</h2><p className="mb-5 text-sm text-muted">{t("patient_hint")}</p>
       {patients.error && <p role="status" className="text-danger">{t("patients_stale")}</p>}
       {!patients.data && <p className="text-muted">{t("loading")}</p>}
@@ -42,9 +42,9 @@ export function ClinicianView({ pump, selectPump, compact = false }: { pump: Pum
         <span className="mt-3 flex flex-wrap gap-2">{p.exceptions.length ? p.exceptions.map((code) => <span key={code} className="text-xs font-medium text-warm">{t(`exc_${code}`)}</span>) : <span className="text-xs text-good">{t("exc_none")}</span>}</span>
         {p.simulated && <span className="mt-3 inline-flex"><SimLabel /></span>}
       </button></li>)}</ul>
-    </aside>}
+    </aside>
     <div className="min-w-0">
-      {!compact && <><div className="mb-7 border-b border-line pb-5"><p className="kicker mb-2">{t("current")}</p><h2 className="font-display text-3xl tracking-tight">{patient?.display_name || pump.pumpId}</h2></div>
+      <div className="mb-7 border-b border-line pb-5"><p className="kicker mb-2">{t("current")}</p><h2 className="font-display text-3xl tracking-tight">{patient?.display_name || pump.pumpId}</h2></div>
       <div className="grid items-center gap-6 md:grid-cols-[220px_minmax(0,1fr)]">
         <FeedGauge delivered={s?.delivered_ml || 0} target={s?.target_ml || 0} />
         <div><p className="mb-5 text-sm font-medium" role="status">{s ? t(`state_${s.state}`) : t("unknown")}</p><dl className="grid grid-cols-2 gap-x-8 gap-y-6">
@@ -58,8 +58,8 @@ export function ClinicianView({ pump, selectPump, compact = false }: { pump: Pum
           <div className="mt-4 flex flex-wrap items-center gap-5 text-xs text-muted"><span className="flex items-center gap-2"><span className="h-2 w-2 rounded-full bg-accent" />{t("chart_delivered")}</span><span className="flex items-center gap-2"><span className="h-0 w-4 border-t border-dashed border-warm" />{t("chart_prescribed")}</span>{daily.data.some((r) => r.simulated) && <SimLabel />}</div>
           <details className="mt-4"><summary className="py-3 text-sm text-accent">{t("chart_show_table")}</summary><div className="table-scroll" tabIndex={0} role="region" aria-label={t("chart_title")}><table><thead><tr><th>{t("chart_col_date")}</th><th>{t("chart_delivered")}</th><th>{t("chart_prescribed")}</th><th>{t("chart_col_alarms")}</th></tr></thead><tbody>{daily.data.map((r) => <tr key={r.date}><th scope="row">{r.date}</th><td>{number(r.delivered_ml)} mL</td><td>{number(r.prescribed_ml)} mL</td><td>{r.alarm_count}</td></tr>)}</tbody></table></div></details>
         </> : <p className="text-muted">{t(daily.error ? "clin_unavailable" : daily.data ? "chart_no_data" : "loading")}</p>}
-      </section></>}
-      <div className={compact ? "grid gap-2" : "grid items-start gap-6 xl:grid-cols-2"}>
+      </section>
+      <div className="grid items-start gap-6 xl:grid-cols-2">
         <div>
           <Accordion title={t("new_proposal")} subtitle={t("clin_propose_intro")} icon={<FilePenLine size={21} />} defaultOpen>
             {profiles.data?.length ? <div className="mb-5"><h3 className="mb-3 text-sm font-medium">{t("profiles_title")}</h3><div className="flex flex-wrap gap-2">{profiles.data.map((p) => <button className="button text-sm!" key={p.id} onClick={() => setForm({ ...form, mode: p.mode, rate: String(p.rate_ml_hr), volume: String(p.volume_ml) })}>{names[p.name] ? t(names[p.name]) : p.name}</button>)}</div><p className="mt-2 text-xs text-muted">{t("profiles_intro")}</p></div> : null}

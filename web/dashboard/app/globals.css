@@ -8,37 +8,36 @@
   --color-tint: var(--tint); --color-track: var(--track); --color-danger: var(--danger);
   --color-warm: var(--warm); --color-good: var(--good);
   --font-sans: "Segoe UI", system-ui, sans-serif;
-  --font-display: "Segoe UI", system-ui, sans-serif;
+  --font-display: Georgia, "Times New Roman", serif;
 }
 :root {
-  color-scheme: dark;
-  --canvas: #080f16; --panel: #101d27; --ink: #e8f2f5; --muted: #91a9b7; --line: #253944;
-  --accent: #26dac7; --tint: #133a3d; --track: #203943; --danger: #ff9c98; --warm: #f0bc77; --good: #26dac7;
+  color-scheme: light;
+  --canvas: #f2f1ec; --panel: #fafaf7; --ink: #223b36; --muted: #56675d; --line: #d9dfd5;
+  --accent: #22634e; --tint: #e5ebdf; --track: #dae3d4; --danger: #a32e2b; --warm: #84511d; --good: #22634e;
 }
 :root[data-theme="night"] {
   color-scheme: dark;
-  --canvas: #080f16; --panel: #101d27; --ink: #e8f2f5; --muted: #91a9b7; --line: #253944;
-  --accent: #26dac7; --tint: #133a3d; --track: #203943; --danger: #ff9c98; --warm: #f0bc77; --good: #26dac7;
+  --canvas: #15130f; --panel: #201c16; --ink: #eee1c8; --muted: #bfae91; --line: #494031;
+  --accent: #d9b378; --tint: #312a1e; --track: #403829; --danger: #f0a48a; --warm: #e3bd77; --good: #b8ce9b;
 }
 * { box-sizing: border-box; }
-html, body { height: 100%; width: 100%; overflow: hidden; overscroll-behavior: none; }
-body { margin: 0; background: var(--canvas); color: var(--ink); font-family: "Segoe UI", system-ui, sans-serif; font-size: 14px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+body { margin: 0; background: var(--canvas); color: var(--ink); font-family: "Segoe UI", system-ui, sans-serif; font-size: 18px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
 h1, h2, h3 { text-wrap: balance; }
 p { text-wrap: pretty; }
 button, input, select, textarea { font: inherit; }
 button, a, input, select, textarea { -webkit-tap-highlight-color: transparent; }
 button:not(:disabled), summary, select { cursor: pointer; }
-button:disabled { opacity: .4; cursor: not-allowed; }
+button:disabled { opacity: .55; cursor: wait; }
 :focus-visible { outline: 3px solid var(--accent); outline-offset: 4px; }
-button, select, input:not([type="checkbox"]), a.control { min-height: 40px; }
+button, select, input:not([type="checkbox"]), a.control { min-height: 48px; }
 .button { display: inline-flex; justify-content: center; align-items: center; gap: 8px; padding: 11px 18px; border: 1px solid var(--line); border-radius: 10px; background: var(--panel); font-size: 16px; font-weight: 600; text-decoration: none; }
 .button:hover { border-color: var(--accent); background: var(--tint); }
-.button-primary { background: var(--accent); color: #062724; border-color: var(--accent); }
+.button-primary { background: var(--accent); color: var(--panel); border-color: var(--accent); }
 .button-primary:hover { background: var(--accent); filter: brightness(.95); }
 .input { width: 100%; border: 1px solid var(--line); border-radius: 8px; background: var(--panel); padding: 10px 12px; color: var(--ink); }
 .input:focus { border-color: var(--accent); }
 .kicker { text-transform: uppercase; letter-spacing: .16em; font-size: 11px; font-weight: 650; color: var(--muted); }
-.accordion { border: 1px solid var(--line); border-radius: 10px; background: var(--panel); padding: 0 14px; margin-bottom: 10px; }
+.accordion { border: 1px solid var(--line); border-radius: 16px; background: var(--panel); padding: 0 20px; margin-bottom: 14px; }
 .chart-grid line { stroke: var(--line); }
 .recharts-text { fill: var(--muted); }
 .table-scroll { overflow-x: auto; }
@@ -48,112 +47,3 @@ th { font-weight: 650; }
 thead { color: var(--muted); }
 .live-dot { width: 7px; height: 7px; border-radius: 100%; background: var(--good); }
 @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
-
-.command-shell { height: 100dvh; }
-.nav-rail, .shell-header { background: #0c151e; }
-.brand-mark { background: #123333; border: 1px solid #275854; }
-.rail-button { min-height: 66px; }
-.rail-button:hover { color: var(--accent); }
-.language-select { min-height: 32px; }
-.split-grid { grid-template-columns: minmax(0, 1fr) 380px; }
-.split-grid[data-open="false"] { grid-template-columns: minmax(0, 1fr); }
-.split-grid[data-open="false"] .details-pane { position: absolute; inset: 0 0 0 auto; width: 380px; }
-.details-pane { background: #0d1821; }
-.ward-stage { background: radial-gradient(ellipse at 45% 42%, #102631 0%, #09141e 72%); }
-.floor-plan { inset: 48px 32px 200px; }
-.bed-marker { width: 110px; padding: 12px 8px; }
-.bed-marker:hover { background: #15343e; color: var(--accent); }
-.status-dot { display: inline-block; width: 5px; height: 5px; border-radius: 100%; flex-shrink: 0; }
-.icon-button, .small-icon { display: grid; place-items: center; border: 1px solid var(--line); border-radius: 7px; color: var(--muted); background: var(--panel); }
-.icon-button { min-height: 36px; width: 36px; }
-.small-icon { min-height: 26px; width: 26px; }
-.icon-button:hover, .small-icon:hover { color: var(--accent); border-color: var(--accent); }
-.local-scroll { scrollbar-width: thin; scrollbar-color: #35515e transparent; overscroll-behavior: contain; scroll-padding: 16px; }
-.local-scroll::-webkit-scrollbar { width: 5px; height: 5px; }
-.local-scroll::-webkit-scrollbar-thumb { border-radius: 10px; background: #35515e; }
-.patient-row:hover { background: #102d35; }
-.skip-link { position: absolute; z-index: 100; transform: translateY(-200%); background: var(--panel); padding: 12px; }
-.skip-link:focus { transform: translateY(0); }
-.monitor-gauge .font-display { font-size: 46px; letter-spacing: -.04em; }
-.monitor-gauge .text-4xl { font-size: 23px; }
-.monitor-gauge .mt-4 { margin-top: 8px; font-size: 9px; }
-.detail-content .accordion h2 > button { padding: 16px 0; gap: 10px; }
-.detail-content .accordion h2 .text-lg { font-size: 13px; }
-.detail-content .accordion h2 .text-sm { font-size: 11px; }
-.detail-content .accordion .text-base, .detail-content .input { font-size: 13px; }
-.detail-content .accordion .button { font-size: 12px; padding: 9px 10px; }
-.detail-content .accordion .sm\:grid-cols-2 { grid-template-columns: minmax(0, 1fr); }
-.detail-content textarea { min-height: 60px; resize: vertical; }
-.detail-content table { font-size: 11px; }
-.detail-content th, .detail-content td { padding: 10px 6px; }
-.tab-bar button { min-height: 44px; }
-@media (max-width: 1100px) and (min-width: 901px) {
-  .split-grid { grid-template-columns: minmax(0, 1fr) 340px; }
-  .split-grid[data-open="false"] .details-pane { width: 340px; }
-  .floor-plan { inset-inline: 16px; }
-  .bed-marker { width: 90px; padding: 8px 5px; }
-  .vital-widget { padding: 8px; gap: 2px; }
-  .vital-widget > div:first-child { width: 62px; }
-}
-@media (max-width: 900px) {
-  .split-grid, .split-grid[data-open="false"] { grid-template-columns: minmax(0, 1fr); }
-  .split-grid[data-open="true"] .visual-pane { display: none; }
-  .split-grid[data-open="false"] .details-pane { width: 100%; }
-  .details-pane { border-left: 0; }
-}
-@media (max-width: 500px) {
-  .command-shell { grid-template-columns: 56px minmax(0, 1fr); }
-  .nav-rail { padding-top: 12px; }
-  .nav-rail nav { margin-top: 20px; padding-inline: 4px; gap: 8px; }
-  .rail-button { min-height: 58px; }
-  .brand-mark { width: 36px; height: 36px; }
-  .shell-header { padding-inline: 12px; }
-  .shell-header .uppercase { font-size: 8px; letter-spacing: .04em; }
-  .pane-heading { padding: 16px 12px 12px; }
-  .pane-heading h1 { font-size: 16px; }
-  .ward-metrics > div { padding: 10px 8px; }
-  .ward-metrics p:first-child { font-size: 9px; }
-  .ward-metrics p:last-child { font-size: 20px; }
-  .floor-plan { inset: 44px 8px 138px; }
-  .bed-marker { width: 65px; padding: 6px 3px; }
-  .bed-marker > svg { width: 27px; height: 27px; }
-  .bed-marker span { font-size: 8px; }
-  .station-label { font-size: 8px; padding: 5px; }
-  .station-label svg { display: none; }
-  .telemetry-overlay { left: 10px; right: 10px; bottom: 68px; }
-  .telemetry-overlay > div { gap: 6px; }
-  .vital-widget { padding: 5px; gap: 0; }
-  .vital-widget > div:first-child { width: 72px; }
-  .vital-widget > div:last-child { display: none; }
-  .telemetry-overlay > p { font-size: 8px; }
-  .map-tools, .map-footer { inset-inline: 12px; }
-  .detail-content { padding: 14px; }
-  .tab-bar button { font-size: 10px; }
-}
-@media (max-height: 600px) {
-  .nav-rail nav { margin-top: 12px; gap: 4px; }
-  .rail-button { min-height: 52px; gap: 3px; padding-block: 8px; }
-  .pane-heading { padding-top: 12px; padding-bottom: 10px; }
-  .ward-metrics > div { padding-block: 6px; }
-  .floor-plan { top: 35px; bottom: 114px; }
-  .bed-marker { padding-block: 4px; }
-  .bed-marker > svg { height: 25px; }
-  .telemetry-overlay { bottom: 55px; }
-  .vital-widget { padding: 4px; }
-  .vital-widget > div:first-child { height: 66px; }
-  .telemetry-overlay > p { font-size: 8px; }
-  .vital-widget > div:last-child svg { display: none; }
-}
-@media (max-height: 600px) and (min-width: 501px) {
-  .floor-plan { inset: 30px 240px 56px 16px; }
-  .bed-marker { width: 72px; padding: 4px; }
-  .bed-marker span { font-size: 8px; }
-  .station-label { font-size: 8px; padding: 4px; }
-  .telemetry-overlay { left: auto; right: 16px; bottom: 55px; width: 210px; }
-  .telemetry-overlay > div { gap: 6px; }
-  .vital-widget { justify-content: center; }
-  .vital-widget > div:first-child { width: 56px; height: 56px; }
-  .vital-widget > div:first-child svg { width: 56px; height: 56px; }
-  .vital-widget > div:last-child { display: none; }
-  .vital-widget .text-xl { font-size: 16px; }
-}
