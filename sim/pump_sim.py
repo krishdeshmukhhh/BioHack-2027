@@ -181,6 +181,7 @@ class PumpCore:
         self.alarm: str | None = None
         self.prescription: dict[str, Any] | None = None
         self.pending: dict[str, Any] | None = None
+        self._persist_failing = False
         self.delivered_ml = 0.0
         self.last_rejected_version: int | None = None
         self.last_reject_reason: str | None = None
@@ -257,14 +258,23 @@ class PumpCore:
                 rx, self.pending = self.pending, None
                 self._apply(rx)
 
-    def _apply(self, rx: dict[str, Any]) -> None:
+    def _apply(self, rx: dict[str, Any]) -> bool:
+        """Persist, then apply. If the write fails (a storage fault), keep it pending:
+        no event, no feed start, retried from tick() (docs/PROTOCOL.md, like NVS)."""
+        if not self._save_state(rx):
+            if not self._persist_failing:
+                log.warning("could not persist v%s; kept pending, retrying", rx["version"])
+            self._persist_failing = True
+            self.pending = rx
+            return False
+        self._persist_failing = False
         self.prescription = rx
-        self._save_state()
         log.info(
             "applied v%s: %s mL/hr, %s mL (demo values)",
             rx["version"], rx["rate_ml_hr"], rx["volume_ml"],
         )
         self._event("prescription_applied", version=rx["version"])
+        return True
 
     # ---- prescriptions -------------------------------------------------
 
@@ -345,8 +355,7 @@ class PumpCore:
 
             accepted = dict(rx)  # fully validated; kept whole so a reload passes check 1
             if self.state == "idle":
-                self._apply(accepted)
-                return "applied"
+                return "applied" if self._apply(accepted) else "unpersisted"
             # S4: never change mid-feed. A newer pending replaces an older one.
             self.pending = accepted
             log.info("queued v%s until idle (state %s)", version, self.state)
@@ -362,6 +371,9 @@ class PumpCore:
                 return False
             if self.prescription is None:
                 log.info("start ignored: no prescription applied yet")
+                return False
+            if self.pending is not None:
+                log.info("start ignored: v%s is not persisted yet", self.pending["version"])
                 return False
             self.delivered_ml = 0.0
             self.transition_to("priming")
@@ -423,6 +435,9 @@ class PumpCore:
                     self.transition_to("complete")
             elif self.state == "complete" and in_state_sim_s >= COMPLETE_HOLD_S:
                 self.transition_to("idle")
+            elif self.state == "idle" and self.pending is not None:
+                rx, self.pending = self.pending, None
+                self._apply(rx)  # retry a failed persist; stays pending if it fails again
 
             if self._last_status is None or now - self._last_status >= STATUS_INTERVAL_S:
                 self.publish_status()
@@ -465,15 +480,18 @@ class PumpCore:
             return False
         return self._restore(dict(DEMO_SEED, pump_id=self.pump_id), "the demo seed")
 
-    def _save_state(self) -> None:
+    def _save_state(self, rx: dict[str, Any]) -> bool:
+        """Write rx as the persisted prescription. True on success or with no state file."""
         if not self.state_file:
-            return
+            return True
         try:
             tmp = self.state_file.with_suffix(".tmp")
-            tmp.write_text(json.dumps({"prescription": self.prescription}))
+            tmp.write_text(json.dumps({"prescription": rx}))
             tmp.replace(self.state_file)
+            return True
         except OSError as exc:
-            log.warning("could not write state file: %s", exc)
+            log.debug("could not write state file: %s", exc)
+            return False
 
 
 class MqttLink:

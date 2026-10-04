@@ -189,8 +189,10 @@ Collected from the safety reviews so nothing is lost between chat threads. Tick 
 - [ ] C, low (dashboard): ~30 strings inline in `lib/locale.tsx` and units hard-coded; move to `strings.en.js`/`strings.es.js`. Review names `clin-01` instead of `proposed_by`; no "changed" markers; no live announcement of a new proposal; no `refreshLists` after a 409.
 - [ ] C, low (dashboard): offline time without a label; Sent chip ignores `rx_sent_offline`; profiles without a Simulated label; stale chart data with no notice; summary control 45 px; focus ring clipped by `overflow-hidden`.
 - [ ] B, low: a status that arrives after `alarm_cleared` can reopen the alert and count twice for `night_alarms`.
-- [ ] A, medium: measure stack headroom (`uxTaskGetStackHighWaterMark`) with a 2 KB prescription (S6 if it overflows).
-- [ ] A, low: reject duplicate JSON keys and add a shared case; `prescription_queued` while idle when NVS write fails (document or drop); `network_bench.py` replays a retained prescription (use retain off); bench tools must never target the demo hub database.
+- [ ] A, medium: network task stack raised to 10 KB (26ec146); still read the bench's stack high-water marks for both tasks with a 2 KB prescription before the demo (S6 if it overflows).
+- [x] A: duplicate JSON keys rejected (firmware and sim, shared cases); no `prescription_queued` while idle on a failed persist (now in PROTOCOL.md; sim matches); bench replay is non-retained.
+- [ ] A, low: rate-limit the NVS retry while idle and log the first failure; bench tools must never target the demo hub database; settle escaped-NUL keys and nesting deeper than 10 with a shared case (firmware drops, sim may reject).
+- [ ] C, blocking for the redesign (held off main 2026-10-03, user decision): "dashboard redesign shell" (5541c6d) needs: no fabricated heart rate / oxygen (remove, or off by default with a large on-screen label), the family view at `/` scoped to the caregiver's own pump (no roster, no ward map), no hospital-ward framing on the family side, text at least 18 px on the family view, and no locked scrolling on phones. Then the lead re-reviews and re-merges.
 - [ ] D: test the Docker stack (`compose.yaml`) end to end, including phones over the LAN.
 
 ## 6. Risks

@@ -545,3 +545,35 @@ def test_demo_seed_never_overrides_a_loaded_prescription(core):
     core.handle_prescription(rx(9))
     assert not core.seed_demo_prescription()
     assert core.version == 9
+
+
+# ---- persist failure (docs/PROTOCOL.md; matches the firmware's NVS path) -----------
+
+
+def test_unpersisted_prescription_stays_pending_while_idle(tmp_path, clock, pub, monkeypatch):
+    path = tmp_path / "state.json"
+    core = PumpCore("pump-001", publish=pub, clock=clock, state_file=path)
+    core.handle_prescription(rx(4))
+    assert core.version == 4
+    pub.clear()
+
+    def full_disk(*args, **kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(type(path), "write_text", full_disk)
+    assert core.handle_prescription(rx(5)) == "unpersisted"
+    assert core.state == "idle"
+    assert core.status()["prescription_version"] == 4
+    assert core.status()["pending_version"] == 5
+    assert pub.events() == []  # no applied, no queued
+    assert core.start() is False  # never feeds on the old version meanwhile
+    advance(core, clock, 2)
+    assert core.version == 4 and core.pending_version == 5
+
+    monkeypatch.undo()  # storage recovers: the retry applies it
+    advance(core, clock, 1)
+    assert core.version == 5 and core.pending_version is None
+    assert [e["type"] for e in pub.events() if e["type"].startswith("prescription_")] == [
+        "prescription_applied"
+    ]
+    assert json.loads(path.read_text())["prescription"]["version"] == 5
