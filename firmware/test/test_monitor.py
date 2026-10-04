@@ -3,11 +3,14 @@
 import json
 
 import pytest
-from platformio.device.monitor.filters.base import load_monitor_filter
-from serial.tools import miniterm
 
-from firmware.monitor.filter_pump_view import PumpView
-from firmware.test.test_bench import status
+# The filter runs inside PlatformIO; skip where it is not installed in this venv.
+pytest.importorskip("platformio")
+from platformio.device.monitor.filters.base import load_monitor_filter  # noqa: E402
+from serial.tools import miniterm  # noqa: E402
+
+from firmware.monitor.filter_pump_view import PumpView  # noqa: E402
+from firmware.test.test_bench import status  # noqa: E402
 
 
 def monitor():

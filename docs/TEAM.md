@@ -112,7 +112,7 @@ Anything not done at its sync point drops to the "Should" or "Stretch" list. Don
 
 ### Phase 6
 - [ ] Hub laptop: `make docker-up` built while online (`compose.yaml`: broker with persistence, hub, optional sim), a fixed IP on the demo router, Windows firewall open for 8000 and 1883, `make docker-reset` tested. (The Pi broke; `scripts/setup_pi.sh` is kept only for reference.).
-- [x ] Reset script support: a "return to v7 at 60 mL/hr, idle" seed (DEMO.md).
+- [x] Reset script support: a "return to v7 at 60 mL/hr, idle" seed (DEMO.md).
 
 **Needs from others:** D gives the frozen API and protocol, plus the sim for end-to-end checks. C reports any API pain early, through D.
 **Gives to others:** the real API on the hub laptop by Sync 2, so C can switch off the mock.
