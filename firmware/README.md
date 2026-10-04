@@ -87,6 +87,15 @@ make fw-monitor
 
 Serial monitor at 115200 baud accepts `start`, `pause`, `resume`, `stop`, `occlusion`, `bag_empty`, `clear`, `status`, and `reboot` (idle only). `demo` additionally exists in `esp32dev_offline`. Use a newline after each command. Fault injection is therefore digital even without physical buttons. Hub-mode reboot latches the controller idle while publishing retained offline; if offline cannot be acknowledged, the transport closes without MQTT DISCONNECT to preserve the Last Will.
 
+The default monitor now formats JSON into colored state/rate summaries, a delivery progress bar, and prominent alarm, pending, and rejection messages. Commands still work by typing their name and pressing Enter. This is a laptop display filter; no ESP32 reflash is needed. Close the old monitor with Ctrl+C, then from the repository root run:
+
+```bash
+export PLATFORMIO_CORE_DIR="$PWD/firmware/.pio/core"
+.venv/bin/pio device monitor -d firmware -e esp32dev --port /dev/cu.usbserial-120 --dtr 0 --rts 0
+```
+
+For raw JSON use the same command with `--filter send_on_enter` instead. `NO_COLOR=1` disables colors while retaining readable formatting.
+
 Optional active-low buttons connect GPIO32 (occlusion), GPIO33 (bag empty), and GPIO27 (start/pause/resume/clear) to ground. A short pause-button release starts when idle, pauses when feeding, resumes when paused, or clears when alarmed. Hold for 1.5 seconds to cancel a feed and return idle; an alarm must first be cleared. GPIO25 can drive an LED with an appropriate series resistor as an activity indicator. The LED does not measure delivery. OLED, sensors, stepper calibration, and FPGA are unimplemented stretch work.
 
 For standalone bench tests with **no hub running**, start the broker with `make broker`, observe `pump/#`, and send a fixed demo fixture (not retained, identity `bench-test`):
