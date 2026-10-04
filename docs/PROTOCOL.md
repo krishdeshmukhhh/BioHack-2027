@@ -44,7 +44,7 @@ Edge cases for check 1, the same in the firmware and the sim:
 
 - A number too large to represent (for example a 400-digit integer) is malformed, never an error that stops the pump's MQTT handling.
 - A boolean is never a number. `version` must be a JSON integer: `3.0` is malformed.
-- A payload that is not valid JSON (including `NaN` or `Infinity`) has no readable version, so it is dropped with a log line.
+- A payload that is not valid JSON (including `NaN` or `Infinity`) has no readable version, so it is dropped with a log line. This includes the zero-byte message the demo reset publishes to clear the retained prescription (`topics.md`, "Demo reset").
 - The limits in checks 5 and 6 are inclusive at both ends.
 
 Check 3 then handles confirmation: if `confirmed_by` or `confirmed_at` is missing or empty, the reason is `not_confirmed`. (A non-string value is already `malformed` in check 1.)

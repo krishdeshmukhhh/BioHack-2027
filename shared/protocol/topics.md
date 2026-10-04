@@ -16,4 +16,8 @@
 - Events can still be lost: QoS 1 does not help while the pump is offline or rebooting. Every outcome that matters is also in telemetry: `prescription_version` (applied), `pending_version` (queued), `last_rejected_version` and `last_reject_reason` (rejected), and `alarm`. The hub treats status as authoritative and events as the fast path.
 - The pump subscribes to `pump/{id}/prescription` at QoS 1, so the retained prescription arrives reliably.
 
+## Demo reset
+
+The demo reset (`make reset-demo`, `make docker-reset`) publishes a **zero-byte retained** message on `pump/{id}/prescription`. That deletes the retained prescription on the broker, so a pump does not pick up the last rehearsal's version on connect. A connected pump also receives the empty message. It has no readable version, so the pump drops it with a log line only: no event, no status change (`docs/PROTOCOL.md`, check 1).
+
 No other topics. Add a row here before using a new one.
