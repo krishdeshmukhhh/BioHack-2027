@@ -125,7 +125,7 @@ Each phase ends with an acceptance check you can show to someone. Do not start t
 - [x] Firmware: fault buttons (occlusion, bag empty, pause)
 - [ ] Optional: OLED showing rate, state, and "updated remotely, version N"
 - [ ] Bench: calibrate `STEPS_PER_ML` with a measuring cup if using a real pump head (n/a while DELIVERY_SIMULATED=1)
-- [ ] Bench: pull wifi mid-feed and confirm the feed continues (S6)
+- [x] Bench: pull wifi mid-feed and confirm the feed continues (S6) (Person A, real ESP32: 30 s outage, feed continued, settings unchanged; firmware/phase3/)
 - [x] Run `safety-reviewer`
 
 **Check:** repeat the phase 2 check with the ESP32 in place of the simulator, with no changes to the hub or web apps.
