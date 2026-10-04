@@ -2,6 +2,7 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import en from "../../shared/strings.en.js";
 import es from "../../shared/strings.es.js";
+import { wardCopy } from "./ward-copy";
 
 const extra = {
   en: { workspace: "Care workspace", overview: "Overview", family: "Family", clinician: "Clinician", feed_session: "This feed", delivery: "Delivery", remaining: "Remaining", feed_settings: "Feed settings", recent_activity: "Recent activity", pump_status: "Pump status", nothing_waiting: "You’re all caught up", review_hint: "No prescription changes waiting for review.", settings_hint: "Language, caregiver & alert preferences", alert_hint: "Clear instructions when the pump needs attention", live: "Live", dark: "Night", light: "Day", connected: "Connected", disconnected: "Offline", unknown: "Waiting for pump", data_stale: "Showing the last received reading.", alert_ack: "Acknowledged on this device", enable: "Enable alerts", details: "Details", percent: "of feed delivered", patient_hint: "Select a patient to inspect their feed", history: "Delivery history", new_proposal: "New proposal", patient_count: "patients", attention_count: "need attention", read: "Read aloud", current: "Current", progress: "Feed progress" },
@@ -13,7 +14,7 @@ export function LocaleProvider({ children }: { children: ReactNode }) {
   const [lang, setLang] = useState<"en" | "es">("en");
   useEffect(() => { try { if (localStorage.getItem("sp-lang") === "es") setLang("es"); } catch { /* session only */ } }, []);
   useEffect(() => { document.documentElement.lang = lang; try { localStorage.setItem("sp-lang", lang); } catch { /* session only */ } }, [lang]);
-  const strings = { ...en, ...(lang === "es" ? es : {}), ...extra[lang] } as Record<string, unknown>;
+  const strings = { ...en, ...(lang === "es" ? es : {}), ...extra[lang], ...wardCopy[lang] } as Record<string, unknown>;
   const t = (key: string, vars: Record<string, string | number> = {}) => String(strings[key] ?? key).replace(/\{(\w+)\}/g, (match, name: string) => String(vars[name] ?? match));
   const value: Locale = {
     lang, setLang, t,
