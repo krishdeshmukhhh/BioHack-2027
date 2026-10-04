@@ -177,13 +177,17 @@ Rehearsed on the simulator, 2026-10-03 (`--scenario occlusion`): the SSE `alert`
 
 Collected from the safety reviews so nothing is lost between chat threads. Tick when fixed.
 
-- [ ] C, medium (S5 display): `web/shared/data.js` `rank()` ties active, rejected and superseded with `>=`, so an older REST copy can show two "Active on pump" chips. Rank superseded above active and use `>`.
+- [x] (fixed by D, with `web/_mock/test_rx_merge.py`) C, medium (S5 display): `web/shared/data.js` `rank()` ties active, rejected and superseded with `>=`, so an older REST copy can show two "Active on pump" chips. Rank superseded above active and use `>`.
 - [ ] C, medium: audit view shows raw codes (`applied_by_pump`, `superseded_by_N`, `alarm_raised`, ...) and alert ids in the Version column (`web/clinician/audit.js`).
 - [ ] C, medium (web.md 18 px): family texts at 14 to 16 px: status and alarm lines, last-update time, Now/New tags, hints, sim label, footer.
 - [ ] C, low: a repeated identical alarm may not be re-announced to screen readers (`web/family/alert.js`).
 - [ ] C, low: the prototype footer is filled by JavaScript only; put the text in the HTML.
 - [ ] C, low: first rail link always `aria-current="page"`; one alarm can cue twice when its key gains `raised_at`.
-- [ ] C, high until reviewed: the React dashboard (`web/dashboard/`) safety and accessibility review (running 2026-10-03); fix what it finds.
+- [x] React dashboard reviewed 2026-10-03: pass with notes. D fixed raw error keys (`errorKey`) and `.`/`..` proxy segments. Open for C:
+- [ ] C, medium (dashboard): family text below 18 px (review rows 14/12 px, state line, hints, buttons 16 px, chips and sim label 12 px, footer 12 px, nav 11 px).
+- [ ] C, medium (dashboard): alert card has no picture, start time, or "cleared" message and announcement; port from `web/family/alert.js`.
+- [ ] C, low (dashboard): ~30 strings inline in `lib/locale.tsx` and units hard-coded; move to `strings.en.js`/`strings.es.js`. Review names `clin-01` instead of `proposed_by`; no "changed" markers; no live announcement of a new proposal; no `refreshLists` after a 409.
+- [ ] C, low (dashboard): offline time without a label; Sent chip ignores `rx_sent_offline`; profiles without a Simulated label; stale chart data with no notice; summary control 45 px; focus ring clipped by `overflow-hidden`.
 - [ ] B, low: a status that arrives after `alarm_cleared` can reopen the alert and count twice for `night_alarms`.
 - [ ] A, medium: measure stack headroom (`uxTaskGetStackHighWaterMark`) with a 2 KB prescription (S6 if it overflows).
 - [ ] A, low: reject duplicate JSON keys and add a shared case; `prescription_queued` while idle when NVS write fails (document or drop); `network_bench.py` replays a retained prescription (use retain off); bench tools must never target the demo hub database.

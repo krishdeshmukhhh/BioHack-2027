@@ -3,7 +3,7 @@ import { useState, type FormEvent } from "react";
 import { Area, CartesianGrid, ComposedChart, Line, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { ArrowUpRight, ClipboardList, FilePenLine, History, ListChecks } from "lucide-react";
 import { useLocale } from "@/lib/locale";
-import { api, useResource, type Audit, type Daily, type Patient, type Profile, type Pump, type Summary } from "@/lib/pump";
+import { api, errorKey, useResource, type Audit, type Daily, type Patient, type Profile, type Pump, type Summary } from "@/lib/pump";
 import { Accordion, FeedGauge, RxChip, SimLabel } from "./primitives";
 
 export function ClinicianView({ pump, selectPump }: { pump: Pump; selectPump: (id: string) => void }) {
@@ -28,7 +28,7 @@ export function ClinicianView({ pump, selectPump }: { pump: Pump; selectPump: (i
     try {
       const rx = await api.propose(pump.pumpId, { mode: form.mode, rate_ml_hr: rate, volume_ml: volume, note: form.note, proposed_by: "clin-01" });
       setSubmitted(rx.version); setForm({ mode: "continuous", rate: "", volume: "", note: "" });
-    } catch (err) { setError(t(`error_${(err as { code?: string }).code || "generic"}`)); }
+    } catch (err) { setError(t(errorKey(err))); }
     finally { setBusy(false); }
   }
   const names: Record<string, string> = { "Overnight continuous": "profile_overnight", "Daytime bolus": "profile_day_bolus", "School day": "profile_school" };

@@ -5,7 +5,8 @@ export const runtime = "nodejs";
 
 async function proxy(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   const { path } = await context.params;
-  if (!["pumps", "patients"].includes(path[0])) {
+  const badSegment = path.some((p) => p === "." || p === ".." || /[\\/]/.test(p));
+  if (badSegment || !["pumps", "patients"].includes(path[0])) {
     return Response.json({ error: "not_found" }, { status: 404 });
   }
   // No default: a forgotten HUB_URL must fail loudly, never fall back to the mock and

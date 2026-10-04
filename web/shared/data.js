@@ -60,7 +60,7 @@ async function request(method, path, body) {
   return data;
 }
 
-const KNOWN_ERRORS = ["invalid_input", "not_proposed", "stale_version", "unknown_pump", "network"];
+export const KNOWN_ERRORS = ["invalid_input", "not_proposed", "stale_version", "unknown_pump", "network"];
 
 /** True when the hub does not offer this endpoint yet (or has no such record). */
 export const isNotAvailable = (err) => err?.status === 404 && err?.code !== "unknown_pump";
@@ -195,7 +195,9 @@ export function createPumpStore(pumpId) {
       // SSE may have delivered newer states while this was in flight: keep those.
       for (const rx of rxs) {
         const have = state.prescriptions[rx.version];
-        if (!have || rank(rx.state) >= rank(have.state)) putPrescription(rx);
+        // Strictly further along only: an older REST copy must never turn a
+        // superseded version back into "active" (S5: two active chips).
+        if (!have || rank(rx.state) > rank(have.state)) putPrescription(rx);
       }
       for (const a of alerts) putAlert(a);
       notify();
@@ -269,9 +271,11 @@ export function createPumpStore(pumpId) {
 }
 
 // Lifecycle order, for merging REST and SSE copies only. Never used to set a state.
-const ORDER = ["proposed", "confirmed", "sent", "active", "rejected", "superseded"];
+// active can only move on to superseded; rejected and superseded are final, so both
+// rank above active and neither replaces the other.
+const RANK = { proposed: 0, confirmed: 1, sent: 2, active: 3, rejected: 4, superseded: 4 };
 function rank(s) {
-  return s === "active" || s === "rejected" || s === "superseded" ? 3 : ORDER.indexOf(s);
+  return RANK[s] ?? -1;
 }
 
 // ---- Selectors (read-only views over the state) ------------------------------

@@ -2,7 +2,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Bell, Check, ChevronRight, CircleAlert, FileCheck, Settings2, Volume2 } from "lucide-react";
 import { useLocale } from "@/lib/locale";
-import { api, type Pump } from "@/lib/pump";
+import { api, errorKey, type Pump } from "@/lib/pump";
 import { Accordion, FeedGauge, RxChip } from "./primitives";
 
 export function FamilyView({ pump }: { pump: Pump }) {
@@ -62,7 +62,7 @@ export function FamilyView({ pump }: { pump: Pump }) {
     const version = proposal.version;
     setBusy(true); setError("");
     try { await api[action](pump.pumpId, version, caregiver); setAnswered(version); }
-    catch (err) { setError(t(`error_${(err as { code?: string }).code || "generic"}`)); }
+    catch (err) { setError(t(errorKey(err))); }
     finally { setBusy(false); }
   }
   function enable() {

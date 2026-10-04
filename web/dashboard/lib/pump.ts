@@ -1,9 +1,15 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { api, createPumpStore } from "../../shared/data.js";
+import { api, createPumpStore, KNOWN_ERRORS } from "../../shared/data.js";
 
 export { api };
+
+/** Strings key for an API error: a known code, else generic. Never a bare code. */
+export function errorKey(err: unknown): string {
+  const code = (err as { code?: string } | null)?.code;
+  return code && (KNOWN_ERRORS as string[]).includes(code) ? `error_${code}` : "error_generic";
+}
 export type Prescription = {
   version: number; state: string; mode: string; rate_ml_hr: number; volume_ml: number;
   note?: string; reject_reason?: string; confirmed_by?: string; confirmed_role?: string;
