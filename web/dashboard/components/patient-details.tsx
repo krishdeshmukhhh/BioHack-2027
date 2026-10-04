@@ -24,7 +24,7 @@ function Tabs({ items, value, change, prefix }: { items: { key: string; label: s
     {item.label}{value === item.key && <motion.span layoutId={reduced ? undefined : `${prefix}-tab-line`} className="absolute right-3 bottom-0 left-3 h-0.5 bg-accent" />}
   </button>)}</div>;
 }
-type DetailsProps = { pump: Pump; patient?: Patient; defaultTab: Tab; close: () => void; selectPump: (id: string) => void; telemetryEnabled: boolean };
+type DetailsProps = { role: "family" | "clinician"; pump: Pump; patient?: Patient; defaultTab: Tab; close: () => void; selectPump: (id: string) => void; telemetryEnabled: boolean };
 export function PatientDetailsPane({ active, ...props }: DetailsProps & { active: boolean }) {
   const { t } = useLocale();
   const reduced = useReducedMotion();
@@ -32,7 +32,7 @@ export function PatientDetailsPane({ active, ...props }: DetailsProps & { active
     <PatientDetails key={props.pump.pumpId} {...props} />
   </motion.aside>}</AnimatePresence>;
 }
-export function PatientDetails({ pump, patient, defaultTab, close, selectPump, telemetryEnabled }: DetailsProps) {
+export function PatientDetails({ pump, patient, defaultTab, close, selectPump, telemetryEnabled, role }: DetailsProps) {
   const { t, date, number, user, list } = useLocale();
   const reduced = useReducedMotion();
   const [tab, setTab] = useState<Tab>(defaultTab);
@@ -45,7 +45,7 @@ export function PatientDetails({ pump, patient, defaultTab, close, selectPump, t
   return <>
     <header className="patient-header sticky top-0 z-10 flex shrink-0 items-start justify-between gap-3 border-b border-line px-5 pt-4 pb-3"><div className="min-w-0"><p className="kicker mb-1">{t("selected_patient")}</p><h2 data-patient-heading tabIndex={-1} className="truncate text-lg font-semibold">{patient?.display_name || pump.pumpId}</h2><p className="mt-1 text-[10px] text-muted">{patient?.id || pump.pumpId} · {pump.pumpId}</p><span data-patient-status className={`mt-2 inline-flex items-center gap-1.5 rounded-full border px-2 py-0.5 text-[10px] ${alarm ? "border-danger/40 bg-danger/10 text-danger" : !pump.online ? "border-warm/40 text-warm" : "border-line bg-panel text-muted"}`}><span className={`status-dot ${alarm ? "bg-danger" : !pump.online ? "bg-warm" : "bg-muted"}`} />{t(alarm ? "active_alarm" : pump.stream === "connecting" ? "connecting" : !pump.online ? "disconnected" : "status_no_alarm")}</span></div><button className="icon-button shrink-0" onClick={close} aria-label={t("close_details")}><X size={17} aria-hidden="true" /></button></header>
     <PatientTelemetry patient={patient} pump={pump} enabled={telemetryEnabled} />
-    <Tabs prefix={id} value={tab} change={(key) => setTab(key as Tab)} items={(["monitor", "care", "orders", "history"] as const).map((key) => ({ key, label: t(`tab_${key}`) }))} />
+    <Tabs prefix={id} value={tab} change={(key) => setTab(key as Tab)} items={(role === "family" ? ["monitor", "care", "history"] as const : ["monitor", "orders", "history"] as const).map((key) => ({ key, label: t(`tab_${key}`) }))} />
     {!pump.online && pump.stream !== "connecting" && <p role="status" className="shrink-0 border-b border-line px-5 py-3 text-xs text-warm">{t("data_stale")}</p>}
     <motion.div layoutScroll className="patient-scroll local-scroll min-h-0 flex-1 overflow-x-hidden overflow-y-auto" tabIndex={0} aria-label={t(`tab_${tab}`)}>
       <AnimatePresence mode="wait" initial={false}>
@@ -59,17 +59,17 @@ export function PatientDetails({ pump, patient, defaultTab, close, selectPump, t
               {active ? <div className="space-y-3 text-sm"><div className="flex items-center justify-between"><span>v{active.version}</span><RxChip rx={active} /></div><p>{t(`mode_${active.mode}`)} · {number(active.rate_ml_hr)} mL/hr</p><dl className="space-y-2"><div><dt className="text-[10px] text-muted">{t("field_volume")}</dt><dd>{number(active.volume_ml)} mL</dd></div><div><dt className="text-[10px] text-muted">{t("prescribing_clinician")}</dt><dd>{active.proposed_by ? user(active.proposed_by) : t("unknown")}</dd></div></dl>{active.note && <p className="text-muted">{active.note}</p>}</div> : <p className="text-sm text-muted">{t("unknown")}</p>}
             </Accordion>
             <Accordion key={alarm || "no-alarms"} title={t("current_alerts")} subtitle={alerts.length ? t("active_alarm") : t("all_clear")} icon={<Bell size={17} />} defaultOpen={!!alarm}>
-              {alerts.length ? <div className="space-y-4">{alerts.map((alert) => <div key={`${alert.alarm}:${alert.raised_at}`}><h3 className="text-sm font-semibold text-danger">{t(`alarm_${alert.alarm}`)}</h3><p className="mt-1 text-xs text-muted">{date(alert.raised_at)}</p><p className="mt-2 text-xs">{t(`cause_${alert.alarm}`)}</p><ol className="mt-3 list-decimal space-y-2 pl-4 text-xs">{list(`steps_${alert.alarm}`).map((step) => <li key={step}>{step}</li>)}</ol></div>)}<button className="button w-full" onClick={() => setTab("care")}>{t("open_alert_care")}</button></div> : <p className="text-xs text-muted">{t("all_clear")}</p>}
+              {alerts.length ? <div className="space-y-4">{alerts.map((alert) => <div key={`${alert.alarm}:${alert.raised_at}`}><h3 className="text-sm font-semibold text-danger">{t(`alarm_${alert.alarm}`)}</h3><p className="mt-1 text-xs text-muted">{date(alert.raised_at)}</p><p className="mt-2 text-xs">{t(`cause_${alert.alarm}`)}</p><ol className="mt-3 list-decimal space-y-2 pl-4 text-xs">{list(`steps_${alert.alarm}`).map((step) => <li key={step}>{step}</li>)}</ol></div>)}{role === "family" && <button className="button w-full" onClick={() => setTab("care")}>{t("open_alert_care")}</button>}</div> : <p className="text-xs text-muted">{t("all_clear")}</p>}
             </Accordion>
             <Accordion title={t("connection_details")} icon={<Link2 size={17} />}><dl className="space-y-3 text-xs"><div><dt className="text-muted">{t("pump_connection")}</dt><dd className="mt-1">{t(pump.online ? "connected" : "disconnected")}</dd></div><div><dt className="text-muted">{t("last_signal")}</dt><dd className="mt-1">{date(pump.lastUpdateAt)}</dd></div></dl></Accordion>
-          </> : tab === "care" ? <FamilyView pump={pump} compact /> : tab === "orders" ? <ClinicianView pump={pump} selectPump={selectPump} compact /> : <PatientHistory pump={pump} patient={patient} />}
+          </> : tab === "care" ? <FamilyView pump={pump} compact /> : tab === "orders" ? <ClinicianView pump={pump} selectPump={selectPump} compact /> : <PatientHistory pump={pump} patient={patient} role={role} />}
         </motion.div>
       </AnimatePresence>
     </motion.div>
   </>;
 }
 
-function PatientHistory({ pump, patient }: { pump: Pump; patient?: Patient }) {
+function PatientHistory({ pump, patient, role }: { pump: Pump; patient?: Patient; role: "family" | "clinician" }) {
   const { t, date, number, user } = useLocale();
   const [section, setSection] = useState("delivery");
   const [days, setDays] = useState(7);
@@ -77,7 +77,7 @@ function PatientHistory({ pump, patient }: { pump: Pump; patient?: Patient }) {
   const id = useId();
   const daily = useResource<Daily[]>(patient ? `/api/patients/${patient.id}/daily?days=${days}` : null);
   const audit = useResource<Audit[]>(`/api/pumps/${pump.pumpId}/audit`, 2000);
-  return <div className="min-w-0"><h3 className="mb-4 flex items-center gap-2 text-sm"><Activity size={16} className="text-accent" />{t("activity_history")}</h3><Tabs prefix={id} value={section} change={setSection} items={[{ key: "delivery", label: t("delivery_tab") }, { key: "prescriptions", label: t("prescriptions_tab") }, { key: "audit", label: t("audit_tab") }]} />
+  return <div className="min-w-0"><h3 className="mb-4 flex items-center gap-2 text-sm"><Activity size={16} className="text-accent" />{t("activity_history")}</h3><Tabs prefix={id} value={section} change={setSection} items={[{ key: "delivery", label: t("delivery_tab") }, { key: "prescriptions", label: t("prescriptions_tab") }, ...(role === "clinician" ? [{ key: "audit", label: t("audit_tab") }] : [])]} />
     <AnimatePresence mode="wait" initial={false}><motion.div key={section} id={`${id}-content`} role="tabpanel" aria-labelledby={`${id}-${section}`} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} transition={{ duration: motionTokens.duration.fast }} className="pt-5">
       {section === "delivery" ? <>
         <div className="mb-5 flex flex-wrap items-center justify-between gap-2"><div role="group" aria-label={t("range_label")} className="flex gap-1">{[7, 30].map((value) => <button key={value} aria-pressed={days === value} onClick={() => setDays(value)} className={`rounded-md px-2 text-xs ${days === value ? "bg-tint text-accent" : "text-muted"}`}>{t(value === 7 ? "range_7d" : "range_30d")}</button>)}</div><button className="text-xs text-accent" onClick={() => setTable(!table)}>{t(table ? "show_chart" : "show_table")}</button></div>

@@ -39,7 +39,7 @@ export function useMapCamera() {
       size.current = { width: node.clientWidth, height: node.clientHeight };
       // Preserve normalized framing while the adjacent details pane changes width.
       const camera = desired.current;
-      action.current.move({ ...camera, x: camera.x * size.current.width / previous.width, y: camera.y * size.current.height / previous.height });
+      action.current.move({ ...camera, x: camera.x * size.current.width / previous.width, y: camera.y * size.current.height / previous.height }, true);
     });
     observer.observe(node);
     // Native listener is deliberately non-passive: wheel zoom must never scroll the document.

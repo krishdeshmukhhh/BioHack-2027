@@ -17,8 +17,12 @@ npm ci
 npm run dev
 ```
 
-Open **http://localhost:3000** for the ward command dashboard or
-**http://localhost:3000/clinician** to open it with the Orders tab selected.
+Open **http://localhost:3000** for the family home-care view or
+**http://localhost:3000/clinician** for clinician oversight of children in separate homes.
+Use the **Demo view** switch in the header to change roles while keeping the
+selected child and pump. Families review or decline clinician proposals;
+clinicians create proposals and follow their status through the same hub.
+The switch demonstrates perspectives; it is not an authentication system.
 Mock pump controls remain at http://localhost:8003/_mock/.
 The older static pages run on port 8003; the React dashboard runs on port 3000.
 
@@ -44,18 +48,21 @@ animations respect reduced motion, and charts have readable labels and tables.
 
 ## Single-screen interaction
 
-The shell fits `100dvh` and locks document scrolling. Global and Ward Map show
-clickable bed markers. Patients and Alerts swap the central pane for searchable,
-paginated rosters. The map is a schematic demo layout, not patient location data.
+The shell fits `100dvh` and locks document scrolling. The clinician overview and Homes show
+clickable home markers. Patients and Alerts swap the central pane for searchable,
+paginated rosters. The network is schematic; connections represent remote care, not geographic
+locations or a shared ward. The family view focuses on one child and includes a
+labelled demo household selector.
 
-The dashboard starts with the map expanded. Selecting a bed slides the adjacent
-patient panel in from the right. Close it to expand the map;
+The clinician dashboard starts with the home network expanded. Selecting a home slides the adjacent
+patient panel in from the right. Close it to expand the map and smoothly reset
+the camera to the full home network;
 Escape also closes it and restores keyboard focus. On screens up to 900px wide,
 the map and details occupy the same space and clicking swaps between them.
 
-Monitor, Care, Orders, and History tabs keep exploration in the same viewport.
+Family Monitor, Care, and History tabs and clinician Monitor, Orders, and History tabs keep exploration in the same viewport.
 Care contains caregiver review and alert preferences; Orders contains proposal
-controls. History has Delivery, Prescriptions, and Audit tabs. Arrow keys, Home,
+controls. Both views have delivery and prescription history; only clinicians see Audit. Arrow keys, Home,
 and End navigate each tab group. Deep content scrolls only inside its panel.
 
 The charcoal and teal theme is bundled in Tailwind tokens. Framer Motion drives
@@ -71,13 +78,13 @@ come from the existing hub REST/SSE connection.
 
 ## Spatial map and themes
 
-Drag within the ward to pan. Use the mouse wheel, a two-finger pinch, or the
+Drag within the home network to pan. Use the mouse wheel, a two-finger pinch, or the
 plus/minus controls to zoom between 100% and 350%. Zoom follows the cursor or
-pinch midpoint; camera bounds prevent panning beyond the ward. The fit button
+pinch midpoint; camera bounds prevent panning beyond the network. The fit button
 restores the full map. When the map region has keyboard focus, `+`, `-`, and `0`
-zoom in, zoom out, and fit the ward.
+zoom in, zoom out, and fit all homes.
 
-Click a bed (or press Enter/Space on its button) to select its pump, center the
+Click a home (or press Enter/Space on its button) to select its pump, center the
 camera, and open the parent details pane. Pointer movement beyond the drag
 threshold suppresses selection, so a drag or pinch cannot accidentally choose
 a patient. Bed tags appear on hover/focus or at 180% zoom: the selected pump's

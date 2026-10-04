@@ -201,3 +201,14 @@ thead { color: var(--muted); }
   .vital-widget > div:last-child { display: none; }
   .vital-widget .text-xl { font-size: 16px; }
 }
+/* The demo changes perspective while keeping the selected home device. */
+.shell-header { padding-bottom: 36px; }
+.demo-role-switch { position: absolute; bottom: 7px; left: 20px; display: flex; align-items: center; gap: 4px; font-size: 11px; }
+.demo-role-switch > span { color: var(--muted); margin-right: 8px; }
+.demo-role-switch a { position: relative; padding: 5px 12px; border-radius: 6px; color: var(--muted); }
+.demo-role-switch a.active { color: var(--accent); }
+.role-highlight { position: absolute; inset: 0; background: var(--tint); border: 1px solid var(--line); border-radius: 6px; }
+.home-feed { grid-template-columns: minmax(0, 1fr) minmax(150px, .75fr); }
+.home-progress { max-width: 280px; width: 100%; justify-self: center; }
+.home-action:hover { background: var(--tint); }
+@media (max-width: 650px) { .home-feed { grid-template-columns: minmax(0, 1fr); padding: 16px; } .home-progress { max-width: 160px; } .home-progress .font-display { font-size: 48px; } .demo-role-switch { left: 12px; } .family-home { padding-inline: 12px; } }
