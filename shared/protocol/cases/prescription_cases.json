@@ -1050,6 +1050,44 @@
      "last_reject_reason": "malformed"
     }
    }
+  },
+  {
+   "name": "dropped: duplicate version with different values",
+   "beyond_schema": "Duplicate keys collapse before JSON Schema sees them; the pump checks the raw JSON.",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"version\":9,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "dropped",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
+  },
+  {
+   "name": "dropped: duplicate version with equal values",
+   "beyond_schema": "Duplicate keys collapse before JSON Schema sees them; the pump checks the raw JSON.",
+   "setup": {
+    "current_version": 7,
+    "pending_version": null,
+    "state": "idle"
+   },
+   "payload": "{\"pump_id\":\"pump-001\",\"version\":8,\"version\":8,\"mode\":\"continuous\",\"rate_ml_hr\":90,\"volume_ml\":500,\"proposed_by\":\"clinician-demo\",\"proposed_at\":\"2026-10-03T14:02:00Z\",\"confirmed_by\":\"caregiver-demo\",\"confirmed_at\":\"2026-10-03T14:03:10Z\",\"note\":\"Demo value only\"}",
+   "expect": {
+    "outcome": "dropped",
+    "status_after": {
+     "prescription_version": 7,
+     "pending_version": null,
+     "last_rejected_version": null,
+     "last_reject_reason": null
+    }
+   }
   }
  ]
 }

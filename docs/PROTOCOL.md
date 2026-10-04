@@ -46,6 +46,7 @@ Edge cases for check 1, the same in the firmware and the sim:
 - A boolean is never a number. `version` must be a JSON integer: `3.0` is malformed.
 - A payload that is not valid JSON (including `NaN` or `Infinity`) has no readable version, so it is dropped with a log line.
 - The limits in checks 5 and 6 are inclusive at both ends.
+- Duplicate keys are malformed, compared after decoding escapes (`"rate_ml_\u0068r"` is the same key as `"rate_ml_hr"`). If the duplicated key is the top-level `version`, the version is unreadable, so the payload is dropped with a log line only (no event, status reject fields unchanged). Any other duplicate with a readable `version` is rejected as `malformed`.
 
 Check 3 then handles confirmation: if `confirmed_by` or `confirmed_at` is missing or empty, the reason is `not_confirmed`. (A non-string value is already `malformed` in check 1.)
 
@@ -53,6 +54,7 @@ If all checks pass:
 
 - Pump is idle: apply, persist, publish `prescription_applied`, and report the new `prescription_version` in status.
 - Pump is not idle: store as pending, publish `prescription_queued`, report `pending_version` in status, and apply on the next return to idle.
+- The pump cannot persist an accepted prescription while idle (a storage fault): it does not apply it, keeps it as pending (status shows `pending_version` while `idle`), publishes no event, refuses to start a feed, and retries the write. It is never reported as applied until persisted.
 
 Because the prescription topic is retained, the pump will see the same message again on every reconnect. Check 4 makes that harmless. A version **equal to the current or the pending version** is a replay: the pump ignores it silently, with no event and no change to the status reject fields. Any other version that is not greater than both is rejected as `stale_version`.
 
@@ -111,3 +113,4 @@ Record any rename, removal, or change of meaning here with the date.
 - 2026-10-03: `version` in a prescription has a maximum of 2147483647 (schema and check 1), and an unrepresentable number is `malformed`. From the sim safety review.
 - 2026-10-03 (Sync 1): check 1 is now the full prescription schema shape (unknown keys, `proposed_*`, date-times, note length), adopted from the firmware, which is the stricter and safer of the two. A non-string `confirmed_by`/`confirmed_at` is `malformed`; missing or empty is still `not_confirmed`. Rate or volume of 0 or less is still `*_out_of_range`. Pump events and `online` are now published at QoS 1 (the firmware uses 256dpi arduino-mqtt); see `topics.md`.
 - 2026-10-03: added the shared prescription test cases. No behaviour change; they encode the rules above.
+- 2026-10-03: duplicate keys are malformed and a duplicated `version` is dropped (with shared cases); an unpersisted prescription stays pending while idle. Clarifications; nothing renamed or removed.

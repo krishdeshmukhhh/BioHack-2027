@@ -21,7 +21,7 @@
       "enum": [null, "occlusion", "bag_empty", "low_battery", "sensor_mismatch"]
     },
     "prescription_version": { "type": "integer", "minimum": 0, "description": "Version currently applied. 0 means none yet." },
-    "pending_version": { "type": ["integer", "null"], "minimum": 1, "description": "Version queued until the pump is idle, or null." },
+    "pending_version": { "type": ["integer", "null"], "minimum": 1, "description": "Version accepted but not yet applied: queued until the pump is idle, or (while idle) waiting for a failed persist to succeed. Null when none." },
     "battery_pct": { "type": "integer", "minimum": 0, "maximum": 100 },
     "level_pct": { "type": "number", "minimum": 0, "maximum": 100, "description": "Independent bag level estimate from the level sensor, if fitted." },
     "last_rejected_version": {
